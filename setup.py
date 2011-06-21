@@ -13,7 +13,7 @@ except ImportError:
 
 here = os.path.abspath(os.path.dirname(__file__))
 
-DESCRIPTION = "Simple VTXX compatible terminal emulator."
+DESCRIPTION = "Simple VTXXX compatible terminal emulator."
 
 try:
     LONG_DESCRIPTION = open(os.path.join(here, "README.rst")).read()
