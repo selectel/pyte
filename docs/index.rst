@@ -22,7 +22,7 @@ So, why would one need a terminal emulator library?
   `AjaxTerm <http://antony.lesuisse.org/software/ajaxterm/>`_.
 * To have fun, hacking on the ancient, poorly documented technologies.
 
-**Note**: ``pyte`` started as a fork of `vt102 <http://github.com/samfoo/vt102`_,
+**Note**: ``pyte`` started as a fork of `vt102 <http://github.com/samfoo/vt102>`_,
 which is an incomplete implementation of VT100 features.
 
 
