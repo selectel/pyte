@@ -1,3 +1,9 @@
+2011-06-21 version 0.4.1:
+
+  * Minor examples and documentation update before the first public
+    release.
+
+
 2011-06-21 version 0.4.0:
 
   * Improved cursor movement -- ``Screen`` passes all but one tests
