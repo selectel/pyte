@@ -45,21 +45,15 @@ can do something like the following:
     >>> screen = pyte.Screen(80, 24)
     >>> stream = pyte.Stream()
     >>> stream.attach(screen)
-    >>> stream.feed(u"\u001b7\u001b[?47h\u001b)0\u001b[H\u001b[2J\u001b[H"
-                    u"\u001b[2;1HNetHack, Copyright 1985-2003\r\u001b[3;1"
-                    u"H         By Stichting Mathematisch Centrum and M. "
-                    u"Stephenson.\r\u001b[4;1H         See license for de"
-                    u"tails.\r\u001b[5;1H\u001b[6;1H\u001b[7;1HShall I pi"
-                    u"ck a character's race, role, gender and alignment f"
-                    u"or you? [ynq] ")
+    >>> stream.feed("Hello World!")
     >>> screen.display
-        ['                                                                                ',
-         'NetHack, Copyright 1985-2003                                                    ',
-         '         By Stichting Mathematisch Centrum and M. Stephenson.                   ',
-         '         See license for details.                                               ',
+        ['Hello World!                                                                    ',
          '                                                                                ',
          '                                                                                ',
-         "Shall I pick a character's race, role, gender and alignment for you? [ynq]      ",
+         '                                                                                ',
+         '                                                                                ',
+         '                                                                                ',
+         '                                                                                ',
          '                                                                                ',
          '                                                                                ',
          '                                                                                ',
@@ -77,7 +71,6 @@ can do something like the following:
          '                                                                                ',
          '                                                                                ',
          '                                                                                ']
-    >>>
 
 .. _api:
 
