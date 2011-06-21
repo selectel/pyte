@@ -6,9 +6,9 @@ import subprocess
 import sys
 
 try:
-    from setuptools import find_packages, setup, Command
+    from setuptools import setup, Command
 except ImportError:
-    from distutils.core import find_packages, setup, Command
+    from distutils.core import setup, Command
 
 
 here = os.path.abspath(os.path.dirname(__file__))
@@ -53,7 +53,7 @@ class PyTest(Command):
 
 setup(name="pyte",
       version="0.4.1",
-      packages=find_packages(exclude=["tests"]),
+      packages=["pyte"],
       cmdclass={"test": PyTest},
       platforms=["any"],
 
