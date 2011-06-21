@@ -62,6 +62,6 @@ setup(name="pyte",
       description=DESCRIPTION,
       long_description=LONG_DESCRIPTION,
       classifiers=CLASSIFIERS,
-      keywords=["pyte", "terminal emulator"],
+      keywords=["vt102", "vte", "terminal emulator"],
       url="https://github.com/selectel/pyte",
 )
