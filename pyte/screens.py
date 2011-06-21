@@ -266,7 +266,7 @@ class Screen(list):
         :param unicode mode: if ``"("`` ``G0`` charset is set, if
                              ``")"`` -- we operate on ``G1``.
 
-        .. warning:: user-defined charsets are currently not supported.
+        .. warning:: User-defined charsets are currently not supported.
         """
         if code in cs.MAPS:
             setattr(self, {"(": "g0_charset", ")": "g1_charset"}[mode],

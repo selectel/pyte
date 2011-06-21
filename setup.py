@@ -13,7 +13,7 @@ except ImportError:
 
 here = os.path.abspath(os.path.dirname(__file__))
 
-DESCRIPTION = "Simple VTXXX compatible terminal emulator."
+DESCRIPTION = "Simple VTXXX-compatible terminal emulator."
 
 try:
     LONG_DESCRIPTION = open(os.path.join(here, "README.rst")).read()
@@ -22,13 +22,13 @@ except IOError:
 
 
 CLASSIFIERS = (
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Environment :: Console",
     "Intended Audience :: Developers",
     "Operating System :: OS Independent",
     "License :: OSI Approved :: GNU Library or Lesser General Public License (LGPL)",
-    "Programming Language :: Python",
     "Programming Language :: Python :: 2.6",
+    "Programming Language :: Python :: 3.2",
     "Topic :: Terminals :: Terminal Emulators/X Terminals",
 )
 
@@ -52,7 +52,7 @@ class PyTest(Command):
 
 
 setup(name="pyte",
-      version="0.4.0",
+      version="0.4.1",
       packages=find_packages(exclude=["tests"]),
       cmdclass={"test": PyTest},
       platforms=["any"],
