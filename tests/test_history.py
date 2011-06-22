@@ -13,7 +13,7 @@ def chars(lines):
 
 
 def test_index():
-    screen = HistoryScreen(5, 5, pages=10)
+    screen = HistoryScreen(5, 5, history=50)
 
     # Filling the screen with line numbers, so it's easier to
     # track history contents.
@@ -45,7 +45,9 @@ def test_index():
 
 
 def test_page_up():
-    screen = HistoryScreen(4, 4, pages=10)
+    screen = HistoryScreen(4, 4, history=40)
+
+    assert screen.history.position == 40
 
     # Once again filling the screen with line numbers, but this time,
     # we need them to span on multiple lines.
@@ -55,7 +57,7 @@ def test_page_up():
 
     assert screen.history.top
     assert not screen.history.bottom
-    assert screen.page == 5
+    assert screen.history.position == 40
     assert screen.display == [
         "37  ",
         "38  ",
@@ -72,7 +74,7 @@ def test_page_up():
 
     # a) first page up.
     screen.page_up()
-    assert screen.page == 4
+    assert screen.history.position == 36
     assert screen.display == [
         "35  ",
         "36  ",
@@ -95,7 +97,7 @@ def test_page_up():
 
     # b) second page up.
     screen.page_up()
-    assert screen.page == 3
+    assert screen.history.position == 32
     assert screen.display == [
         "33  ",
         "34  ",
@@ -112,7 +114,7 @@ def test_page_up():
     ]
 
     # c) same with odd number of lines.
-    screen = HistoryScreen(5, 5, pages=10)
+    screen = HistoryScreen(5, 5, history=50)
 
     # Once again filling the screen with line numbers, but this time,
     # we need them to span on multiple lines.
@@ -122,7 +124,7 @@ def test_page_up():
 
     assert screen.history.top
     assert not screen.history.bottom
-    assert screen.page == 5
+    assert screen.history.position == 50
     assert screen.display == [
         "46   ",
         "47   ",
@@ -132,7 +134,7 @@ def test_page_up():
     ]
 
     screen.page_up()
-    assert screen.page == 4
+    assert screen.history.position == 45
     assert screen.display == [
         "43   ",
         "44   ",
@@ -151,7 +153,7 @@ def test_page_up():
 
 
 def test_page_down():
-    screen = HistoryScreen(5, 5, pages=10)
+    screen = HistoryScreen(5, 5, history=50)
 
     # Once again filling the screen with line numbers, but this time,
     # we need them to span on multiple lines.
@@ -161,7 +163,7 @@ def test_page_down():
 
     assert screen.history.top
     assert not screen.history.bottom
-    assert screen.page == 5
+    assert screen.history.position == 50
     assert screen.display == [
         "21   ",
         "22   ",
@@ -175,7 +177,7 @@ def test_page_down():
     screen.page_down()
     assert screen.history.top
     assert not screen.history.bottom
-    assert screen.page == 5
+    assert screen.history.position == 50
     assert screen.display == [
         "21   ",
         "22   ",
@@ -188,7 +190,7 @@ def test_page_down():
     screen.page_up()
     screen.page_up()
     screen.page_down()
-    assert screen.page == 4
+    assert screen.history.position == 45
     assert screen.history.top
     assert chars(screen.history.bottom) == [
         "23   ",
@@ -210,7 +212,7 @@ def test_page_down():
     screen.page_up()
     screen.page_down()
     screen.page_down()
-    assert screen.page == 4
+    assert screen.history.position == 45
     assert screen.display == [
         "18   ",
         "19   ",
@@ -221,7 +223,7 @@ def test_page_down():
 
 
 def test_ensure_width():
-    screen = HistoryScreen(5, 5, pages=10)
+    screen = HistoryScreen(5, 5, history=50)
 
     for idx in xrange(len(screen) * 5):
         map(screen.draw, unicode(idx))

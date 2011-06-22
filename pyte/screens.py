@@ -863,7 +863,10 @@ class DiffScreen(Screen):
         super(DiffScreen, self).alignment_display()
 
 
-History = namedtuple("History", "top bottom")
+class History(namedtuple("_History", "top bottom position")):
+    @property
+    def size(self):
+        return self.top.maxlen + self.bottom.maxlen
 
 
 class HistoryScreen(Screen):
@@ -871,20 +874,20 @@ class HistoryScreen(Screen):
     pagination. This is not linux-specific, but still useful; see  page
     462 of VT520 User's Manual.
 
-    :param int pages: total number of pages to keep.
+    :param int history: total number of history lines to keep; is split
+                        between top and bottom queues.
 
     .. attribute:: history
 
        A pair of history queues for top and bottom margins accordingly.
     """
 
-    def __init__(self, columns, lines, pages=10):
-        super(HistoryScreen, self).__init__(columns, lines)
+    def __init__(self, columns, lines, history=100):
+        self.history = History(deque(maxlen=history // 2),
+                               deque(maxlen=history - history // 2),
+                               history)
 
-        self.page = pages // 2
-        self.pages = pages
-        self.history = History(deque(maxlen=self.page * self.lines),
-                               deque(maxlen=self.page * self.lines))
+        super(HistoryScreen, self).__init__(columns, lines)
 
     def ensure_width(self):
         """Ensures all lines on a screen have proper width (attr:`columns`).
@@ -899,8 +902,20 @@ class HistoryScreen(Screen):
                 self[idx] = line + take(self.columns - len(line),
                                         self.default_line)
 
+    def reset(self):
+        """Overloaded to reset screen history state:
+
+        * history position is reset to bottom of both queues;
+        * queues themselves are emptied.
+        """
+        super(HistoryScreen, self).reset()
+
+        self.history.top.clear()
+        self.history.bottom.clear()
+        self.history = self.history._replace(position=self.history.size)
+
     def index(self):
-        """Overloaded, to update top history with the removed lines."""
+        """Overloaded to update top history with the removed lines."""
         top, bottom = self.margins
 
         if self.cursor.y == bottom:
@@ -915,10 +930,11 @@ class HistoryScreen(Screen):
                   is floored, so for a 5-line screen only the first two
                   lines are saved.
         """
-        if self.page > 0:
+        if self.history.position > self.lines:
             mid = int(math.floor(self.lines / 2.))
             self.history.bottom.extendleft(reversed(self[mid:]))
-            self.page -= 1
+            self.history = self.history \
+                ._replace(position=self.history.position - self.lines)
 
             self[:] = list(reversed([
                 self.history.top.pop() for _ in xrange(self.lines - mid)
@@ -933,10 +949,11 @@ class HistoryScreen(Screen):
                   is ceiled, so for a 5-line screen only the last two
                   lines are saved.
         """
-        if self.page < self.pages:
+        if self.history.position < self.history.size:
             mid = int(math.ceil(self.lines / 2.))
             self.history.top.extend(self[:mid])
-            self.page +=1
+            self.history = self.history \
+                ._replace(position=self.history.position + self.lines)
 
             self[:] = self[mid:] + [
                 self.history.bottom.popleft() for _ in xrange(mid)
