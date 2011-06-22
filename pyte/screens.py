@@ -879,7 +879,23 @@ class HistoryScreen(Screen):
 
     .. attribute:: history
 
-       A pair of history queues for top and bottom margins accordingly.
+       A pair of history queues for top and bottom margins accordingly;
+       here's the overall screen structure::
+
+            [ 1: .......]
+            [ 2: .......]  <- top history
+            [ 3: .......]
+            ------------
+            [ 4: .......]  s
+            [ 5: .......]  c
+            [ 6: .......]  r
+            [ 7: .......]  e
+            [ 8: .......]  e
+            [ 9: .......]  n
+            ------------
+            [10: .......]
+            [11: .......]  <- bottom history
+            [12: .......]
     """
 
     def __init__(self, columns, lines, history=100):
