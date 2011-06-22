@@ -947,7 +947,9 @@ class HistoryScreen(Screen):
                   lines are saved.
         """
         if self.history.position > self.lines:
-            mid = int(math.floor(self.lines / 2.))
+            mid = min(abs(self.lines - len(self.history.top)),
+                      int(math.floor(self.lines / 2.)))
+
             self.history.bottom.extendleft(reversed(self[mid:]))
             self.history = self.history \
                 ._replace(position=self.history.position - self.lines)
@@ -966,7 +968,8 @@ class HistoryScreen(Screen):
                   lines are saved.
         """
         if self.history.position < self.history.size:
-            mid = int(math.ceil(self.lines / 2.))
+            mid = max(self.lines - len(self.history.bottom),
+                      int(math.ceil(self.lines / 2.)))
             self.history.top.extend(self[:mid])
             self.history = self.history \
                 ._replace(position=self.history.position + self.lines)
