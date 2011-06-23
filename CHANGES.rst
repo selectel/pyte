@@ -1,3 +1,10 @@
+2012-06-24 version 0.4.2:
+
+  * Added a tiny debugging helper: ``python -m pyte your escape codes``
+  * Fixed ``HistoryScreen`` -- now not as buggy as it used to be:
+    and allows for custom ratio aspect when browsing history, see
+    ``HistoryScreen`` documentation for details.
+
 2011-06-21 version 0.4.1:
 
   * Minor examples and documentation update before the first public
