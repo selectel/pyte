@@ -865,7 +865,7 @@ class DiffScreen(Screen):
         super(DiffScreen, self).alignment_display()
 
 
-class History(namedtuple("_History", "top bottom position")):
+class History(namedtuple("_History", "top bottom ratio position")):
     @property
     def size(self):
         return self.top.maxlen + self.bottom.maxlen
@@ -878,6 +878,8 @@ class HistoryScreen(Screen):
 
     :param int history: total number of history lines to keep; is split
                         between top and bottom queues.
+    :param int ratio: defines how much lines to scroll on :meth:`next_page`
+                      and :meth:`prev_page` calls.
 
     .. attribute:: history
 
@@ -900,9 +902,10 @@ class HistoryScreen(Screen):
             [12: .......]
     """
 
-    def __init__(self, columns, lines, history=100):
+    def __init__(self, columns, lines, history=100, ratio=.5):
         self.history = History(deque(maxlen=history // 2),
                                deque(maxlen=history - history // 2),
+                               ratio,
                                history)
 
         super(HistoryScreen, self).__init__(columns, lines)
@@ -941,7 +944,7 @@ class HistoryScreen(Screen):
 
         super(HistoryScreen, self).index()
 
-    def page_up(self):
+    def prev_page(self):
         """Moves the screen half-page up.
 
         .. note:: If a screen has odd number of lines, the middle point
@@ -949,7 +952,8 @@ class HistoryScreen(Screen):
                   lines are saved.
         """
         if self.history.position > self.lines:
-            mid = min(len(self.history.top), int(math.ceil(self.lines / 2)))
+            mid = min(len(self.history.top),
+                      int(math.ceil(self.lines * self.history.ratio)))
 
             self.history.bottom.extendleft(reversed(self[-mid:]))
             self.history = self.history \
@@ -961,7 +965,7 @@ class HistoryScreen(Screen):
 
             self.ensure_width()
 
-    def page_down(self):
+    def next_page(self):
         """Moves the screen half-page down.
 
         .. note:: If a screen has odd number of lines, the middle point
@@ -969,7 +973,8 @@ class HistoryScreen(Screen):
                   lines are saved.
         """
         if self.history.position < self.history.size:
-            mid = min(len(self.history.bottom), int(math.ceil(self.lines / 2)))
+            mid = min(len(self.history.bottom),
+                      int(math.ceil(self.lines * self.history.ratio)))
 
             self.history.top.extend(self[:mid])
             self.history = self.history \

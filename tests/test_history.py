@@ -44,7 +44,7 @@ def test_index():
     assert len(screen.history.top) == 25  # pages // 2 * lines
 
 
-def test_page_up():
+def test_prev_page():
     screen = HistoryScreen(4, 4, history=40)
 
     assert screen.history.position == 40
@@ -73,7 +73,7 @@ def test_page_up():
     ]
 
     # a) first page up.
-    screen.page_up()
+    screen.prev_page()
     assert screen.history.position == 36
     assert screen.display == [
         "35  ",
@@ -96,7 +96,7 @@ def test_page_up():
     ]
 
     # b) second page up.
-    screen.page_up()
+    screen.prev_page()
     assert screen.history.position == 32
     assert screen.display == [
         "33  ",
@@ -133,7 +133,7 @@ def test_page_up():
         "     "
     ]
 
-    screen.page_up()
+    screen.prev_page()
     assert screen.history.position == 45
     assert screen.display == [
         "43   ",
@@ -152,7 +152,7 @@ def test_page_up():
 
 
 
-def test_page_down():
+def test_next_page():
     screen = HistoryScreen(5, 5, history=50)
 
     # Once again filling the screen with line numbers, but this time,
@@ -173,8 +173,8 @@ def test_page_down():
     ]
 
     # a) page up -- page down.
-    screen.page_up()
-    screen.page_down()
+    screen.prev_page()
+    screen.next_page()
     assert screen.history.top
     assert not screen.history.bottom
     assert screen.history.position == 50
@@ -187,9 +187,9 @@ def test_page_down():
     ]
 
     # b) double page up -- page down.
-    screen.page_up()
-    screen.page_up()
-    screen.page_down()
+    screen.prev_page()
+    screen.prev_page()
+    screen.next_page()
     assert screen.history.position == 45
     assert screen.history.top
     assert chars(screen.history.bottom) == [
@@ -208,10 +208,10 @@ def test_page_down():
 
 
     # c) double page up -- double page down
-    screen.page_up()
-    screen.page_up()
-    screen.page_down()
-    screen.page_down()
+    screen.prev_page()
+    screen.prev_page()
+    screen.next_page()
+    screen.next_page()
     assert screen.history.position == 45
     assert screen.display == [
         "18   ",
@@ -240,7 +240,7 @@ def test_ensure_width():
     # a) shrinking the screen, expecting the lines displayed to
     #    be truncated.
     screen.resize(5, 2)
-    screen.page_up()
+    screen.prev_page()
 
     assert all(len(l) is not 2 for l in screen.history.top)
     assert all(len(l) is 2 for l in screen.history.bottom)
@@ -255,7 +255,7 @@ def test_ensure_width():
     # b) expading the screen, expecting the lines displayed to
     #    be filled with whitespace characters.
     screen.resize(5, 10)
-    screen.page_down()
+    screen.next_page()
 
     assert all(len(l) is 10 for l in list(screen.history.top)[-3:])
     assert all(len(l) is not 10 for l in screen.history.bottom)
@@ -288,7 +288,7 @@ def test_not_enough_lines():
         "     "
     ]
 
-    screen.page_up()
+    screen.prev_page()
     assert not screen.history.top
     assert len(screen.history.bottom) is 1
     assert chars(screen.history.bottom) == ["     "]
@@ -301,7 +301,7 @@ def test_not_enough_lines():
     ]
 
 
-    screen.page_down()
+    screen.next_page()
     assert screen.history.top
     assert not screen.history.bottom
     assert screen.display == [
