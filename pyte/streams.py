@@ -3,7 +3,9 @@
     pyte.streams
     ~~~~~~~~~~~~
 
-    Quick example:
+    This module provides three stream implementations with different
+    features; for starters, here's a quick example of how streams are
+    typically used:
 
     >>> import pyte
     >>>
@@ -41,7 +43,7 @@ class Stream(object):
 
        Stream only accepts unicode strings as input, but if, for some
        reason, you need to feed it with byte strings, consider using
-       :class:`pyte.streams.ByteStream` instead.
+       :class:`~pyte.streams.ByteStream` instead.
 
     .. seealso::
 

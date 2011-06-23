@@ -4,6 +4,8 @@
 API
 ===
 
+.. automodule:: pyte
+
 .. automodule:: pyte.streams
     :members:
 
