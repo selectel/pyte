@@ -81,11 +81,8 @@ class Cursor(object):
                                      :meth:`Screen.selectel_graphic_rendition`
                                      for details).
     """
-    __slots__ = "x y attrs".split()
-
     def __init__(self, x, y, attrs=Char(" ")):
         self.x, self.y, self.attrs = x, y, attrs
-
 
 
 class Screen(list):
@@ -865,13 +862,10 @@ class DiffScreen(Screen):
         super(DiffScreen, self).alignment_display()
 
 
-class History(namedtuple("_History", "top bottom ratio position")):
-    @property
-    def size(self):
-        return self.top.maxlen + self.bottom.maxlen
+History = namedtuple("History", "top bottom ratio size position")
 
 
-class HistoryScreen(Screen):
+class HistoryScreen(DiffScreen):
     """A screen subclass, which keeps track of screen history and allows
     pagination. This is not linux-specific, but still useful; see  page
     462 of VT520 User's Manual.
@@ -906,6 +900,7 @@ class HistoryScreen(Screen):
         self.history = History(deque(maxlen=history // 2),
                                deque(maxlen=history - history // 2),
                                ratio,
+                               history,
                                history)
 
         super(HistoryScreen, self).__init__(columns, lines)
