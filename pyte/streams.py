@@ -202,9 +202,11 @@ class Stream(object):
                 continue
 
             try:
-                getattr(listener, event)(*args, **self.flags)
+                handler = getattr(listener, event)
             except AttributeError:
                 pass
+            else:
+                handler(*args, **self.flags)
         else:
             if kwargs.get("reset", True): self.reset()
 
