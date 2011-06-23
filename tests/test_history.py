@@ -266,3 +266,48 @@ def test_ensure_width():
         "24        ",
         "          "
     ]
+
+
+def test_not_enough_lines():
+    screen = HistoryScreen(5, 5, history=6)
+
+    # Once again filling the screen with line numbers, but this time,
+    # we need them to span on multiple lines.
+    for idx in xrange(len(screen)):
+        map(screen.draw, unicode(idx))
+        screen.linefeed()
+
+    assert screen.history.top
+    assert not screen.history.bottom
+    assert screen.history.position == 6
+    assert screen.display == [
+        "1    ",
+        "2    ",
+        "3    ",
+        "4    ",
+        "     "
+    ]
+
+    screen.page_up()
+    assert not screen.history.top
+    assert len(screen.history.bottom) is 1
+    assert chars(screen.history.bottom) == ["     "]
+    assert screen.display == [
+        "0    ",
+        "1    ",
+        "2    ",
+        "3    ",
+        "4    ",
+    ]
+
+
+    screen.page_down()
+    assert screen.history.top
+    assert not screen.history.bottom
+    assert screen.display == [
+        "1    ",
+        "2    ",
+        "3    ",
+        "4    ",
+        "     "
+    ]

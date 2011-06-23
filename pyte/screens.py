@@ -16,7 +16,9 @@
     :license: LGPL, see LICENSE for more details.
 """
 
-from __future__ import absolute_import, print_function, unicode_literals
+from __future__ import (
+    absolute_import, print_function, unicode_literals, division
+)
 
 import copy
 import math
@@ -947,16 +949,15 @@ class HistoryScreen(Screen):
                   lines are saved.
         """
         if self.history.position > self.lines:
-            mid = min(abs(self.lines - len(self.history.top)),
-                      int(math.floor(self.lines / 2.)))
+            mid = min(len(self.history.top), int(math.ceil(self.lines / 2)))
 
-            self.history.bottom.extendleft(reversed(self[mid:]))
+            self.history.bottom.extendleft(reversed(self[-mid:]))
             self.history = self.history \
                 ._replace(position=self.history.position - self.lines)
 
             self[:] = list(reversed([
-                self.history.top.pop() for _ in xrange(self.lines - mid)
-            ])) + self[:mid]
+                self.history.top.pop() for _ in xrange(mid)
+            ])) + self[:-mid]
 
             self.ensure_width()
 
@@ -968,8 +969,8 @@ class HistoryScreen(Screen):
                   lines are saved.
         """
         if self.history.position < self.history.size:
-            mid = max(self.lines - len(self.history.bottom),
-                      int(math.ceil(self.lines / 2.)))
+            mid = min(len(self.history.bottom), int(math.ceil(self.lines / 2)))
+
             self.history.top.extend(self[:mid])
             self.history = self.history \
                 ._replace(position=self.history.position + self.lines)
