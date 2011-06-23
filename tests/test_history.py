@@ -44,6 +44,40 @@ def test_index():
     assert len(screen.history.top) == 25  # pages // 2 * lines
 
 
+def test_reverse_index():
+    screen = HistoryScreen(5, 5, history=50)
+
+    # Filling the screen with line numbers, so it's easier to
+    # track history contents.
+    for idx in xrange(len(screen)):
+        screen.draw(unicode(idx))
+        if idx is not len(screen) - 1:
+            screen.linefeed()
+
+    assert not screen.history.top
+    assert not screen.history.bottom
+
+    screen.cursor_position()
+
+    # a) first index, expecting top history to be updated.
+    line = screen[-1]
+    screen.reverse_index()
+    assert screen.history.bottom
+    assert screen.history.bottom[0] == line
+
+    # b) second index.
+    line = screen[-1]
+    screen.reverse_index()
+    assert len(screen.history.bottom) == 2
+    assert screen.history.bottom[1] == line
+
+    # c) rotation.
+    for _ in xrange(len(screen) * screen.lines):
+        screen.reverse_index()
+
+    assert len(screen.history.bottom) == 25  # pages // 2 * lines
+
+
 def test_prev_page():
     screen = HistoryScreen(4, 4, history=40)
 
@@ -271,8 +305,6 @@ def test_ensure_width():
 def test_not_enough_lines():
     screen = HistoryScreen(5, 5, history=6)
 
-    # Once again filling the screen with line numbers, but this time,
-    # we need them to span on multiple lines.
     for idx in xrange(len(screen)):
         map(screen.draw, unicode(idx))
         screen.linefeed()
@@ -300,7 +332,6 @@ def test_not_enough_lines():
         "4    ",
     ]
 
-
     screen.next_page()
     assert screen.history.top
     assert not screen.history.bottom
@@ -310,4 +341,35 @@ def test_not_enough_lines():
         "3    ",
         "4    ",
         "     "
+    ]
+
+
+def test_draw():
+    screen = HistoryScreen(5, 5, history=50)
+
+    for idx in xrange(len(screen) * 5):
+        map(screen.draw, unicode(idx))
+        screen.linefeed()
+
+    assert screen.display == [
+        "21   ",
+        "22   ",
+        "23   ",
+        "24   ",
+        "     "
+    ]
+
+    # a) doing a pageup and then a draw -- expecting the screen
+    #    to scroll to the bottom before drawing anything.
+    screen.prev_page()
+    screen.prev_page()
+    screen.next_page()
+    screen.draw("x")
+
+    assert screen.display == [
+        "21   ",
+        "22   ",
+        "23   ",
+        "24   ",
+        "x    "
     ]

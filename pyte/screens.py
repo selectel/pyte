@@ -894,6 +894,15 @@ class HistoryScreen(DiffScreen):
             [10: .......]
             [11: .......]  <- bottom history
             [12: .......]
+
+    .. note::
+
+       Don't forget to update :class:`~pyte.streams.Stream` class with
+       appropriate escape sequences -- you can use any, since pagination
+       protocol is not standardized, for example::
+
+           Stream.escape["N"] = "next_page"
+           Stream.escape["P"] = "prev_page"
     """
 
     def __init__(self, columns, lines, history=100, ratio=.5):
@@ -918,11 +927,17 @@ class HistoryScreen(DiffScreen):
                 self[idx] = line + take(self.columns - len(line),
                                         self.default_line)
 
-    def reset(self):
-        """Overloaded to reset screen history state:
+    def draw(self, *args):
+        """Overloaded to scroll to the botom on each new input."""
+        while self.history.position < self.history.size:
+            self.next_page()
 
-        * history position is reset to bottom of both queues;
-        * queues themselves are emptied.
+        super(HistoryScreen, self).draw(*args)
+
+    def reset(self):
+        """Overloaded to reset screen history state: history position
+        is reset to bottom of both queues;  queues themselves are
+        emptied.
         """
         super(HistoryScreen, self).reset()
 
@@ -938,6 +953,15 @@ class HistoryScreen(DiffScreen):
             self.history.top.append(self[top])
 
         super(HistoryScreen, self).index()
+
+    def reverse_index(self):
+        """Overloaded to update bottom history with the removed lines."""
+        top, bottom = self.margins
+
+        if self.cursor.y == top:
+            self.history.bottom.append(self[bottom])
+
+        super(HistoryScreen, self).reverse_index()
 
     def prev_page(self):
         """Moves the screen half-page up.
