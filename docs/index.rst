@@ -85,8 +85,8 @@ can do something like the following:
          '                                                                                ',
          '                                                                                ']
 
-Whant more?
+Want more?
 -----------
 
-Sorry, but ``pyte`` doesn't have anything but the :ref:`API  documentation <api>`
+Unfortunately, ``pyte`` doesn't have anything but the :ref:`API  documentation <api>`
 at the moment.
