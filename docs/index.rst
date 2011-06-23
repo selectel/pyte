@@ -3,8 +3,21 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to pyte's documentation!
-=================================
+::
+
+                       _
+                      | |
+         _ __   _   _ | |_  ___
+        | '_ \ | | | || __|/ _ \
+        | |_) || |_| || |_|  __/
+        | .__/  \__, | \__|\___|
+        | |      __/ |
+        |_|     |___/      0.4.2
+
+        -- chicks dig dudes with terminals (c) @samfoo
+
+What is ``pyte``?
+-----------------
 
 What is ``pyte``? It's an in memory VTXXX-compatible terminal emulator.
 *XXX* stands for a series video terminals, developed by
@@ -26,8 +39,8 @@ So, why would one need a terminal emulator library?
 which is an incomplete implementation of VT100 features.
 
 
-Usage
-=====
+Quick example
+-------------
 
 There are two important classes in ``pyte``:
 :class:`~pyte.screens.Screen` and :class:`~pyte.streams.Stream`. The
@@ -72,28 +85,8 @@ can do something like the following:
          '                                                                                ',
          '                                                                                ']
 
-.. _api:
+Whant more?
+-----------
 
-API
-===
-
-.. automodule:: pyte.streams
-    :members:
-
-.. automodule:: pyte.screens
-    :members:
-
-.. automodule:: pyte.modes
-    :members:
-
-.. automodule:: pyte.control
-    :members:
-
-.. automodule:: pyte.escape
-    :members:
-
-.. automodule:: pyte.graphics
-    :members:
-
-.. automodule:: pyte.charsets
-    :members:
+Sorry, but ``pyte`` doesn't have anything but the :ref:`API  documentation <api>`
+at the moment.

@@ -1,0 +1,27 @@
+.. _api:
+
+
+API
+===
+
+.. automodule:: pyte.streams
+    :members:
+
+.. automodule:: pyte.screens
+    :members:
+    :exclude-members: Margins, Savepoint, _Char, Char
+
+.. automodule:: pyte.modes
+    :members:
+
+.. automodule:: pyte.control
+    :members:
+
+.. automodule:: pyte.escape
+    :members:
+
+.. automodule:: pyte.graphics
+    :members:
+
+.. automodule:: pyte.charsets
+    :members:

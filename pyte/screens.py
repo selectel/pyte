@@ -78,8 +78,8 @@ class Cursor(object):
     :param int x: horizontal cursor position.
     :param int y: vertical cursor position.
     :param pyte.screens.Char attrs: cursor attributes (see
-                                     :meth:`Screen.selectel_graphic_rendition`
-                                     for details).
+        :meth:`~pyte.screens.Screen.selectel_graphic_rendition`
+        for details).
     """
     def __init__(self, x, y, attrs=Char(" ")):
         self.x, self.y, self.attrs = x, y, attrs
@@ -531,7 +531,7 @@ class Screen(list):
 
         .. warning::
 
-           Even though *ALL* of the VTXXX manuals tsate that character
+           Even though *ALL* of the VTXXX manuals state that character
            attributes **should be reset to defaults**, ``libvte``,
            ``xterm`` and ``ROTE`` completely ignore this. Same applies
            too all ``erase_*()`` and ``delete_*()`` methods.
