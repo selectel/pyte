@@ -37,6 +37,14 @@ from itertools import islice, repeat
 from . import modes as mo, graphics as g, charsets as cs
 
 
+try:
+    xrange
+except NameError:
+    pass
+else:
+    range = xrange
+
+
 def take(n, iterable):
     """Returns first n items of the iterable as a list."""
     return list(islice(iterable, n))
@@ -168,7 +176,7 @@ class Screen(list):
            :manpage:`xterm` -- we now know that.
         """
         self[:] = (take(self.columns, self.default_line)
-                   for _ in xrange(self.lines))
+                   for _ in range(self.lines))
         self.mode = set([mo.DECAWM, mo.DECTCEM, mo.LNM, mo.DECTCEM])
         self.margins = Margins(0, self.lines - 1)
 
@@ -181,7 +189,7 @@ class Screen(list):
         # From ``man terminfo`` -- "... hardware tabs are initially
         # set every `n` spaces when the terminal is powered up. Since
         # we aim to support VT102 / VT220 and linux -- we use n = 8.
-        self.tabstops = set(xrange(7, self.columns, 8))
+        self.tabstops = set(range(7, self.columns, 8))
 
         self.cursor = Cursor(0, 0)
         self.cursor_position()
@@ -213,7 +221,7 @@ class Screen(list):
         #    size, add lines to the bottom.
         if diff < 0:
             self.extend(take(self.columns, self.default_line)
-                        for _ in xrange(diff, 0))
+                        for _ in range(diff, 0))
         # b) if the current display size is greater than requested
         #    size, take lines off the top.
         elif diff > 0:
@@ -225,7 +233,7 @@ class Screen(list):
         # a) if the current display size is less than the requested
         #    size, expand each line to the new size.
         if diff < 0:
-            for y in xrange(lines):
+            for y in range(lines):
                 self[y].extend(take(abs(diff), self.default_line))
         # b) if the current display size is greater than requested
         #    size, trim each line from the right to the new size.
@@ -474,8 +482,8 @@ class Screen(list):
 
         # If cursor is outside scrolling margins it -- do nothin'.
         if top <= self.cursor.y <= bottom:
-            #                           v +1, because xrange() is exclusive.
-            for line in xrange(self.cursor.y, min(bottom + 1, self.cursor.y + count)):
+            #                           v +1, because range() is exclusive.
+            for line in range(self.cursor.y, min(bottom + 1, self.cursor.y + count)):
                 self.pop(bottom)
                 self.insert(line, take(self.columns, self.default_line))
 
@@ -495,7 +503,7 @@ class Screen(list):
         # If cursor is outside scrolling margins it -- do nothin'.
         if top <= self.cursor.y <= bottom:
             #                v -- +1 to include the bottom margin.
-            for _ in xrange(min(bottom - self.cursor.y + 1, count)):
+            for _ in range(min(bottom - self.cursor.y + 1, count)):
                 self.pop(self.cursor.y)
                 self.insert(bottom, list(
                     repeat(self.cursor.attrs, self.columns)))
@@ -512,7 +520,7 @@ class Screen(list):
         """
         count = count or 1
 
-        for _ in xrange(min(self.columns - self.cursor.y, count)):
+        for _ in range(min(self.columns - self.cursor.y, count)):
             self[self.cursor.y].insert(self.cursor.x, self.cursor.attrs)
             self[self.cursor.y].pop()
 
@@ -526,7 +534,7 @@ class Screen(list):
         """
         count = count or 1
 
-        for _ in xrange(min(self.columns - self.cursor.x, count)):
+        for _ in range(min(self.columns - self.cursor.x, count)):
             self[self.cursor.y].pop(self.cursor.x)
             self[self.cursor.y].append(self.cursor.attrs)
 
@@ -546,7 +554,7 @@ class Screen(list):
         """
         count = count or 1
 
-        for column in xrange(self.cursor.x, min(self.cursor.x + count, self.columns)):
+        for column in range(self.cursor.x, min(self.cursor.x + count, self.columns)):
             self[self.cursor.y][column] = self.cursor.attrs
 
     def erase_in_line(self, type_of=0, private=False):
@@ -565,12 +573,12 @@ class Screen(list):
         interval = (
             # a) erase from the cursor to the end of line, including
             # the cursor,
-            xrange(self.cursor.x, self.columns),
+            range(self.cursor.x, self.columns),
             # b) erase from the beginning of the line to the cursor,
             # including it,
-            xrange(0, self.cursor.x + 1),
+            range(0, self.cursor.x + 1),
             # c) erase the entire line.
-            xrange(0, self.columns)
+            range(0, self.columns)
         )[type_of]
 
         for column in interval:
@@ -593,17 +601,17 @@ class Screen(list):
         interval = (
             # a) erase from cursor to the end of the display, including
             # the cursor,
-            xrange(self.cursor.y + 1, self.lines),
+            range(self.cursor.y + 1, self.lines),
             # b) erase from the beginning of the display to the cursor,
             # including it,
-            xrange(0, self.cursor.y),
+            range(0, self.cursor.y),
             # c) erase the whole display.
-            xrange(0, self.lines)
+            range(0, self.lines)
         )[type_of]
 
         for line in interval:
             self[line][:] = \
-                (self.cursor.attrs for _ in xrange(self.columns))
+                (self.cursor.attrs for _ in range(self.columns))
 
         # In case of 0 or 1 we have to erase the line with the cursor.
         if type_of in [0, 1]:
@@ -801,20 +809,20 @@ class DiffScreen(Screen):
 
     def set_mode(self, *modes, **kwargs):
        	if mo.DECSCNM >> 5 in modes and kwargs.get("private"):
-            self.dirty.update(xrange(self.lines))
+            self.dirty.update(range(self.lines))
         super(DiffScreen, self).set_mode(*modes, **kwargs)
 
     def reset_mode(self, *modes, **kwargs):
         if mo.DECSCNM >> 5 in modes and kwargs.get("private"):
-            self.dirty.update(xrange(self.lines))
+            self.dirty.update(range(self.lines))
         super(DiffScreen, self).reset_mode(*modes, **kwargs)
 
     def reset(self):
-        self.dirty.update(xrange(self.lines))
+        self.dirty.update(range(self.lines))
         super(DiffScreen, self).reset()
 
     def resize(self, *args, **kwargs):
-        self.dirty.update(xrange(self.lines))
+        self.dirty.update(range(self.lines))
         super(DiffScreen, self).resize(*args, **kwargs)
 
     def draw(self, *args):
@@ -823,22 +831,22 @@ class DiffScreen(Screen):
 
     def index(self):
         if self.cursor.y == self.margins.bottom:
-            self.dirty.update(xrange(self.lines))
+            self.dirty.update(range(self.lines))
 
         super(DiffScreen, self).index()
 
     def reverse_index(self):
         if self.cursor.y == self.margins.top:
-            self.dirty.update(xrange(self.lines))
+            self.dirty.update(range(self.lines))
 
         super(DiffScreen, self).reverse_index()
 
     def insert_lines(self, *args):
-        self.dirty.update(xrange(self.cursor.y, self.lines))
+        self.dirty.update(range(self.cursor.y, self.lines))
         super(DiffScreen, self).insert_lines(*args)
 
     def delete_lines(self, *args):
-        self.dirty.update(xrange(self.cursor.y, self.lines))
+        self.dirty.update(range(self.cursor.y, self.lines))
         super(DiffScreen, self).delete_lines(*args)
 
     def insert_characters(self, *args):
@@ -859,14 +867,14 @@ class DiffScreen(Screen):
 
     def erase_in_display(self, type_of=0):
         self.dirty.update((
-            xrange(self.cursor.y + 1, self.lines),
-            xrange(0, self.cursor.y),
-            xrange(0, self.lines)
+            range(self.cursor.y + 1, self.lines),
+            range(0, self.cursor.y),
+            range(0, self.lines)
         )[type_of])
         super(DiffScreen, self).erase_in_display(type_of)
 
     def alignment_display(self):
-        self.dirty.update(xrange(self.lines))
+        self.dirty.update(range(self.lines))
         super(DiffScreen, self).alignment_display()
 
 
@@ -987,7 +995,7 @@ class HistoryScreen(DiffScreen):
                 ._replace(position=self.history.position - self.lines)
 
             self[:] = list(reversed([
-                self.history.top.pop() for _ in xrange(mid)
+                self.history.top.pop() for _ in range(mid)
             ])) + self[:-mid]
 
             self.ensure_width()
@@ -1008,7 +1016,7 @@ class HistoryScreen(DiffScreen):
                 ._replace(position=self.history.position + self.lines)
 
             self[:] = self[mid:] + [
-                self.history.bottom.popleft() for _ in xrange(mid)
+                self.history.bottom.popleft() for _ in range(mid)
             ]
 
             self.ensure_width()

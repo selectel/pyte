@@ -14,22 +14,22 @@ def test_mark_whole_screen():
     # a) init.
     assert hasattr(screen, "dirty")
     assert isinstance(screen.dirty, set)
-    assert screen.dirty == set(xrange(screen.lines))
+    assert screen.dirty == set(range(screen.lines))
 
     # b) reset().
     screen.dirty.clear()
     screen.reset()
-    assert screen.dirty == set(xrange(screen.lines))
+    assert screen.dirty == set(range(screen.lines))
 
     # c) resize().
     screen.dirty.clear()
     screen.resize()
-    assert screen.dirty == set(xrange(screen.lines))
+    assert screen.dirty == set(range(screen.lines))
 
     # d) alignment_display().
     screen.dirty.clear()
     screen.alignment_display()
-    assert screen.dirty == set(xrange(screen.lines))
+    assert screen.dirty == set(range(screen.lines))
 
 
 def test_mark_single_line():
@@ -56,11 +56,11 @@ def test_modes():
 
     screen.dirty.clear()
     screen.set_mode(mo.DECSCNM >> 5, private=True)
-    assert screen.dirty == set(xrange(screen.lines))
+    assert screen.dirty == set(range(screen.lines))
 
     screen.dirty.clear()
     screen.reset_mode(mo.DECSCNM >> 5, private=True)
-    assert screen.dirty == set(xrange(screen.lines))
+    assert screen.dirty == set(range(screen.lines))
 
 
 def test_index():
@@ -74,7 +74,7 @@ def test_index():
     # b) whole screen is dirty.
     screen.cursor_to_line(24)
     screen.index()
-    assert screen.dirty == set(xrange(screen.lines))
+    assert screen.dirty == set(range(screen.lines))
 
 
 def test_reverse_index():
@@ -83,7 +83,7 @@ def test_reverse_index():
 
     # a) not at the top margin -- whole screen is dirty.
     screen.reverse_index()
-    assert screen.dirty == set(xrange(screen.lines))
+    assert screen.dirty == set(range(screen.lines))
 
     # b) nothing is marked dirty.
     screen.dirty.clear()
@@ -99,7 +99,7 @@ def test_insert_delete_lines():
     for method in ["insert_lines", "delete_lines"]:
         screen.dirty.clear()
         getattr(screen, method)()
-        assert screen.dirty == set(xrange(screen.cursor.y, screen.lines))
+        assert screen.dirty == set(range(screen.cursor.y, screen.lines))
 
 
 def test_erase_in_display():
@@ -109,14 +109,14 @@ def test_erase_in_display():
     # a) from cursor to the end of the screen.
     screen.dirty.clear()
     screen.erase_in_display()
-    assert screen.dirty == set(xrange(screen.cursor.y, screen.lines))
+    assert screen.dirty == set(range(screen.cursor.y, screen.lines))
 
     # b) from the begining of the screen to cursor.
     screen.dirty.clear()
     screen.erase_in_display(1)
-    assert screen.dirty == set(xrange(0, screen.cursor.y + 1))
+    assert screen.dirty == set(range(0, screen.cursor.y + 1))
 
     # c) whole screen.
     screen.dirty.clear()
     screen.erase_in_display(2)
-    assert screen.dirty == set(xrange(0, screen.lines))
+    assert screen.dirty == set(range(0, screen.lines))

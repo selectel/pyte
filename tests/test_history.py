@@ -17,7 +17,7 @@ def test_index():
 
     # Filling the screen with line numbers, so it's easier to
     # track history contents.
-    for idx in xrange(len(screen)):
+    for idx in range(len(screen)):
         screen.draw(unicode(idx))
         if idx is not len(screen) - 1:
             screen.linefeed()
@@ -38,7 +38,7 @@ def test_index():
     assert screen.history.top[-1] == line
 
     # c) rotation.
-    for _ in xrange(len(screen) * screen.lines):
+    for _ in range(len(screen) * screen.lines):
         screen.index()
 
     assert len(screen.history.top) == 25  # pages // 2 * lines
@@ -49,7 +49,7 @@ def test_reverse_index():
 
     # Filling the screen with line numbers, so it's easier to
     # track history contents.
-    for idx in xrange(len(screen)):
+    for idx in range(len(screen)):
         screen.draw(unicode(idx))
         if idx is not len(screen) - 1:
             screen.linefeed()
@@ -72,7 +72,7 @@ def test_reverse_index():
     assert screen.history.bottom[1] == line
 
     # c) rotation.
-    for _ in xrange(len(screen) * screen.lines):
+    for _ in range(len(screen) * screen.lines):
         screen.reverse_index()
 
     assert len(screen.history.bottom) == 25  # pages // 2 * lines
@@ -85,7 +85,7 @@ def test_prev_page():
 
     # Once again filling the screen with line numbers, but this time,
     # we need them to span on multiple lines.
-    for idx in xrange(len(screen) * 10):
+    for idx in range(len(screen) * 10):
         map(screen.draw, unicode(idx))
         screen.linefeed()
 
@@ -152,7 +152,7 @@ def test_prev_page():
 
     # Once again filling the screen with line numbers, but this time,
     # we need them to span on multiple lines.
-    for idx in xrange(len(screen) * 10):
+    for idx in range(len(screen) * 10):
         map(screen.draw, unicode(idx))
         screen.linefeed()
 
@@ -191,7 +191,7 @@ def test_next_page():
 
     # Once again filling the screen with line numbers, but this time,
     # we need them to span on multiple lines.
-    for idx in xrange(len(screen) * 5):
+    for idx in range(len(screen) * 5):
         map(screen.draw, unicode(idx))
         screen.linefeed()
 
@@ -259,7 +259,7 @@ def test_next_page():
 def test_ensure_width():
     screen = HistoryScreen(5, 5, history=50)
 
-    for idx in xrange(len(screen) * 5):
+    for idx in range(len(screen) * 5):
         map(screen.draw, unicode(idx))
         screen.linefeed()
 
@@ -305,7 +305,7 @@ def test_ensure_width():
 def test_not_enough_lines():
     screen = HistoryScreen(5, 5, history=6)
 
-    for idx in xrange(len(screen)):
+    for idx in range(len(screen)):
         map(screen.draw, unicode(idx))
         screen.linefeed()
 
@@ -347,7 +347,7 @@ def test_not_enough_lines():
 def test_draw():
     screen = HistoryScreen(5, 5, history=50)
 
-    for idx in xrange(len(screen) * 5):
+    for idx in range(len(screen) * 5):
         map(screen.draw, unicode(idx))
         screen.linefeed()
 
