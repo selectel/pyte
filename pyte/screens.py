@@ -980,11 +980,10 @@ class HistoryScreen(DiffScreen):
         super(HistoryScreen, self).reverse_index()
 
     def prev_page(self):
-        """Moves the screen half-page up.
-
-        .. note:: If a screen has odd number of lines, the middle point
-                  is floored, so for a 5-line screen only the first two
-                  lines are saved.
+        """Moves the screen page up through the history buffer. Page
+        size is defined by ``history.ratio``, so for instance
+        ``ratio = .5`` means that half the screen is restored from
+        history on page switch.
         """
         if self.history.position > self.lines:
             mid = min(len(self.history.top),
@@ -1001,12 +1000,7 @@ class HistoryScreen(DiffScreen):
             self.ensure_width()
 
     def next_page(self):
-        """Moves the screen half-page down.
-
-        .. note:: If a screen has odd number of lines, the middle point
-                  is ceiled, so for a 5-line screen only the last two
-                  lines are saved.
-        """
+        """Moves the screen page down through the history buffer."""
         if self.history.position < self.history.size:
             mid = min(len(self.history.bottom),
                       int(math.ceil(self.lines * self.history.ratio)))
