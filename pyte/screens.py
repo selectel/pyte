@@ -4,13 +4,21 @@
     ~~~~~~~~~~~~
 
     This module provides classes for terminal screens, currently
-    there's only one base screen implementation, but who knows what
-    the future will bring :).
+    it contains three screens with different features:
 
-    .. warning:: from ``xterm/main.c`` «If you think you know what all
-                 of this code is doing, you are probably very mistaken.
-                 There be serious and nasty dragons here» -- nothing
-                 has changed.
+    * :class:`~pyte.screens.Screen` -- base screen implementation,
+      which handles all the core escape sequences, recognized by
+      :class:`~pyte.streams.Stream`.
+    * If you need a screen to keep track of the changed lines
+      (which you probably do need) -- use
+      :class:`~pyte.screens.DiffScreen`.
+    * If you also want a screen to collect history and allow
+      pagination -- :class:`pyte.screen.HistoryScreen` is here
+      for ya ;)
+
+    .. note:: It would be nice to split those features into mixin
+              classes, rather than subclasses, but it's not obvious
+              how to do -- feel free to submit a pull request.
 
     :copyright: (c) 2011 Selectel, see AUTHORS for more details.
     :license: LGPL, see LICENSE for more details.

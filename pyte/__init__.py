@@ -6,10 +6,16 @@
     `pyte` implements a mix of VT100, VT220 and VT520 specification,
     and aims to support most of the `TERM=linux` functionality.
 
-    Two classes: :class:`~pyte.Stream`, which parses the command stream
-    and dispatches events for commands, and :class:`~pyte.Screen` which,
-    when used with a stream maintains a buffer of strings representing
-    the screen of a terminal.
+    Two classes: :class:`~pyte.streams.Stream`, which parses the
+    command stream and dispatches events for commands, and
+    :class:`~pyte.screens.Screen` which, when used with a stream
+    maintains a buffer of strings representing the screen of a
+    terminal.
+
+    .. warning:: From ``xterm/main.c`` «If you think you know what all
+                 of this code is doing, you are probably very mistaken.
+                 There be serious and nasty dragons here» -- nothing
+                 has changed.
 
     :copyright: (c) 2011 by Selectel, see AUTHORS for more details.
     :license: LGPL, see LICENSE for more details.
