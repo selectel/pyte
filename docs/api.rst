@@ -11,7 +11,7 @@ API
 
 .. automodule:: pyte.screens
     :members:
-    :exclude-members: Margins, Savepoint, _Char, Char, History
+    :exclude-members: Margins, Savepoint, _Char, Char, History, take
 
 .. automodule:: pyte.modes
     :members:
