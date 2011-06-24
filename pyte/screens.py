@@ -866,7 +866,7 @@ class DiffScreen(Screen):
         super(DiffScreen, self).erase_in_display(type_of)
 
     def alignment_display(self):
-        self.dirty.update(xrange(self.cursor.y, self.lines))
+        self.dirty.update(xrange(self.lines))
         super(DiffScreen, self).alignment_display()
 
 
