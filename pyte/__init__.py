@@ -21,7 +21,7 @@
     :license: LGPL, see LICENSE for more details.
 """
 
-__all__ = ("Screen",  "DiffScreen", "HistoryScreen",
+__all__ = ("Screen", "DiffScreen", "HistoryScreen",
            "Stream", "ByteStream", "DebugStream",
            "ctrl", "esc", "mo", "g", "cs")
 
