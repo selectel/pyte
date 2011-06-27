@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 
 import operator
 
-from pyte import HistoryScreen
+from pyte import HistoryScreen, Stream, ctrl
 
 
 def chars(lines):
@@ -265,10 +265,13 @@ def test_next_page():
 
 def test_ensure_width():
     screen = HistoryScreen(5, 5, history=50)
+    stream = Stream()
+    stream.attach(screen)
+    stream.escape["N"] = "next_page"
+    stream.escape["P"] = "prev_page"
 
     for idx in range(len(screen) * 5):
-        map(screen.draw, unicode(idx))
-        screen.linefeed()
+        map(stream.feed, unicode(idx) + "\n")
 
     assert screen.display == [
         "21   ",
@@ -281,7 +284,7 @@ def test_ensure_width():
     # a) shrinking the screen, expecting the lines displayed to
     #    be truncated.
     screen.resize(5, 2)
-    screen.prev_page()
+    stream.feed(ctrl.ESC + "P")
 
     assert all(len(l) is not 2 for l in screen.history.top)
     assert all(len(l) is 2 for l in screen.history.bottom)
@@ -296,7 +299,7 @@ def test_ensure_width():
     # b) expading the screen, expecting the lines displayed to
     #    be filled with whitespace characters.
     screen.resize(5, 10)
-    screen.next_page()
+    stream.feed(ctrl.ESC + "N")
 
     assert all(len(l) is 10 for l in list(screen.history.top)[-3:])
     assert all(len(l) is not 10 for l in screen.history.bottom)
@@ -353,10 +356,13 @@ def test_not_enough_lines():
 
 def test_draw():
     screen = HistoryScreen(5, 5, history=50)
+    stream = Stream()
+    stream.attach(screen)
+    stream.escape["N"] = "next_page"
+    stream.escape["P"] = "prev_page"
 
     for idx in range(len(screen) * 5):
-        map(screen.draw, unicode(idx))
-        screen.linefeed()
+        map(stream.feed, unicode(idx) + "\n")
 
     assert screen.display == [
         "21   ",
@@ -368,10 +374,10 @@ def test_draw():
 
     # a) doing a pageup and then a draw -- expecting the screen
     #    to scroll to the bottom before drawing anything.
-    screen.prev_page()
-    screen.prev_page()
-    screen.next_page()
-    screen.draw("x")
+    stream.feed(ctrl.ESC + "P")
+    stream.feed(ctrl.ESC + "P")
+    stream.feed(ctrl.ESC + "N")
+    stream.feed("x")
 
     assert screen.display == [
         "21   ",

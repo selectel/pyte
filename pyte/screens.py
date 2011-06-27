@@ -159,6 +159,20 @@ class Screen(list):
         return ["".join(map(operator.attrgetter("data"), line))
                 for line in self]
 
+    def before_command(self, command):
+        """Hook, called **before** a command is dispatched to the
+        :class:`Screen` instance.
+
+        :param unicode command: command name, for example ``"LINEFEED"``.
+        """
+
+    def after_command(self, command):
+        """Hook, called **after** a command is dispatched to the
+        :class:`Screen` instance.
+
+        :param unicode command: command name, for example ``"LINEFEED"``.
+        """
+
     def reset(self):
         """Resets the terminal to its initial state.
 
@@ -930,25 +944,29 @@ class HistoryScreen(DiffScreen):
 
         super(HistoryScreen, self).__init__(columns, lines)
 
-    def ensure_width(self):
+    def before_command(self, command):
+        """Ensures a screen is at the bottom of the history buffer."""
+        if command not in ["prev_page", "next_page"]:
+            while self.history.position < self.history.size:
+                self.next_page()
+
+        super(HistoryScreen, self).before_command(command)
+
+    def after_command(self, command):
         """Ensures all lines on a screen have proper width (attr:`columns`).
 
         Extra characters are truncated, missing characters are filled
         with whitespace.
         """
-        for idx, line in enumerate(self):
-            if len(line) > self.columns:
-                self[idx] = line[:self.columns]
-            elif len(line) < self.columns:
-                self[idx] = line + take(self.columns - len(line),
-                                        self.default_line)
+        if command in ["prev_page", "next_page"]:
+            for idx, line in enumerate(self):
+                if len(line) > self.columns:
+                    self[idx] = line[:self.columns]
+                elif len(line) < self.columns:
+                    self[idx] = line + take(self.columns - len(line),
+                                            self.default_line)
 
-    def draw(self, *args):
-        """Overloaded to scroll to the botom on each new input."""
-        while self.history.position < self.history.size:
-            self.next_page()
-
-        super(HistoryScreen, self).draw(*args)
+        super(HistoryScreen, self).after_command(command)
 
     def reset(self):
         """Overloaded to reset screen history state: history position
@@ -997,8 +1015,6 @@ class HistoryScreen(DiffScreen):
                 self.history.top.pop() for _ in range(mid)
             ])) + self[:-mid]
 
-            self.ensure_width()
-
             self.dirty = set(range(self.lines))
 
     def next_page(self):
@@ -1014,7 +1030,5 @@ class HistoryScreen(DiffScreen):
             self[:] = self[mid:] + [
                 self.history.bottom.popleft() for _ in range(mid)
             ]
-
-            self.ensure_width()
 
             self.dirty = set(range(self.lines))
