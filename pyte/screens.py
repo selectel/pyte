@@ -999,6 +999,8 @@ class HistoryScreen(DiffScreen):
 
             self.ensure_width()
 
+            self.dirty = set(range(self.lines))
+
     def next_page(self):
         """Moves the screen page down through the history buffer."""
         if self.history.position < self.history.size:
@@ -1014,3 +1016,5 @@ class HistoryScreen(DiffScreen):
             ]
 
             self.ensure_width()
+
+            self.dirty = set(range(self.lines))
