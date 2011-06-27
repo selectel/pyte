@@ -395,7 +395,8 @@ class Screen(list):
         if mo.IRM in self.mode:
             self.insert_characters(1)
 
-        self[self.cursor.y][self.cursor.x] = self.cursor.attrs._replace(data=char)
+        self[self.cursor.y][self.cursor.x] = self.cursor.attrs \
+            ._replace(data=char)
 
         # .. note:: We can't use :meth:`cursor_forward()`, because that
         #           way, we'll never know when to linefeed.
@@ -941,7 +942,7 @@ class HistoryScreen(DiffScreen):
 
     def __init__(self, columns, lines, history=100, ratio=.5):
         self.history = History(deque(maxlen=history // 2),
-                               deque(maxlen=history - history // 2),
+                               deque(maxlen=history),
                                float(ratio),
                                history,
                                history)
@@ -969,6 +970,13 @@ class HistoryScreen(DiffScreen):
                 elif len(line) < self.columns:
                     self[idx] = line + take(self.columns - len(line),
                                             self.default_line)
+
+        # If we're at the bottom of the history buffer and `DECTCEM`
+        # mode is set -- show the cursor.
+        self.cursor.hidden = not (
+            abs(self.history.position - self.history.size) < self.lines and
+            mo.DECTCEM in self.mode
+        )
 
         super(HistoryScreen, self).__after__(command)
 
@@ -1007,7 +1015,7 @@ class HistoryScreen(DiffScreen):
         ``ratio = .5`` means that half the screen is restored from
         history on page switch.
         """
-        if self.history.position > self.lines:
+        if self.history.position > self.lines and self.history.top:
             mid = min(len(self.history.top),
                       int(math.ceil(self.lines * self.history.ratio)))
 
@@ -1021,9 +1029,13 @@ class HistoryScreen(DiffScreen):
 
             self.dirty = set(range(self.lines))
 
+            if len(self) is not self.lines or self.history.position > self.history.size:
+                import pdb; pdb.set_trace()
+
+
     def next_page(self):
         """Moves the screen page down through the history buffer."""
-        if self.history.position < self.history.size:
+        if self.history.position < self.history.size and self.history.bottom:
             mid = min(len(self.history.bottom),
                       int(math.ceil(self.lines * self.history.ratio)))
 
@@ -1036,3 +1048,6 @@ class HistoryScreen(DiffScreen):
             ]
 
             self.dirty = set(range(self.lines))
+
+            if len(self) is not self.lines or self.history.position > self.history.size:
+                import pdb; pdb.set_trace()
