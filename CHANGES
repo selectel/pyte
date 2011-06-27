@@ -6,10 +6,16 @@ Here you can see the full list of changes between each pyte release.
 Version 0.4.2
 -------------
 
+Bugfix release, released on July 27th
+
 - Added a tiny debugging helper: ``python -m pyte your escape codes``
+- Added ``Screen.__{before,after}__()`` hooks to ``Screen`` -- now
+  subclasses can extend more than one command easily.
 - Fixed ``HistoryScreen`` -- now not as buggy as it used to be:
   and allows for custom ratio aspect when browsing history, see
   ``HistoryScreen`` documentation for details.
+- Fixed `DECTCEM` private mode handling -- when the mode is reset
+  ``Screen.cursor.hidden`` is ``True`` otherwise it's ``False``.
 
 Version 0.4.1
 -------------

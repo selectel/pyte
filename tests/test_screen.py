@@ -1167,3 +1167,19 @@ def test_set_margins():
     screen.set_margins()
     assert screen.margins != (None, None)
     assert screen.margins == (0, 4)
+
+
+def test_hide_cursor():
+    screen = Screen(10, 10)
+
+    # DECTCEM is set by default.
+    assert mo.DECTCEM in screen.mode
+    assert not screen.cursor.hidden
+
+    # a) resetting DECTCEM hides the cursor.
+    screen.reset_mode(mo.DECTCEM)
+    assert screen.cursor.hidden
+
+    # b) ... and it's back!
+    screen.set_mode(mo.DECTCEM)
+    assert not screen.cursor.hidden

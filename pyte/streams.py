@@ -206,9 +206,15 @@ class Stream(object):
             try:
                 handler = getattr(listener, event)
             except AttributeError:
-                pass
-            else:
-                handler(*args, **self.flags)
+                continue
+
+            if hasattr(listener, "__before__"):
+                listener.__before__(event)
+
+            handler(*args, **self.flags)
+
+            if hasattr(listener, "__after__"):
+                listener.__after__(event)
         else:
             if kwargs.get("reset", True): self.reset()
 
