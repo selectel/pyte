@@ -92,6 +92,7 @@ def test_prev_page():
     assert screen.history.top
     assert not screen.history.bottom
     assert screen.history.position == 40
+    assert len(screen) == screen.lines
     assert screen.display == [
         "37  ",
         "38  ",
@@ -109,6 +110,7 @@ def test_prev_page():
     # a) first page up.
     screen.prev_page()
     assert screen.history.position == 36
+    assert len(screen) == screen.lines
     assert screen.display == [
         "35  ",
         "36  ",
@@ -132,6 +134,7 @@ def test_prev_page():
     # b) second page up.
     screen.prev_page()
     assert screen.history.position == 32
+    assert len(screen) == screen.lines
     assert screen.display == [
         "33  ",
         "34  ",
@@ -169,6 +172,7 @@ def test_prev_page():
 
     screen.prev_page()
     assert screen.history.position == 45
+    assert len(screen) == screen.lines
     assert screen.display == [
         "43   ",
         "44   ",
@@ -198,6 +202,7 @@ def test_next_page():
     assert screen.history.top
     assert not screen.history.bottom
     assert screen.history.position == 50
+    assert len(screen) == screen.lines
     assert screen.display == [
         "21   ",
         "22   ",
@@ -232,6 +237,7 @@ def test_next_page():
         "     "
     ]
 
+    assert len(screen) == screen.lines
     assert screen.display == [
         "18   ",
         "19   ",
@@ -247,6 +253,7 @@ def test_next_page():
     screen.next_page()
     screen.next_page()
     assert screen.history.position == 45
+    assert len(screen) == screen.lines
     assert screen.display == [
         "18   ",
         "19   ",
