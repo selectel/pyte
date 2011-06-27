@@ -1,3 +1,5 @@
+.. -*- mode: rst -*-
+
 ::
 
                        _
@@ -7,13 +9,13 @@
         | |_) || |_| || |_|  __/
         | .__/  \__, | \__|\___|
         | |      __/ |
-        |_|     |___/      0.4.1
+        |_|     |___/      0.4.2
 
         -- chicks dig dudes with terminals (c) @samfoo
 
 
-About
------
+What is ``pyte``?
+-----------------
 
 What is ``pyte``? It's an in memory VTXXX-compatible terminal emulator.
 *XXX* stands for a series video terminals, developed by
@@ -43,8 +45,20 @@ you can use ``easy_install -U pyte``. Otherwise, you can download the source
 from `GitHub <http://github.com/selectel/pyte>`_ and run ``python setup.py install``.
 
 
-Example
--------
+Quick example
+-------------
+
+There are two important classes in ``pyte``:
+:class:`~pyte.screens.Screen` and :class:`~pyte.streams.Stream`. The
+``Screen`` is the terminal screen emulator. It maintains an in-memory
+buffer of text and text-attributes to display on screen. The ``Stream``
+is the stream processor. It manages the state of the input and dispatches
+events to anything that's listening about things that are going on.
+Events are things like ``LINEFEED``, ``DRAW "a"``, or ``CURSOR_POSITION 10 10``.
+See the :ref:`API <api>` for more details.
+
+In general, if you just want to know what's being displayed on screen you
+can do something like the following:
 
     >>> import pyte
     >>> screen = pyte.Screen(80, 24)

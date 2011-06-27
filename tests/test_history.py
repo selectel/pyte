@@ -13,11 +13,11 @@ def chars(lines):
 
 
 def test_index():
-    screen = HistoryScreen(5, 5, pages=10)
+    screen = HistoryScreen(5, 5, history=50)
 
     # Filling the screen with line numbers, so it's easier to
     # track history contents.
-    for idx in xrange(len(screen)):
+    for idx in range(len(screen)):
         screen.draw(unicode(idx))
         if idx is not len(screen) - 1:
             screen.linefeed()
@@ -38,24 +38,61 @@ def test_index():
     assert screen.history.top[-1] == line
 
     # c) rotation.
-    for _ in xrange(len(screen) * screen.lines):
+    for _ in range(len(screen) * screen.lines):
         screen.index()
 
     assert len(screen.history.top) == 25  # pages // 2 * lines
 
 
-def test_page_up():
-    screen = HistoryScreen(4, 4, pages=10)
+def test_reverse_index():
+    screen = HistoryScreen(5, 5, history=50)
+
+    # Filling the screen with line numbers, so it's easier to
+    # track history contents.
+    for idx in range(len(screen)):
+        screen.draw(unicode(idx))
+        if idx is not len(screen) - 1:
+            screen.linefeed()
+
+    assert not screen.history.top
+    assert not screen.history.bottom
+
+    screen.cursor_position()
+
+    # a) first index, expecting top history to be updated.
+    line = screen[-1]
+    screen.reverse_index()
+    assert screen.history.bottom
+    assert screen.history.bottom[0] == line
+
+    # b) second index.
+    line = screen[-1]
+    screen.reverse_index()
+    assert len(screen.history.bottom) == 2
+    assert screen.history.bottom[1] == line
+
+    # c) rotation.
+    for _ in range(len(screen) * screen.lines):
+        screen.reverse_index()
+
+    assert len(screen.history.bottom) == 25  # pages // 2 * lines
+
+
+def test_prev_page():
+    screen = HistoryScreen(4, 4, history=40)
+
+    assert screen.history.position == 40
 
     # Once again filling the screen with line numbers, but this time,
     # we need them to span on multiple lines.
-    for idx in xrange(len(screen) * 10):
+    for idx in range(len(screen) * 10):
         map(screen.draw, unicode(idx))
         screen.linefeed()
 
     assert screen.history.top
     assert not screen.history.bottom
-    assert screen.page == 5
+    assert screen.history.position == 40
+    assert len(screen) == screen.lines
     assert screen.display == [
         "37  ",
         "38  ",
@@ -71,8 +108,9 @@ def test_page_up():
     ]
 
     # a) first page up.
-    screen.page_up()
-    assert screen.page == 4
+    screen.prev_page()
+    assert screen.history.position == 36
+    assert len(screen) == screen.lines
     assert screen.display == [
         "35  ",
         "36  ",
@@ -94,8 +132,9 @@ def test_page_up():
     ]
 
     # b) second page up.
-    screen.page_up()
-    assert screen.page == 3
+    screen.prev_page()
+    assert screen.history.position == 32
+    assert len(screen) == screen.lines
     assert screen.display == [
         "33  ",
         "34  ",
@@ -112,17 +151,17 @@ def test_page_up():
     ]
 
     # c) same with odd number of lines.
-    screen = HistoryScreen(5, 5, pages=10)
+    screen = HistoryScreen(5, 5, history=50)
 
     # Once again filling the screen with line numbers, but this time,
     # we need them to span on multiple lines.
-    for idx in xrange(len(screen) * 10):
+    for idx in range(len(screen) * 10):
         map(screen.draw, unicode(idx))
         screen.linefeed()
 
     assert screen.history.top
     assert not screen.history.bottom
-    assert screen.page == 5
+    assert screen.history.position == 50
     assert screen.display == [
         "46   ",
         "47   ",
@@ -131,8 +170,9 @@ def test_page_up():
         "     "
     ]
 
-    screen.page_up()
-    assert screen.page == 4
+    screen.prev_page()
+    assert screen.history.position == 45
+    assert len(screen) == screen.lines
     assert screen.display == [
         "43   ",
         "44   ",
@@ -150,18 +190,19 @@ def test_page_up():
 
 
 
-def test_page_down():
-    screen = HistoryScreen(5, 5, pages=10)
+def test_next_page():
+    screen = HistoryScreen(5, 5, history=50)
 
     # Once again filling the screen with line numbers, but this time,
     # we need them to span on multiple lines.
-    for idx in xrange(len(screen) * 5):
+    for idx in range(len(screen) * 5):
         map(screen.draw, unicode(idx))
         screen.linefeed()
 
     assert screen.history.top
     assert not screen.history.bottom
-    assert screen.page == 5
+    assert screen.history.position == 50
+    assert len(screen) == screen.lines
     assert screen.display == [
         "21   ",
         "22   ",
@@ -171,11 +212,11 @@ def test_page_down():
     ]
 
     # a) page up -- page down.
-    screen.page_up()
-    screen.page_down()
+    screen.prev_page()
+    screen.next_page()
     assert screen.history.top
     assert not screen.history.bottom
-    assert screen.page == 5
+    assert screen.history.position == 50
     assert screen.display == [
         "21   ",
         "22   ",
@@ -185,10 +226,10 @@ def test_page_down():
     ]
 
     # b) double page up -- page down.
-    screen.page_up()
-    screen.page_up()
-    screen.page_down()
-    assert screen.page == 4
+    screen.prev_page()
+    screen.prev_page()
+    screen.next_page()
+    assert screen.history.position == 45
     assert screen.history.top
     assert chars(screen.history.bottom) == [
         "23   ",
@@ -196,6 +237,7 @@ def test_page_down():
         "     "
     ]
 
+    assert len(screen) == screen.lines
     assert screen.display == [
         "18   ",
         "19   ",
@@ -206,11 +248,12 @@ def test_page_down():
 
 
     # c) double page up -- double page down
-    screen.page_up()
-    screen.page_up()
-    screen.page_down()
-    screen.page_down()
-    assert screen.page == 4
+    screen.prev_page()
+    screen.prev_page()
+    screen.next_page()
+    screen.next_page()
+    assert screen.history.position == 45
+    assert len(screen) == screen.lines
     assert screen.display == [
         "18   ",
         "19   ",
@@ -221,9 +264,9 @@ def test_page_down():
 
 
 def test_ensure_width():
-    screen = HistoryScreen(5, 5, pages=10)
+    screen = HistoryScreen(5, 5, history=50)
 
-    for idx in xrange(len(screen) * 5):
+    for idx in range(len(screen) * 5):
         map(screen.draw, unicode(idx))
         screen.linefeed()
 
@@ -238,7 +281,7 @@ def test_ensure_width():
     # a) shrinking the screen, expecting the lines displayed to
     #    be truncated.
     screen.resize(5, 2)
-    screen.page_up()
+    screen.prev_page()
 
     assert all(len(l) is not 2 for l in screen.history.top)
     assert all(len(l) is 2 for l in screen.history.bottom)
@@ -253,7 +296,7 @@ def test_ensure_width():
     # b) expading the screen, expecting the lines displayed to
     #    be filled with whitespace characters.
     screen.resize(5, 10)
-    screen.page_down()
+    screen.next_page()
 
     assert all(len(l) is 10 for l in list(screen.history.top)[-3:])
     assert all(len(l) is not 10 for l in screen.history.bottom)
@@ -263,4 +306,77 @@ def test_ensure_width():
         "23        ",
         "24        ",
         "          "
+    ]
+
+
+def test_not_enough_lines():
+    screen = HistoryScreen(5, 5, history=6)
+
+    for idx in range(len(screen)):
+        map(screen.draw, unicode(idx))
+        screen.linefeed()
+
+    assert screen.history.top
+    assert not screen.history.bottom
+    assert screen.history.position == 6
+    assert screen.display == [
+        "1    ",
+        "2    ",
+        "3    ",
+        "4    ",
+        "     "
+    ]
+
+    screen.prev_page()
+    assert not screen.history.top
+    assert len(screen.history.bottom) is 1
+    assert chars(screen.history.bottom) == ["     "]
+    assert screen.display == [
+        "0    ",
+        "1    ",
+        "2    ",
+        "3    ",
+        "4    ",
+    ]
+
+    screen.next_page()
+    assert screen.history.top
+    assert not screen.history.bottom
+    assert screen.display == [
+        "1    ",
+        "2    ",
+        "3    ",
+        "4    ",
+        "     "
+    ]
+
+
+def test_draw():
+    screen = HistoryScreen(5, 5, history=50)
+
+    for idx in range(len(screen) * 5):
+        map(screen.draw, unicode(idx))
+        screen.linefeed()
+
+    assert screen.display == [
+        "21   ",
+        "22   ",
+        "23   ",
+        "24   ",
+        "     "
+    ]
+
+    # a) doing a pageup and then a draw -- expecting the screen
+    #    to scroll to the bottom before drawing anything.
+    screen.prev_page()
+    screen.prev_page()
+    screen.next_page()
+    screen.draw("x")
+
+    assert screen.display == [
+        "21   ",
+        "22   ",
+        "23   ",
+        "24   ",
+        "x    "
     ]

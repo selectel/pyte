@@ -16,7 +16,7 @@ here = os.path.abspath(os.path.dirname(__file__))
 DESCRIPTION = "Simple VTXXX-compatible terminal emulator."
 
 try:
-    LONG_DESCRIPTION = open(os.path.join(here, "README.rst")).read()
+    LONG_DESCRIPTION = open(os.path.join(here, "README")).read()
 except IOError:
     LONG_DESCRIPTION = ""
 
@@ -52,7 +52,7 @@ class PyTest(Command):
 
 
 setup(name="pyte",
-      version="0.4.1",
+      version="0.4.2",
       packages=["pyte"],
       cmdclass={"test": PyTest},
       platforms=["any"],

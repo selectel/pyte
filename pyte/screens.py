@@ -4,19 +4,29 @@
     ~~~~~~~~~~~~
 
     This module provides classes for terminal screens, currently
-    there's only one base screen implementation, but who knows what
-    the future will bring :).
+    it contains three screens with different features:
 
-    .. warning:: from ``xterm/main.c`` «If you think you know what all
-                 of this code is doing, you are probably very mistaken.
-                 There be serious and nasty dragons here» -- nothing
-                 has changed.
+    * :class:`~pyte.screens.Screen` -- base screen implementation,
+      which handles all the core escape sequences, recognized by
+      :class:`~pyte.streams.Stream`.
+    * If you need a screen to keep track of the changed lines
+      (which you probably do need) -- use
+      :class:`~pyte.screens.DiffScreen`.
+    * If you also want a screen to collect history and allow
+      pagination -- :class:`pyte.screen.HistoryScreen` is here
+      for ya ;)
+
+    .. note:: It would be nice to split those features into mixin
+              classes, rather than subclasses, but it's not obvious
+              how to do -- feel free to submit a pull request.
 
     :copyright: (c) 2011 Selectel, see AUTHORS for more details.
     :license: LGPL, see LICENSE for more details.
 """
 
-from __future__ import absolute_import, print_function, unicode_literals
+from __future__ import (
+    absolute_import, print_function, unicode_literals, division
+)
 
 import copy
 import math
@@ -25,6 +35,14 @@ from collections import namedtuple, deque
 from itertools import islice, repeat
 
 from . import modes as mo, graphics as g, charsets as cs
+
+
+try:
+    xrange
+except NameError:
+    pass
+else:
+    range = xrange
 
 
 def take(n, iterable):
@@ -76,14 +94,11 @@ class Cursor(object):
     :param int x: horizontal cursor position.
     :param int y: vertical cursor position.
     :param pyte.screens.Char attrs: cursor attributes (see
-                                     :meth:`Screen.selectel_graphic_rendition`
-                                     for details).
+        :meth:`~pyte.screens.Screen.selectel_graphic_rendition`
+        for details).
     """
-    __slots__ = "x y attrs".split()
-
     def __init__(self, x, y, attrs=Char(" ")):
         self.x, self.y, self.attrs = x, y, attrs
-
 
 
 class Screen(list):
@@ -161,7 +176,7 @@ class Screen(list):
            :manpage:`xterm` -- we now know that.
         """
         self[:] = (take(self.columns, self.default_line)
-                   for _ in xrange(self.lines))
+                   for _ in range(self.lines))
         self.mode = set([mo.DECAWM, mo.DECTCEM, mo.LNM, mo.DECTCEM])
         self.margins = Margins(0, self.lines - 1)
 
@@ -174,7 +189,7 @@ class Screen(list):
         # From ``man terminfo`` -- "... hardware tabs are initially
         # set every `n` spaces when the terminal is powered up. Since
         # we aim to support VT102 / VT220 and linux -- we use n = 8.
-        self.tabstops = set(xrange(7, self.columns, 8))
+        self.tabstops = set(range(7, self.columns, 8))
 
         self.cursor = Cursor(0, 0)
         self.cursor_position()
@@ -206,7 +221,7 @@ class Screen(list):
         #    size, add lines to the bottom.
         if diff < 0:
             self.extend(take(self.columns, self.default_line)
-                        for _ in xrange(diff, 0))
+                        for _ in range(diff, 0))
         # b) if the current display size is greater than requested
         #    size, take lines off the top.
         elif diff > 0:
@@ -218,7 +233,7 @@ class Screen(list):
         # a) if the current display size is less than the requested
         #    size, expand each line to the new size.
         if diff < 0:
-            for y in xrange(lines):
+            for y in range(lines):
                 self[y].extend(take(abs(diff), self.default_line))
         # b) if the current display size is greater than requested
         #    size, trim each line from the right to the new size.
@@ -467,8 +482,8 @@ class Screen(list):
 
         # If cursor is outside scrolling margins it -- do nothin'.
         if top <= self.cursor.y <= bottom:
-            #                           v +1, because xrange() is exclusive.
-            for line in xrange(self.cursor.y, min(bottom + 1, self.cursor.y + count)):
+            #                           v +1, because range() is exclusive.
+            for line in range(self.cursor.y, min(bottom + 1, self.cursor.y + count)):
                 self.pop(bottom)
                 self.insert(line, take(self.columns, self.default_line))
 
@@ -488,7 +503,7 @@ class Screen(list):
         # If cursor is outside scrolling margins it -- do nothin'.
         if top <= self.cursor.y <= bottom:
             #                v -- +1 to include the bottom margin.
-            for _ in xrange(min(bottom - self.cursor.y + 1, count)):
+            for _ in range(min(bottom - self.cursor.y + 1, count)):
                 self.pop(self.cursor.y)
                 self.insert(bottom, list(
                     repeat(self.cursor.attrs, self.columns)))
@@ -505,7 +520,7 @@ class Screen(list):
         """
         count = count or 1
 
-        for _ in xrange(min(self.columns - self.cursor.y, count)):
+        for _ in range(min(self.columns - self.cursor.y, count)):
             self[self.cursor.y].insert(self.cursor.x, self.cursor.attrs)
             self[self.cursor.y].pop()
 
@@ -519,7 +534,7 @@ class Screen(list):
         """
         count = count or 1
 
-        for _ in xrange(min(self.columns - self.cursor.x, count)):
+        for _ in range(min(self.columns - self.cursor.x, count)):
             self[self.cursor.y].pop(self.cursor.x)
             self[self.cursor.y].append(self.cursor.attrs)
 
@@ -532,14 +547,14 @@ class Screen(list):
 
         .. warning::
 
-           Even though *ALL* of the VTXXX manuals tsate that character
+           Even though *ALL* of the VTXXX manuals state that character
            attributes **should be reset to defaults**, ``libvte``,
            ``xterm`` and ``ROTE`` completely ignore this. Same applies
            too all ``erase_*()`` and ``delete_*()`` methods.
         """
         count = count or 1
 
-        for column in xrange(self.cursor.x, min(self.cursor.x + count, self.columns)):
+        for column in range(self.cursor.x, min(self.cursor.x + count, self.columns)):
             self[self.cursor.y][column] = self.cursor.attrs
 
     def erase_in_line(self, type_of=0, private=False):
@@ -558,12 +573,12 @@ class Screen(list):
         interval = (
             # a) erase from the cursor to the end of line, including
             # the cursor,
-            xrange(self.cursor.x, self.columns),
+            range(self.cursor.x, self.columns),
             # b) erase from the beginning of the line to the cursor,
             # including it,
-            xrange(0, self.cursor.x + 1),
+            range(0, self.cursor.x + 1),
             # c) erase the entire line.
-            xrange(0, self.columns)
+            range(0, self.columns)
         )[type_of]
 
         for column in interval:
@@ -586,17 +601,17 @@ class Screen(list):
         interval = (
             # a) erase from cursor to the end of the display, including
             # the cursor,
-            xrange(self.cursor.y + 1, self.lines),
+            range(self.cursor.y + 1, self.lines),
             # b) erase from the beginning of the display to the cursor,
             # including it,
-            xrange(0, self.cursor.y),
+            range(0, self.cursor.y),
             # c) erase the whole display.
-            xrange(0, self.lines)
+            range(0, self.lines)
         )[type_of]
 
         for line in interval:
             self[line][:] = \
-                (self.cursor.attrs for _ in xrange(self.columns))
+                (self.cursor.attrs for _ in range(self.columns))
 
         # In case of 0 or 1 we have to erase the line with the cursor.
         if type_of in [0, 1]:
@@ -794,20 +809,20 @@ class DiffScreen(Screen):
 
     def set_mode(self, *modes, **kwargs):
        	if mo.DECSCNM >> 5 in modes and kwargs.get("private"):
-            self.dirty.update(xrange(self.lines))
+            self.dirty.update(range(self.lines))
         super(DiffScreen, self).set_mode(*modes, **kwargs)
 
     def reset_mode(self, *modes, **kwargs):
         if mo.DECSCNM >> 5 in modes and kwargs.get("private"):
-            self.dirty.update(xrange(self.lines))
+            self.dirty.update(range(self.lines))
         super(DiffScreen, self).reset_mode(*modes, **kwargs)
 
     def reset(self):
-        self.dirty.update(xrange(self.lines))
+        self.dirty.update(range(self.lines))
         super(DiffScreen, self).reset()
 
     def resize(self, *args, **kwargs):
-        self.dirty.update(xrange(self.lines))
+        self.dirty.update(range(self.lines))
         super(DiffScreen, self).resize(*args, **kwargs)
 
     def draw(self, *args):
@@ -816,22 +831,22 @@ class DiffScreen(Screen):
 
     def index(self):
         if self.cursor.y == self.margins.bottom:
-            self.dirty.update(xrange(self.lines))
+            self.dirty.update(range(self.lines))
 
         super(DiffScreen, self).index()
 
     def reverse_index(self):
         if self.cursor.y == self.margins.top:
-            self.dirty.update(xrange(self.lines))
+            self.dirty.update(range(self.lines))
 
         super(DiffScreen, self).reverse_index()
 
     def insert_lines(self, *args):
-        self.dirty.update(xrange(self.cursor.y, self.lines))
+        self.dirty.update(range(self.cursor.y, self.lines))
         super(DiffScreen, self).insert_lines(*args)
 
     def delete_lines(self, *args):
-        self.dirty.update(xrange(self.cursor.y, self.lines))
+        self.dirty.update(range(self.cursor.y, self.lines))
         super(DiffScreen, self).delete_lines(*args)
 
     def insert_characters(self, *args):
@@ -852,39 +867,68 @@ class DiffScreen(Screen):
 
     def erase_in_display(self, type_of=0):
         self.dirty.update((
-            xrange(self.cursor.y + 1, self.lines),
-            xrange(0, self.cursor.y),
-            xrange(0, self.lines)
+            range(self.cursor.y + 1, self.lines),
+            range(0, self.cursor.y),
+            range(0, self.lines)
         )[type_of])
         super(DiffScreen, self).erase_in_display(type_of)
 
     def alignment_display(self):
-        self.dirty.update(xrange(self.cursor.y, self.lines))
+        self.dirty.update(range(self.lines))
         super(DiffScreen, self).alignment_display()
 
 
-History = namedtuple("History", "top bottom")
+History = namedtuple("History", "top bottom ratio size position")
 
 
-class HistoryScreen(Screen):
+class HistoryScreen(DiffScreen):
     """A screen subclass, which keeps track of screen history and allows
     pagination. This is not linux-specific, but still useful; see  page
     462 of VT520 User's Manual.
 
-    :param int pages: total number of pages to keep.
+    :param int history: total number of history lines to keep; is split
+                        between top and bottom queues.
+    :param int ratio: defines how much lines to scroll on :meth:`next_page`
+                      and :meth:`prev_page` calls.
 
     .. attribute:: history
 
-       A pair of history queues for top and bottom margins accordingly.
+       A pair of history queues for top and bottom margins accordingly;
+       here's the overall screen structure::
+
+            [ 1: .......]
+            [ 2: .......]  <- top history
+            [ 3: .......]
+            ------------
+            [ 4: .......]  s
+            [ 5: .......]  c
+            [ 6: .......]  r
+            [ 7: .......]  e
+            [ 8: .......]  e
+            [ 9: .......]  n
+            ------------
+            [10: .......]
+            [11: .......]  <- bottom history
+            [12: .......]
+
+    .. note::
+
+       Don't forget to update :class:`~pyte.streams.Stream` class with
+       appropriate escape sequences -- you can use any, since pagination
+       protocol is not standardized, for example::
+
+           Stream.escape["N"] = "next_page"
+           Stream.escape["P"] = "prev_page"
     """
 
-    def __init__(self, columns, lines, pages=10):
-        super(HistoryScreen, self).__init__(columns, lines)
+    def __init__(self, columns, lines, history=100, ratio=.5):
+        self.history = History(deque(maxlen=history // 2),
+                               deque(maxlen=history - history // 2),
+                               float(ratio),
+                               history,
+                               history)
 
-        self.page = pages // 2
-        self.pages = pages
-        self.history = History(deque(maxlen=self.page * self.lines),
-                               deque(maxlen=self.page * self.lines))
+        super(HistoryScreen, self).__init__(columns, lines)
 
     def ensure_width(self):
         """Ensures all lines on a screen have proper width (attr:`columns`).
@@ -899,8 +943,26 @@ class HistoryScreen(Screen):
                 self[idx] = line + take(self.columns - len(line),
                                         self.default_line)
 
+    def draw(self, *args):
+        """Overloaded to scroll to the botom on each new input."""
+        while self.history.position < self.history.size:
+            self.next_page()
+
+        super(HistoryScreen, self).draw(*args)
+
+    def reset(self):
+        """Overloaded to reset screen history state: history position
+        is reset to bottom of both queues;  queues themselves are
+        emptied.
+        """
+        super(HistoryScreen, self).reset()
+
+        self.history.top.clear()
+        self.history.bottom.clear()
+        self.history = self.history._replace(position=self.history.size)
+
     def index(self):
-        """Overloaded, to update top history with the removed lines."""
+        """Overloaded to update top history with the removed lines."""
         top, bottom = self.margins
 
         if self.cursor.y == bottom:
@@ -908,38 +970,51 @@ class HistoryScreen(Screen):
 
         super(HistoryScreen, self).index()
 
-    def page_up(self):
-        """Moves the screen half-page up.
+    def reverse_index(self):
+        """Overloaded to update bottom history with the removed lines."""
+        top, bottom = self.margins
 
-        .. note:: If a screen has odd number of lines, the middle point
-                  is floored, so for a 5-line screen only the first two
-                  lines are saved.
+        if self.cursor.y == top:
+            self.history.bottom.append(self[bottom])
+
+        super(HistoryScreen, self).reverse_index()
+
+    def prev_page(self):
+        """Moves the screen page up through the history buffer. Page
+        size is defined by ``history.ratio``, so for instance
+        ``ratio = .5`` means that half the screen is restored from
+        history on page switch.
         """
-        if self.page > 0:
-            mid = int(math.floor(self.lines / 2.))
-            self.history.bottom.extendleft(reversed(self[mid:]))
-            self.page -= 1
+        if self.history.position > self.lines:
+            mid = min(len(self.history.top),
+                      int(math.ceil(self.lines * self.history.ratio)))
+
+            self.history.bottom.extendleft(reversed(self[-mid:]))
+            self.history = self.history \
+                ._replace(position=self.history.position - self.lines)
 
             self[:] = list(reversed([
-                self.history.top.pop() for _ in xrange(self.lines - mid)
-            ])) + self[:mid]
+                self.history.top.pop() for _ in range(mid)
+            ])) + self[:-mid]
 
             self.ensure_width()
 
-    def page_down(self):
-        """Moves the screen half-page down.
+            self.dirty = set(range(self.lines))
 
-        .. note:: If a screen has odd number of lines, the middle point
-                  is ceiled, so for a 5-line screen only the last two
-                  lines are saved.
-        """
-        if self.page < self.pages:
-            mid = int(math.ceil(self.lines / 2.))
+    def next_page(self):
+        """Moves the screen page down through the history buffer."""
+        if self.history.position < self.history.size:
+            mid = min(len(self.history.bottom),
+                      int(math.ceil(self.lines * self.history.ratio)))
+
             self.history.top.extend(self[:mid])
-            self.page +=1
+            self.history = self.history \
+                ._replace(position=self.history.position + self.lines)
 
             self[:] = self[mid:] + [
-                self.history.bottom.popleft() for _ in xrange(mid)
+                self.history.bottom.popleft() for _ in range(mid)
             ]
 
             self.ensure_width()
+
+            self.dirty = set(range(self.lines))
