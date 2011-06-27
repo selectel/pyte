@@ -98,7 +98,7 @@ class Cursor(object):
         for details).
     """
     def __init__(self, x, y, attrs=Char(" ")):
-        self.x, self.y, self.attrs = x, y, attrs
+        self.x, self.y, self.attrs, self.hidden = x, y, attrs, False
 
 
 class Screen(list):
@@ -146,18 +146,28 @@ class Screen(list):
 
     @property
     def size(self):
-        """Returns screen size -- ``(lines, columns)`` when
-        :data:`~pyte.modes.DECTCEM` mode is set, otherwise returns
-        ``None``.
-        """
-        if mo.DECTCEM in self.mode:
-          return self.lines, self.columns
+        """Returns screen size -- ``(lines, columns)``"""
+        return self.lines, self.columns
 
     @property
     def display(self):
         """Returns a :func:`list` of screen lines as unicode strings."""
         return ["".join(map(operator.attrgetter("data"), line))
                 for line in self]
+
+    def __before__(self, command):
+        """Hook, called **before** a command is dispatched to the
+        :class:`Screen` instance.
+
+        :param unicode command: command name, for example ``"LINEFEED"``.
+        """
+
+    def __after__(self, command):
+        """Hook, called **after** a command is dispatched to the
+        :class:`Screen` instance.
+
+        :param unicode command: command name, for example ``"LINEFEED"``.
+        """
 
     def reset(self):
         """Resets the terminal to its initial state.
@@ -318,6 +328,10 @@ class Screen(list):
                        for line in self)
             self.select_graphic_rendition(g._SGR["+reverse"])
 
+        # Make the cursor visible.
+        if mo.DECTCEM in modes:
+            self.cursor.hidden = False
+
     def reset_mode(self, *modes, **kwargs):
         """Resets (disables) a given list of modes.
 
@@ -344,6 +358,10 @@ class Screen(list):
             self[:] = ([char._replace(reverse=False) for char in line]
                        for line in self)
             self.select_graphic_rendition(g._SGR["-reverse"])
+
+        # Hide the cursor.
+        if mo.DECTCEM in modes:
+            self.cursor.hidden = True
 
     def shift_in(self):
         """Activates ``G0`` character set."""
@@ -377,7 +395,8 @@ class Screen(list):
         if mo.IRM in self.mode:
             self.insert_characters(1)
 
-        self[self.cursor.y][self.cursor.x] = self.cursor.attrs._replace(data=char)
+        self[self.cursor.y][self.cursor.x] = self.cursor.attrs \
+            ._replace(data=char)
 
         # .. note:: We can't use :meth:`cursor_forward()`, because that
         #           way, we'll never know when to linefeed.
@@ -923,32 +942,43 @@ class HistoryScreen(DiffScreen):
 
     def __init__(self, columns, lines, history=100, ratio=.5):
         self.history = History(deque(maxlen=history // 2),
-                               deque(maxlen=history - history // 2),
+                               deque(maxlen=history),
                                float(ratio),
                                history,
                                history)
 
         super(HistoryScreen, self).__init__(columns, lines)
 
-    def ensure_width(self):
+    def __before__(self, command):
+        """Ensures a screen is at the bottom of the history buffer."""
+        if command not in ["prev_page", "next_page"]:
+            while self.history.position < self.history.size:
+                self.next_page()
+
+        super(HistoryScreen, self).__before__(command)
+
+    def __after__(self, command):
         """Ensures all lines on a screen have proper width (attr:`columns`).
 
         Extra characters are truncated, missing characters are filled
         with whitespace.
         """
-        for idx, line in enumerate(self):
-            if len(line) > self.columns:
-                self[idx] = line[:self.columns]
-            elif len(line) < self.columns:
-                self[idx] = line + take(self.columns - len(line),
-                                        self.default_line)
+        if command in ["prev_page", "next_page"]:
+            for idx, line in enumerate(self):
+                if len(line) > self.columns:
+                    self[idx] = line[:self.columns]
+                elif len(line) < self.columns:
+                    self[idx] = line + take(self.columns - len(line),
+                                            self.default_line)
 
-    def draw(self, *args):
-        """Overloaded to scroll to the botom on each new input."""
-        while self.history.position < self.history.size:
-            self.next_page()
+        # If we're at the bottom of the history buffer and `DECTCEM`
+        # mode is set -- show the cursor.
+        self.cursor.hidden = not (
+            abs(self.history.position - self.history.size) < self.lines and
+            mo.DECTCEM in self.mode
+        )
 
-        super(HistoryScreen, self).draw(*args)
+        super(HistoryScreen, self).__after__(command)
 
     def reset(self):
         """Overloaded to reset screen history state: history position
@@ -985,7 +1015,7 @@ class HistoryScreen(DiffScreen):
         ``ratio = .5`` means that half the screen is restored from
         history on page switch.
         """
-        if self.history.position > self.lines:
+        if self.history.position > self.lines and self.history.top:
             mid = min(len(self.history.top),
                       int(math.ceil(self.lines * self.history.ratio)))
 
@@ -997,13 +1027,15 @@ class HistoryScreen(DiffScreen):
                 self.history.top.pop() for _ in range(mid)
             ])) + self[:-mid]
 
-            self.ensure_width()
-
             self.dirty = set(range(self.lines))
+
+            if len(self) is not self.lines or self.history.position > self.history.size:
+                import pdb; pdb.set_trace()
+
 
     def next_page(self):
         """Moves the screen page down through the history buffer."""
-        if self.history.position < self.history.size:
+        if self.history.position < self.history.size and self.history.bottom:
             mid = min(len(self.history.bottom),
                       int(math.ceil(self.lines * self.history.ratio)))
 
@@ -1015,6 +1047,7 @@ class HistoryScreen(DiffScreen):
                 self.history.bottom.popleft() for _ in range(mid)
             ]
 
-            self.ensure_width()
-
             self.dirty = set(range(self.lines))
+
+            if len(self) is not self.lines or self.history.position > self.history.size:
+                import pdb; pdb.set_trace()
