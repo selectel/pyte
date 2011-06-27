@@ -98,7 +98,7 @@ class Cursor(object):
         for details).
     """
     def __init__(self, x, y, attrs=Char(" ")):
-        self.x, self.y, self.attrs = x, y, attrs
+        self.x, self.y, self.attrs, self.hidden = x, y, attrs, False
 
 
 class Screen(list):
@@ -146,12 +146,8 @@ class Screen(list):
 
     @property
     def size(self):
-        """Returns screen size -- ``(lines, columns)`` when
-        :data:`~pyte.modes.DECTCEM` mode is set, otherwise returns
-        ``None``.
-        """
-        if mo.DECTCEM in self.mode:
-          return self.lines, self.columns
+        """Returns screen size -- ``(lines, columns)``"""
+        return self.lines, self.columns
 
     @property
     def display(self):
@@ -332,6 +328,10 @@ class Screen(list):
                        for line in self)
             self.select_graphic_rendition(g._SGR["+reverse"])
 
+        # Make the cursor visible.
+        if mo.DECTCEM in modes:
+            self.cursor.hidden = False
+
     def reset_mode(self, *modes, **kwargs):
         """Resets (disables) a given list of modes.
 
@@ -358,6 +358,10 @@ class Screen(list):
             self[:] = ([char._replace(reverse=False) for char in line]
                        for line in self)
             self.select_graphic_rendition(g._SGR["-reverse"])
+
+        # Hide the cursor.
+        if mo.DECTCEM in modes:
+            self.cursor.hidden = True
 
     def shift_in(self):
         """Activates ``G0`` character set."""
