@@ -48,14 +48,13 @@ from `GitHub <http://github.com/selectel/pyte>`_ and run ``python setup.py insta
 Quick example
 -------------
 
-There are two important classes in ``pyte``:
-:class:`~pyte.screens.Screen` and :class:`~pyte.streams.Stream`. The
+There are two important classes in ``pyte``: ``Screen`` and ``Stream``. The
 ``Screen`` is the terminal screen emulator. It maintains an in-memory
 buffer of text and text-attributes to display on screen. The ``Stream``
 is the stream processor. It manages the state of the input and dispatches
 events to anything that's listening about things that are going on.
 Events are things like ``LINEFEED``, ``DRAW "a"``, or ``CURSOR_POSITION 10 10``.
-See the :ref:`API <api>` for more details.
+See the `API documentation` for more details.
 
 In general, if you just want to know what's being displayed on screen you
 can do something like the following:
