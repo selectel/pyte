@@ -6,10 +6,14 @@ Here you can see the full list of changes between each pyte release.
 Version 0.4.2
 -------------
 
+Bugfix release, released on July 27th
+
 - Added a tiny debugging helper: ``python -m pyte your escape codes``
 - Fixed ``HistoryScreen`` -- now not as buggy as it used to be:
   and allows for custom ratio aspect when browsing history, see
   ``HistoryScreen`` documentation for details.
+- Added {before,after}_command() hooks to ``Screen`` -- now subclasses
+  can extend more than one command easily
 
 Version 0.4.1
 -------------
