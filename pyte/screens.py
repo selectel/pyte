@@ -159,14 +159,14 @@ class Screen(list):
         return ["".join(map(operator.attrgetter("data"), line))
                 for line in self]
 
-    def before_command(self, command):
+    def __before__(self, command):
         """Hook, called **before** a command is dispatched to the
         :class:`Screen` instance.
 
         :param unicode command: command name, for example ``"LINEFEED"``.
         """
 
-    def after_command(self, command):
+    def __after__(self, command):
         """Hook, called **after** a command is dispatched to the
         :class:`Screen` instance.
 
@@ -944,15 +944,15 @@ class HistoryScreen(DiffScreen):
 
         super(HistoryScreen, self).__init__(columns, lines)
 
-    def before_command(self, command):
+    def __before__(self, command):
         """Ensures a screen is at the bottom of the history buffer."""
         if command not in ["prev_page", "next_page"]:
             while self.history.position < self.history.size:
                 self.next_page()
 
-        super(HistoryScreen, self).before_command(command)
+        super(HistoryScreen, self).__before__(command)
 
-    def after_command(self, command):
+    def __after__(self, command):
         """Ensures all lines on a screen have proper width (attr:`columns`).
 
         Extra characters are truncated, missing characters are filled
@@ -966,7 +966,7 @@ class HistoryScreen(DiffScreen):
                     self[idx] = line + take(self.columns - len(line),
                                             self.default_line)
 
-        super(HistoryScreen, self).after_command(command)
+        super(HistoryScreen, self).__after__(command)
 
     def reset(self):
         """Overloaded to reset screen history state: history position

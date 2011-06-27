@@ -12,8 +12,8 @@ Bugfix release, released on July 27th
 - Fixed ``HistoryScreen`` -- now not as buggy as it used to be:
   and allows for custom ratio aspect when browsing history, see
   ``HistoryScreen`` documentation for details.
-- Added {before,after}_command() hooks to ``Screen`` -- now subclasses
-  can extend more than one command easily
+- Added ``Screen.__{before,after}__()`` hooks to ``Screen`` -- now
+  subclasses can extend more than one command easily.
 
 Version 0.4.1
 -------------

@@ -208,13 +208,13 @@ class Stream(object):
             except AttributeError:
                 continue
 
-            if hasattr(listener, "before_command"):
-                listener.before_command(event)
+            if hasattr(listener, "__before__"):
+                listener.__before__(event)
 
             handler(*args, **self.flags)
 
-            if hasattr(listener, "after_command"):
-                listener.after_command(event)
+            if hasattr(listener, "__after__"):
+                listener.__after__(event)
         else:
             if kwargs.get("reset", True): self.reset()
 
