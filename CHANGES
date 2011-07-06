@@ -3,6 +3,16 @@ pyte Changelog
 
 Here you can see the full list of changes between each pyte release.
 
+Version 0.4.3
+-------------
+
+Bugfix release
+
+- Fixed encoding issues in `DebugStream` -- Unicode was not converted
+  to bytes properly.
+- Fixed G0-1 charset handling and added VAX42 charset for the ancient
+  stuff to work correctly.
+
 Version 0.4.2
 -------------
 
