@@ -118,6 +118,11 @@ class Screen(list):
        Top and bottom screen margins, defining the scrolling region;
        the actual values are top and bottom line.
 
+    .. attribute:: charset
+
+       Current charset number; can be either ``0`` or ``1`` for `G0`
+       and `G1` respectively, note that `G0` is activated by default.
+
     .. note::
 
        According to ``ECMA-48`` standard, **lines and columnns are
@@ -193,7 +198,8 @@ class Screen(list):
         # According to VT220 manual and ``linux/drivers/tty/vt.c``
         # the default G0 charset is latin-1, but for reasons unknown
         # latin-1 breaks ascii-graphics; so G0 defaults to cp437.
-        self.g0_charset = self.charset = cs.IBMPC_MAP
+        self.charset = 0
+        self.g0_charset = cs.IBMPC_MAP
         self.g1_charset = cs.VT100_MAP
 
         # From ``man terminfo`` -- "... hardware tabs are initially
@@ -293,6 +299,7 @@ class Screen(list):
 
         .. warning:: User-defined charsets are currently not supported.
         """
+        print(code, code in cs.MAPS, cs.MAPS.keys())
         if code in cs.MAPS:
             setattr(self, {"(": "g0_charset", ")": "g1_charset"}[mode],
                     cs.MAPS[code])
@@ -365,11 +372,11 @@ class Screen(list):
 
     def shift_in(self):
         """Activates ``G0`` character set."""
-        self.charset = self.g0_charset
+        self.charset = 0
 
     def shift_out(self):
         """Activates ``G1`` character set."""
-        self.charset = self.g1_charset
+        self.charset = 1
 
     def draw(self, char):
         """Display a character at the current cursor position and advance
@@ -378,7 +385,8 @@ class Screen(list):
         :param unicode char: a character to display.
         """
         # Translating a given character.
-        char = char.translate(self.charset)
+        char = char.translate([self.g0_charset,
+                               self.g1_charset][self.charset])
 
         # If this was the last column in a line and auto wrap mode is
         # enabled, move the cursor to the next line. Otherwise replace

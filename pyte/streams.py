@@ -256,7 +256,7 @@ class Stream(object):
 
     def _charset(self, char):
         """Parse ``G0`` or ``G1`` charset code."""
-        self.dispatch("set-charset", char)
+        self.dispatch("set_charset", char)
 
     def _arguments(self, char):
         """Parse arguments of an escape sequence.
