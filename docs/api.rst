@@ -1,8 +1,8 @@
 .. _api:
 
 
-API
-===
+API reference
+=============
 
 .. automodule:: pyte
 
