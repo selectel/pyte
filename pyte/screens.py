@@ -149,17 +149,6 @@ class Screen(list):
         self.lines, self.columns = lines, columns
         self.reset()
 
-    @property
-    def size(self):
-        """Returns screen size -- ``(lines, columns)``"""
-        return self.lines, self.columns
-
-    @property
-    def display(self):
-        """Returns a :func:`list` of screen lines as unicode strings."""
-        return ["".join(map(operator.attrgetter("data"), line))
-                for line in self]
-
     def __before__(self, command):
         """Hook, called **before** a command is dispatched to the
         :class:`Screen` instance.
@@ -173,6 +162,17 @@ class Screen(list):
 
         :param unicode command: command name, for example ``"LINEFEED"``.
         """
+
+    @property
+    def size(self):
+        """Returns screen size -- ``(lines, columns)``"""
+        return self.lines, self.columns
+
+    @property
+    def display(self):
+        """Returns a :func:`list` of screen lines as unicode strings."""
+        return ["".join(map(operator.attrgetter("data"), line))
+                for line in self]
 
     def reset(self):
         """Resets the terminal to its initial state.

@@ -382,23 +382,28 @@ class DebugStream(ByteStream):
     def __init__(self, to=sys.stdout, only=(), *args, **kwargs):
         super(DebugStream, self).__init__(*args, **kwargs)
 
+        def safestr(chunk):
+            if isinstance(chunk, unicode):
+                chunk = chunk.encode("utf-8")
+            elif not isinstance(chunk, str):
+                chunk = str(chunk)
+
+            return chunk
+
+        def write(chunk):
+            to.write(safestr(chunk))
+
         class Bugger(object):
-            def fixup(self, arg):
-                if isinstance(arg, str):
-                    return arg.encode("utf-8")
-                elif not isinstance(arg, unicode):
-                    return str(arg)
-                else:
-                    return arg
+            __before__ = __after__ = lambda *args: None
 
             def __getattr__(self, event):
                 def inner(*args, **flags):
-                    to.write(event.upper() + " ")
-                    to.write("; ".join(map(self.fixup, args)))
-                    to.write(" ")
-                    to.write(", ".join("{0}: {1}".format(name, self.fixup(arg))
-                                       for name, arg in flags.iteritems()))
-                    to.write("\n")
+                    write(event.upper() + " ")
+                    write("; ".join(safestr(args)))
+                    write(" ")
+                    write(", ".join("{0}: {1}".format(name, safestr(arg))
+                                    for name, arg in flags.iteritems()))
+                    write("\n")
                 return inner
 
         self.attach(Bugger(), only=only)
