@@ -3,10 +3,28 @@ pyte Changelog
 
 Here you can see the full list of changes between each pyte release.
 
+Version 0.4.4
+-------------
+
+Bugfix release, released on July 17th
+
+- Removed `pdb` calls, left from `HistoryScreen` debugging -- silly,
+  I know :)
+
+Version 0.4.3
+-------------
+
+Bugfix release, released on July 12th
+
+- Fixed encoding issues in `DebugStream` -- Unicode was not converted
+  to bytes properly.
+- Fixed G0-1 charset handling and added VAX42 charset for the ancient
+  stuff to work correctly.
+
 Version 0.4.2
 -------------
 
-Bugfix release, released on July 27th
+Bugfix release, released on June 27th
 
 - Added a tiny debugging helper: ``python -m pyte your escape codes``
 - Added ``Screen.__{before,after}__()`` hooks to ``Screen`` -- now
@@ -20,7 +38,7 @@ Bugfix release, released on July 27th
 Version 0.4.1
 -------------
 
-Bugfix release, released on July 21st 2011
+Bugfix release, released on June 21st 2011
 
 - Minor examples and documentation update before the first public
   release.
@@ -28,7 +46,7 @@ Bugfix release, released on July 21st 2011
 Version 0.4.0
 -------------
 
-Released on July 21st 2011
+Released on June 21st 2011
 
 - Improved cursor movement -- ``Screen`` passes all but one tests
   in `vttest`.

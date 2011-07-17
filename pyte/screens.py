@@ -118,6 +118,11 @@ class Screen(list):
        Top and bottom screen margins, defining the scrolling region;
        the actual values are top and bottom line.
 
+    .. attribute:: charset
+
+       Current charset number; can be either ``0`` or ``1`` for `G0`
+       and `G1` respectively, note that `G0` is activated by default.
+
     .. note::
 
        According to ``ECMA-48`` standard, **lines and columnns are
@@ -127,7 +132,8 @@ class Screen(list):
     .. seealso::
 
        `Standard ECMA-48, Section 6.1.1 \
-       <http://www.ecma-international.org/publications/standards/Ecma-048.htm>`_
+       <http://www.ecma-international.org/publications
+       /standards/Ecma-048.htm>`_
          For a description of the presentational component, implemented
          by ``Screen``.
     """
@@ -144,16 +150,9 @@ class Screen(list):
         self.lines, self.columns = lines, columns
         self.reset()
 
-    @property
-    def size(self):
-        """Returns screen size -- ``(lines, columns)``"""
-        return self.lines, self.columns
-
-    @property
-    def display(self):
-        """Returns a :func:`list` of screen lines as unicode strings."""
-        return ["".join(map(operator.attrgetter("data"), line))
-                for line in self]
+    def __repr__(self):
+        return ("{0}({2}, {3})".format(self.__class__.__name__,
+                                       self.columns, self.lines))
 
     def __before__(self, command):
         """Hook, called **before** a command is dispatched to the
@@ -168,6 +167,17 @@ class Screen(list):
 
         :param unicode command: command name, for example ``"LINEFEED"``.
         """
+
+    @property
+    def size(self):
+        """Returns screen size -- ``(lines, columns)``"""
+        return self.lines, self.columns
+
+    @property
+    def display(self):
+        """Returns a :func:`list` of screen lines as unicode strings."""
+        return ["".join(map(operator.attrgetter("data"), line))
+                for line in self]
 
     def reset(self):
         """Resets the terminal to its initial state.
@@ -193,7 +203,8 @@ class Screen(list):
         # According to VT220 manual and ``linux/drivers/tty/vt.c``
         # the default G0 charset is latin-1, but for reasons unknown
         # latin-1 breaks ascii-graphics; so G0 defaults to cp437.
-        self.g0_charset = self.charset = cs.IBMPC_MAP
+        self.charset = 0
+        self.g0_charset = cs.IBMPC_MAP
         self.g1_charset = cs.VT100_MAP
 
         # From ``man terminfo`` -- "... hardware tabs are initially
@@ -293,6 +304,7 @@ class Screen(list):
 
         .. warning:: User-defined charsets are currently not supported.
         """
+        print(code, code in cs.MAPS, cs.MAPS.keys())
         if code in cs.MAPS:
             setattr(self, {"(": "g0_charset", ")": "g1_charset"}[mode],
                     cs.MAPS[code])
@@ -365,11 +377,11 @@ class Screen(list):
 
     def shift_in(self):
         """Activates ``G0`` character set."""
-        self.charset = self.g0_charset
+        self.charset = 0
 
     def shift_out(self):
         """Activates ``G1`` character set."""
-        self.charset = self.g1_charset
+        self.charset = 1
 
     def draw(self, char):
         """Display a character at the current cursor position and advance
@@ -378,7 +390,8 @@ class Screen(list):
         :param unicode char: a character to display.
         """
         # Translating a given character.
-        char = char.translate(self.charset)
+        char = char.translate([self.g0_charset,
+                               self.g1_charset][self.charset])
 
         # If this was the last column in a line and auto wrap mode is
         # enabled, move the cursor to the next line. Otherwise replace
@@ -478,8 +491,10 @@ class Screen(list):
             self.g1_charset = savepoint.g1_charset
             self.charset = savepoint.charset
 
-            if savepoint.origin: self.set_mode(mo.DECOM)
-            if savepoint.wrap: self.set_mode(mo.DECAWM)
+            if savepoint.origin:
+                self.set_mode(mo.DECOM)
+            if savepoint.wrap:
+                self.set_mode(mo.DECAWM)
 
             self.cursor = savepoint.cursor
             self.ensure_bounds(use_margins=True)
@@ -502,7 +517,8 @@ class Screen(list):
         # If cursor is outside scrolling margins it -- do nothin'.
         if top <= self.cursor.y <= bottom:
             #                           v +1, because range() is exclusive.
-            for line in range(self.cursor.y, min(bottom + 1, self.cursor.y + count)):
+            for line in range(self.cursor.y,
+                              min(bottom + 1, self.cursor.y + count)):
                 self.pop(bottom)
                 self.insert(line, take(self.columns, self.default_line))
 
@@ -573,7 +589,8 @@ class Screen(list):
         """
         count = count or 1
 
-        for column in range(self.cursor.x, min(self.cursor.x + count, self.columns)):
+        for column in range(self.cursor.x,
+                            min(self.cursor.x + count, self.columns)):
             self[self.cursor.y][column] = self.cursor.attrs
 
     def erase_in_line(self, type_of=0, private=False):
@@ -583,8 +600,8 @@ class Screen(list):
 
             * ``0`` -- Erases from cursor to end of line, including cursor
               position.
-            * ``1`` -- Erases from beginning of line to cursor, including cursor
-              position.
+            * ``1`` -- Erases from beginning of line to cursor,
+              including cursor position.
             * ``2`` -- Erases complete line.
         :param bool private: when ``True`` character attributes aren left
                              unchanged **not implemented**.
@@ -827,7 +844,7 @@ class DiffScreen(Screen):
         super(DiffScreen, self).__init__(*args)
 
     def set_mode(self, *modes, **kwargs):
-       	if mo.DECSCNM >> 5 in modes and kwargs.get("private"):
+        if mo.DECSCNM >> 5 in modes and kwargs.get("private"):
             self.dirty.update(range(self.lines))
         super(DiffScreen, self).set_mode(*modes, **kwargs)
 
@@ -1029,10 +1046,6 @@ class HistoryScreen(DiffScreen):
 
             self.dirty = set(range(self.lines))
 
-            if len(self) is not self.lines or self.history.position > self.history.size:
-                import pdb; pdb.set_trace()
-
-
     def next_page(self):
         """Moves the screen page down through the history buffer."""
         if self.history.position < self.history.size and self.history.bottom:
@@ -1048,6 +1061,3 @@ class HistoryScreen(DiffScreen):
             ]
 
             self.dirty = set(range(self.lines))
-
-            if len(self) is not self.lines or self.history.position > self.history.size:
-                import pdb; pdb.set_trace()
