@@ -150,6 +150,10 @@ class Screen(list):
         self.lines, self.columns = lines, columns
         self.reset()
 
+    def __repr__(self):
+        return ("{0}({2}, {3})".format(self.__class__.__name__,
+                                       self.columns, self.lines))
+
     def __before__(self, command):
         """Hook, called **before** a command is dispatched to the
         :class:`Screen` instance.
@@ -818,12 +822,6 @@ class Screen(list):
                 replace = self.default_char._asdict()
 
         self.cursor.attrs = self.cursor.attrs._replace(**replace)
-
-    def __repr__(self):
-        return ("<{0} at {1}: "
-                "columns={2} lines={3}>".format(self.__class__.__name__,
-                                                hex(id(self)),
-                                                self.columns, self.lines))
 
 
 class DiffScreen(Screen):
