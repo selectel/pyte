@@ -132,7 +132,8 @@ class Screen(list):
     .. seealso::
 
        `Standard ECMA-48, Section 6.1.1 \
-       <http://www.ecma-international.org/publications/standards/Ecma-048.htm>`_
+       <http://www.ecma-international.org/publications
+       /standards/Ecma-048.htm>`_
          For a description of the presentational component, implemented
          by ``Screen``.
     """
@@ -486,8 +487,10 @@ class Screen(list):
             self.g1_charset = savepoint.g1_charset
             self.charset = savepoint.charset
 
-            if savepoint.origin: self.set_mode(mo.DECOM)
-            if savepoint.wrap: self.set_mode(mo.DECAWM)
+            if savepoint.origin:
+                self.set_mode(mo.DECOM)
+            if savepoint.wrap:
+                self.set_mode(mo.DECAWM)
 
             self.cursor = savepoint.cursor
             self.ensure_bounds(use_margins=True)
@@ -510,7 +513,8 @@ class Screen(list):
         # If cursor is outside scrolling margins it -- do nothin'.
         if top <= self.cursor.y <= bottom:
             #                           v +1, because range() is exclusive.
-            for line in range(self.cursor.y, min(bottom + 1, self.cursor.y + count)):
+            for line in range(self.cursor.y,
+                              min(bottom + 1, self.cursor.y + count)):
                 self.pop(bottom)
                 self.insert(line, take(self.columns, self.default_line))
 
@@ -581,7 +585,8 @@ class Screen(list):
         """
         count = count or 1
 
-        for column in range(self.cursor.x, min(self.cursor.x + count, self.columns)):
+        for column in range(self.cursor.x,
+                            min(self.cursor.x + count, self.columns)):
             self[self.cursor.y][column] = self.cursor.attrs
 
     def erase_in_line(self, type_of=0, private=False):
@@ -591,8 +596,8 @@ class Screen(list):
 
             * ``0`` -- Erases from cursor to end of line, including cursor
               position.
-            * ``1`` -- Erases from beginning of line to cursor, including cursor
-              position.
+            * ``1`` -- Erases from beginning of line to cursor,
+              including cursor position.
             * ``2`` -- Erases complete line.
         :param bool private: when ``True`` character attributes aren left
                              unchanged **not implemented**.
@@ -814,6 +819,12 @@ class Screen(list):
 
         self.cursor.attrs = self.cursor.attrs._replace(**replace)
 
+    def __repr__(self):
+        return ("<{0} at {1}: "
+                "columns={2} lines={3}>".format(self.__class__.__name__,
+                                                hex(id(self)),
+                                                self.columns, self.lines))
+
 
 class DiffScreen(Screen):
     """A screen subclass, which maintains a set of dirty lines in its
@@ -835,7 +846,7 @@ class DiffScreen(Screen):
         super(DiffScreen, self).__init__(*args)
 
     def set_mode(self, *modes, **kwargs):
-       	if mo.DECSCNM >> 5 in modes and kwargs.get("private"):
+        if mo.DECSCNM >> 5 in modes and kwargs.get("private"):
             self.dirty.update(range(self.lines))
         super(DiffScreen, self).set_mode(*modes, **kwargs)
 
@@ -1037,10 +1048,6 @@ class HistoryScreen(DiffScreen):
 
             self.dirty = set(range(self.lines))
 
-            if len(self) is not self.lines or self.history.position > self.history.size:
-                import pdb; pdb.set_trace()
-
-
     def next_page(self):
         """Moves the screen page down through the history buffer."""
         if self.history.position < self.history.size and self.history.bottom:
@@ -1056,6 +1063,3 @@ class HistoryScreen(DiffScreen):
             ]
 
             self.dirty = set(range(self.lines))
-
-            if len(self) is not self.lines or self.history.position > self.history.size:
-                import pdb; pdb.set_trace()
