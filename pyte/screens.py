@@ -1043,10 +1043,6 @@ class HistoryScreen(DiffScreen):
 
             self.dirty = set(range(self.lines))
 
-            if len(self) is not self.lines or self.history.position > self.history.size:
-                import pdb; pdb.set_trace()
-
-
     def next_page(self):
         """Moves the screen page down through the history buffer."""
         if self.history.position < self.history.size and self.history.bottom:
@@ -1062,6 +1058,3 @@ class HistoryScreen(DiffScreen):
             ]
 
             self.dirty = set(range(self.lines))
-
-            if len(self) is not self.lines or self.history.position > self.history.size:
-                import pdb; pdb.set_trace()
