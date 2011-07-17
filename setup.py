@@ -52,7 +52,7 @@ class PyTest(Command):
 
 
 setup(name="pyte",
-      version="0.4.3",
+      version="0.4.4",
       packages=["pyte"],
       cmdclass={"test": PyTest},
       platforms=["any"],
