@@ -3,6 +3,14 @@ pyte Changelog
 
 Here you can see the full list of changes between each pyte release.
 
+Version 0.4.4
+-------------
+
+Bugfix release, released on July 17th
+
+- Removed `pdb` calls, left from `HistoryScreen` debugging -- silly,
+  I know :)
+
 Version 0.4.3
 -------------
 
