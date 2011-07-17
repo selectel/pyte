@@ -814,6 +814,12 @@ class Screen(list):
 
         self.cursor.attrs = self.cursor.attrs._replace(**replace)
 
+    def __repr__(self):
+        return ("<{0} at {1}: "
+                "columns={2} lines={3}>".format(self.__class__.__name__,
+                                                hex(id(self)),
+                                                self.columns, self.lines))
+
 
 class DiffScreen(Screen):
     """A screen subclass, which maintains a set of dirty lines in its
