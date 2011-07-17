@@ -151,7 +151,7 @@ class Screen(list):
         self.reset()
 
     def __repr__(self):
-        return ("{0}({2}, {3})".format(self.__class__.__name__,
+        return ("{0}({1}, {2})".format(self.__class__.__name__,
                                        self.columns, self.lines))
 
     def __before__(self, command):
