@@ -3,6 +3,14 @@ pyte Changelog
 
 Here you can see the full list of changes between each pyte release.
 
+Version 0.4.5
+-------------
+
+Technical release, released on September 1st
+
+- Created MANIFEST.in file
+- Added CentOS spec file
+
 Version 0.4.4
 -------------
 
