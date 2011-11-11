@@ -5,7 +5,7 @@
 
     ... what if I need to debug a bunch of escape sequences? Just use
     :class:`~pyte.streams.DebugStream` instead of the usual
-    :class:`~pyte.streams.Steram`. Note though, that it requires
+    :class:`~pyte.streams.Stream`. Note though, that it requires
     :func:`bytes` as input.
 
     :copyright: (c) 2011 by Selectel, see AUTHORS for more details.
