@@ -25,7 +25,7 @@
 """
 
 from __future__ import (
-    absolute_import, print_function, unicode_literals, division
+    absolute_import, unicode_literals, division
 )
 
 import copy
@@ -304,7 +304,6 @@ class Screen(list):
 
         .. warning:: User-defined charsets are currently not supported.
         """
-        print(code, code in cs.MAPS, cs.MAPS.keys())
         if code in cs.MAPS:
             setattr(self, {"(": "g0_charset", ")": "g1_charset"}[mode],
                     cs.MAPS[code])
