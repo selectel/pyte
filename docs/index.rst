@@ -9,12 +9,14 @@
 ``pyte`` users
 --------------
 
-Believe it or not, there're project which actually **need** a terminal emulator
+Believe it or not, there're projects which actually **need** a terminal emulator
 library, not many of them use ``pyte`` though:
 
 * `Selectel <http://selectel.com>`_ -- hey, we wrote this thing :)
 * `Ajenti <http://github.com/Eugeny/ajenti>`_ -- easy to use weadmin panel for Linux
   and BSD uses ``pyte`` for its terminal plugin.
+* `Neutron IDE <https://github.com/pizzapanther/Neutron-IDE>`_ -- personal cloud
+  IDE.
 
 
 Show me the code!
@@ -31,4 +33,3 @@ minimal examples in the ``examples/`` directory.
    tutorial
    api
    changelog
-
