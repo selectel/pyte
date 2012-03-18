@@ -1,0 +1,24 @@
+<script src="charsets.js"></script>
+<script src="control.js"></script>
+<script src="escape.js"></script>
+<script src="graphics.js"></script>
+<script src="modes.js"></script>
+<script src="screens.js"></script>
+<script src="streams.js"></script>
+<style>
+    textarea { font-family: monospace; }
+</style>
+<script>
+    function doTest() {
+        var stream = new Stream();
+        var screen = new Screen(80, 24);
+        stream.attach(screen);
+        stream.feed("Hello worldddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd!\nHello another thing.");
+
+        var out = screen.display().join("\n") + "\n";
+        document.getElementById("testTextarea").value = out;
+
+    }
+</script>
+<textarea rows="26" cols="85" id="testTextarea"></textarea>
+<button onclick="doTest()">Test</button>
