@@ -190,7 +190,7 @@ Screen.prototype = {
 
         if (diff < 0) {
             for (i = diff; i < 0; i++) {
-                this[this.lines] = repeat(this.columns, this.default_char);
+                this.push(repeat(this.columns, this.default_char));
             }
         } else if (diff > 0) {
             for (i = 0; i < diff; i++) this.pop();
@@ -329,6 +329,9 @@ Screen.prototype = {
     },
     pop: function(idx) {
         Array.prototype.splice.call(this, idx, 1);
+    },
+    push: function(item) {
+        this.insert(this.length - 1, item);
     },
     index: function() {
         var top = this.margins.top, bottom = this.margins.bottom;
