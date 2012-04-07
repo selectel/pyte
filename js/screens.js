@@ -584,7 +584,7 @@ Screen.prototype = {
                 attr = TEXT[attr];
                 replace[attr.substr(1, attr.length - 1)] = attr.charAt(0)=="+";
             } else if (!attr) {
-                replace = this.default_char;
+                replace = new Char(this.default_char.data, this.default_char);
             }
         }
         var curs = this.cursor;
