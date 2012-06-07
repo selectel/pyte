@@ -2,7 +2,7 @@
 
 Summary:    	Simple VTXXX-compatible terminal emulator
 Name:	    	python26-pyte
-Version:    	0.4.5
+Version:    	0.4.6
 Release:    	1.selectel%{?dist}
 Vendor:	    	Selectel
 License:    	LGPL
