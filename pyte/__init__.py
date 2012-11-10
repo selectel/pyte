@@ -12,9 +12,9 @@
     maintains a buffer of strings representing the screen of a
     terminal.
 
-    .. warning:: From ``xterm/main.c`` «If you think you know what all
+    .. warning:: From ``xterm/main.c`` "If you think you know what all
                  of this code is doing, you are probably very mistaken.
-                 There be serious and nasty dragons here» -- nothing
+                 There be serious and nasty dragons here" -- nothing
                  has changed.
 
     :copyright: (c) 2011 by Selectel, see AUTHORS for more details.
