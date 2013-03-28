@@ -3,7 +3,12 @@
 from __future__ import unicode_literals
 
 import operator
-from cStringIO import StringIO
+import sys
+
+if sys.version_info[0] == 2:
+    from cStringIO import StringIO as BytesIO
+else:
+    from io import BytesIO
 
 import pytest
 
@@ -38,7 +43,7 @@ class argstore(object):
 def test_basic_sequences():
     stream = TestStream()
 
-    for cmd, event in stream.escape.iteritems():
+    for cmd, event in stream.escape.items():
         handler = counter()
         stream.connect(event, handler)
 
@@ -79,7 +84,7 @@ def test_unknown_sequences():
 def test_non_csi_sequences():
     stream = TestStream()
 
-    for cmd, event in stream.csi.iteritems():
+    for cmd, event in stream.csi.items():
         # a) single param
         handler = argcheck()
         stream.connect(event, handler)
@@ -144,9 +149,12 @@ def test_byte_stream():
     stream = TestByteStream(encodings=[("utf_8", "replace")])
     stream.connect("draw", validator)
 
-    bytes = "Garðabær".encode("utf_8")
+    for byte in "Garðabær".encode("utf_8"):
+        if sys.version_info[0] == 3:
+            # HACK(Sergei): in Python 3 a _byte_ is just an `int``, while
+            # in Python 2 it's an instance of `str``.
+            byte = bytes([byte])
 
-    for byte in bytes:
         stream.feed(byte)
 
 
@@ -202,7 +210,7 @@ def test_debug_stream():
     ]
 
     for input, expected in tests:
-        output = StringIO()
+        output = BytesIO()
         stream = DebugStream(to=output)
         stream.feed(input)
 

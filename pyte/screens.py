@@ -20,28 +20,23 @@
               classes, rather than subclasses, but it's not obvious
               how to do -- feel free to submit a pull request.
 
-    :copyright: (c) 2011 Selectel, see AUTHORS for more details.
+    :copyright: (c) 2011-2013 Selectel, see AUTHORS for details.
     :license: LGPL, see LICENSE for more details.
 """
 
-from __future__ import (
-    absolute_import, unicode_literals, division
-)
+from __future__ import absolute_import, unicode_literals, division
 
 import copy
 import math
 import operator
+import sys
 from collections import namedtuple, deque
 from itertools import islice, repeat
 
 from . import modes as mo, graphics as g, charsets as cs
 
 
-try:
-    xrange
-except NameError:
-    pass
-else:
+if sys.version_info[0] == 2:
     range = xrange
 
 

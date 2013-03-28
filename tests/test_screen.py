@@ -3,6 +3,11 @@
 from __future__ import unicode_literals
 
 import copy
+import sys
+
+if sys.version_info[0] == 2:
+    from future_builtins import map
+    str = unicode
 
 import pytest
 
@@ -171,7 +176,9 @@ def test_draw():
     screen = Screen(3, 3)
     assert mo.DECAWM in screen.mode
 
-    map(screen.draw, "abc")
+    for ch in "abc":
+        screen.draw(ch)
+
     assert screen.display == ["abc", "   ", "   "]
     assert (screen.cursor.y, screen.cursor.x) == (0, 3)
 
@@ -183,7 +190,9 @@ def test_draw():
     screen = Screen(3, 3)
     screen.reset_mode(mo.DECAWM)
 
-    map(screen.draw, "abc")
+    for ch in "abc":
+        screen.draw(ch)
+
     assert screen.display == ["abc", "   ", "   "]
     assert (screen.cursor.y, screen.cursor.x) == (0, 3)
 

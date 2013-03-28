@@ -3,8 +3,15 @@
 from __future__ import unicode_literals
 
 import operator
+import os
+import sys
+
+if sys.version_info[0] == 2:
+    from future_builtins import map
+    str = unicode
 
 from pyte import HistoryScreen, Stream, ctrl
+
 
 
 def chars(lines):
@@ -18,7 +25,7 @@ def test_index():
     # Filling the screen with line numbers, so it's easier to
     # track history contents.
     for idx in range(len(screen)):
-        screen.draw(unicode(idx))
+        screen.draw(str(idx))
         if idx is not len(screen) - 1:
             screen.linefeed()
 
@@ -50,7 +57,7 @@ def test_reverse_index():
     # Filling the screen with line numbers, so it's easier to
     # track history contents.
     for idx in range(len(screen)):
-        screen.draw(unicode(idx))
+        screen.draw(str(idx))
         if idx is not len(screen) - 1:
             screen.linefeed()
 
@@ -86,7 +93,9 @@ def test_prev_page():
     # Once again filling the screen with line numbers, but this time,
     # we need them to span on multiple lines.
     for idx in range(len(screen) * 10):
-        map(screen.draw, unicode(idx))
+        for ch in str(idx):
+            screen.draw(ch)
+
         screen.linefeed()
 
     assert screen.history.top
@@ -154,7 +163,9 @@ def test_prev_page():
     screen = HistoryScreen(5, 5, history=50)
 
     for idx in range(len(screen) * 10):
-        map(screen.draw, unicode(idx))
+        for ch in str(idx):
+            screen.draw(ch)
+
         screen.linefeed()
 
     assert screen.history.top
@@ -190,7 +201,9 @@ def test_prev_page():
     screen = HistoryScreen(5, 5, history=50)
 
     for idx in range(len(screen) * 10):
-        map(screen.draw, unicode(idx))
+        for ch in str(idx):
+            screen.draw(ch)
+
         screen.linefeed()
 
     assert screen.history.top
@@ -236,7 +249,9 @@ def test_prev_page():
     screen = HistoryScreen(5, 5, history=50)
 
     for idx in range(len(screen) * 10):
-        map(screen.draw, unicode(idx))
+        for ch in str(idx):
+            screen.draw(ch)
+
         screen.linefeed()
 
     assert screen.history.top
@@ -284,7 +299,9 @@ def test_next_page():
     # Once again filling the screen with line numbers, but this time,
     # we need them to span on multiple lines.
     for idx in range(len(screen) * 5):
-        map(screen.draw, unicode(idx))
+        for ch in str(idx):
+            screen.draw(ch)
+
         screen.linefeed()
 
     assert screen.history.top
@@ -359,7 +376,8 @@ def test_ensure_width():
     stream.escape["P"] = "prev_page"
 
     for idx in range(len(screen) * 5):
-        map(stream.feed, unicode(idx) + "\n")
+        for ch in str(idx) + os.linesep:
+            stream.feed(ch)
 
     assert screen.display == [
         "21   ",
@@ -404,7 +422,9 @@ def test_not_enough_lines():
     screen = HistoryScreen(5, 5, history=6)
 
     for idx in range(len(screen)):
-        map(screen.draw, unicode(idx))
+        for ch in str(idx):
+            screen.draw(ch)
+
         screen.linefeed()
 
     assert screen.history.top
@@ -450,7 +470,8 @@ def test_draw():
     stream.escape["P"] = "prev_page"
 
     for idx in range(len(screen) * 5):
-        map(stream.feed, unicode(idx) + "\n")
+        for ch in str(idx) + os.linesep:
+            stream.feed(ch)
 
     assert screen.display == [
         "21   ",
@@ -484,7 +505,8 @@ def test_cursor_is_hidden():
     stream.escape["P"] = "prev_page"
 
     for idx in range(len(screen) * 5):
-        map(stream.feed, unicode(idx) + "\n")
+        for ch in str(idx) + os.linesep:
+            stream.feed(ch)
 
     assert not screen.cursor.hidden
 

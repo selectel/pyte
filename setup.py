@@ -28,7 +28,8 @@ CLASSIFIERS = (
     "Operating System :: OS Independent",
     "License :: OSI Approved :: GNU Library or Lesser General Public License (LGPL)",
     "Programming Language :: Python :: 2.6",
-    "Programming Language :: Python :: 3.2",
+    "Programming Language :: Python :: 2.7",
+    "Programming Language :: Python :: 3.3",
     "Topic :: Terminals :: Terminal Emulators/X Terminals",
 )
 
