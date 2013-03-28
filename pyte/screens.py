@@ -20,28 +20,23 @@
               classes, rather than subclasses, but it's not obvious
               how to do -- feel free to submit a pull request.
 
-    :copyright: (c) 2011 Selectel, see AUTHORS for more details.
+    :copyright: (c) 2011-2013 Selectel, see AUTHORS for details.
     :license: LGPL, see LICENSE for more details.
 """
 
-from __future__ import (
-    absolute_import, unicode_literals, division
-)
+from __future__ import absolute_import, unicode_literals, division
 
 import copy
 import math
 import operator
+import sys
 from collections import namedtuple, deque
 from itertools import islice, repeat
 
 from . import modes as mo, graphics as g, charsets as cs
 
 
-try:
-    xrange
-except NameError:
-    pass
-else:
+if sys.version_info[0] == 2:
     range = xrange
 
 
@@ -129,6 +124,12 @@ class Screen(list):
        1-indexed**, so, for instance ``ESC [ 10;10 f`` really means
        -- move cursor to position (9, 9) in the display matrix.
 
+    .. versionchanged:: 0.4.7
+    .. warning::
+
+       :data:`~pyte.modes.LNM` is reset by default, to match VT220
+       specification.
+
     .. seealso::
 
        `Standard ECMA-48, Section 6.1.1 \
@@ -158,14 +159,14 @@ class Screen(list):
         """Hook, called **before** a command is dispatched to the
         :class:`Screen` instance.
 
-        :param unicode command: command name, for example ``"LINEFEED"``.
+        :param str command: command name, for example ``"LINEFEED"``.
         """
 
     def __after__(self, command):
         """Hook, called **after** a command is dispatched to the
         :class:`Screen` instance.
 
-        :param unicode command: command name, for example ``"LINEFEED"``.
+        :param str command: command name, for example ``"LINEFEED"``.
         """
 
     @property
@@ -197,7 +198,7 @@ class Screen(list):
         """
         self[:] = (take(self.columns, self.default_line)
                    for _ in range(self.lines))
-        self.mode = set([mo.DECAWM, mo.DECTCEM, mo.LNM, mo.DECTCEM])
+        self.mode = set([mo.DECAWM, mo.DECTCEM])
         self.margins = Margins(0, self.lines - 1)
 
         # According to VT220 manual and ``linux/drivers/tty/vt.c``
@@ -297,10 +298,10 @@ class Screen(list):
     def set_charset(self, code, mode):
         """Set active ``G0`` or ``G1`` charset.
 
-        :param unicode code: character set code, should be a character
-                             from ``"B0UK"`` -- otherwise ignored.
-        :param unicode mode: if ``"("`` ``G0`` charset is set, if
-                             ``")"`` -- we operate on ``G1``.
+        :param str code: character set code, should be a character
+                         from ``"B0UK"`` -- otherwise ignored.
+        :param str mode: if ``"("`` ``G0`` charset is set, if
+                         ``")"`` -- we operate on ``G1``.
 
         .. warning:: User-defined charsets are currently not supported.
         """
@@ -386,7 +387,7 @@ class Screen(list):
         """Display a character at the current cursor position and advance
         the cursor if :data:`~pyte.modes.DECAWM` is set.
 
-        :param unicode char: a character to display.
+        :param str char: a character to display.
         """
         # Translating a given character.
         char = char.translate([self.g0_charset,
@@ -450,6 +451,8 @@ class Screen(list):
 
         if mo.LNM in self.mode:
             self.carriage_return()
+
+        self.ensure_bounds()
 
     def tab(self):
         """Move to the next tab space, or the end of the screen if there

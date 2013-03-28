@@ -2,9 +2,18 @@
 
 from __future__ import unicode_literals
 
+import operator
+import sys
+
+if sys.version_info[0] == 2:
+    from cStringIO import StringIO
+else:
+    from io import StringIO
+
 import pytest
 
 from pyte import ctrl, esc
+from pyte.streams import DebugStream
 from . import TestStream, TestByteStream
 
 
@@ -34,7 +43,7 @@ class argstore(object):
 def test_basic_sequences():
     stream = TestStream()
 
-    for cmd, event in stream.escape.iteritems():
+    for cmd, event in stream.escape.items():
         handler = counter()
         stream.connect(event, handler)
 
@@ -75,7 +84,7 @@ def test_unknown_sequences():
 def test_non_csi_sequences():
     stream = TestStream()
 
-    for cmd, event in stream.csi.iteritems():
+    for cmd, event in stream.csi.items():
         # a) single param
         handler = argcheck()
         stream.connect(event, handler)
@@ -140,9 +149,12 @@ def test_byte_stream():
     stream = TestByteStream(encodings=[("utf_8", "replace")])
     stream.connect("draw", validator)
 
-    bytes = "Garðabær".encode("utf_8")
+    for byte in "Garðabær".encode("utf_8"):
+        if sys.version_info[0] == 3:
+            # HACK(Sergei): in Python 3 a _byte_ is just an `int``, while
+            # in Python 2 it's an instance of `str``.
+            byte = bytes([byte])
 
-    for byte in bytes:
         stream.feed(byte)
 
 
@@ -190,3 +202,17 @@ def test_control_characters():
     assert handler.count == 1
     assert handler.args == (10, 10)
 
+def test_debug_stream():
+    tests = [
+        (b"foo", "DRAW f\nDRAW o\nDRAW o"),
+        (b"\x1b[1;24r\x1b[4l\x1b[24;1H",
+         "SET_MARGINS 1; 24\nRESET_MODE 4\nCURSOR_POSITION 24; 1"),
+    ]
+
+    for input, expected in tests:
+        output = StringIO()
+        stream = DebugStream(to=output)
+        stream.feed(input)
+
+        lines = [l.rstrip() for l in output.getvalue().splitlines()]
+        assert lines == expected.splitlines()

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
     pyte.charsets
-    ~~~~~~~~~~~~~~
+    ~~~~~~~~~~~~~
 
     This module defines ``G0`` and ``G1`` charset mappings the same way
     they are defined for linux terminal, see
@@ -11,18 +11,23 @@
               from linux kernel source and therefore are licensed
               under **GPL**.
 
-    :copyright: (c) 2011 by Selectel, see AUTHORS for more details.
+    :copyright: (c) 2011-2013 by Selectel, see AUTHORS for details.
     :license: LGPL, see LICENSE for more details.
 """
 
 from __future__ import unicode_literals
 
+import sys
+
+if sys.version_info[0] == 2:
+    chr = unichr
+
 
 #: Latin1.
-LAT1_MAP = map(unichr, xrange(256))
+LAT1_MAP = map(chr, range(256))
 
 #: VT100 graphic character set.
-VT100_MAP = "".join(unichr(c) for c in [
+VT100_MAP = "".join(chr(c) for c in [
     0x0000, 0x0001, 0x0002, 0x0003, 0x0004, 0x0005, 0x0006, 0x0007,
     0x0008, 0x0009, 0x000a, 0x000b, 0x000c, 0x000d, 0x000e, 0x000f,
     0x0010, 0x0011, 0x0012, 0x0013, 0x0014, 0x0015, 0x0016, 0x0017,
@@ -58,7 +63,7 @@ VT100_MAP = "".join(unichr(c) for c in [
 ])
 
 #: IBM Codepage 437.
-IBMPC_MAP = "".join(unichr(c) for c in [
+IBMPC_MAP = "".join(chr(c) for c in [
     0x0000, 0x263a, 0x263b, 0x2665, 0x2666, 0x2663, 0x2660, 0x2022,
     0x25d8, 0x25cb, 0x25d9, 0x2642, 0x2640, 0x266a, 0x266b, 0x263c,
     0x25b6, 0x25c0, 0x2195, 0x203c, 0x00b6, 0x00a7, 0x25ac, 0x21a8,
@@ -95,7 +100,7 @@ IBMPC_MAP = "".join(unichr(c) for c in [
 
 
 #: VAX42 character set.
-VAX42_MAP = "".join(unichr(c) for c in [
+VAX42_MAP = "".join(chr(c) for c in [
     0x0000, 0x263a, 0x263b, 0x2665, 0x2666, 0x2663, 0x2660, 0x2022,
     0x25d8, 0x25cb, 0x25d9, 0x2642, 0x2640, 0x266a, 0x266b, 0x263c,
     0x25b6, 0x25c0, 0x2195, 0x203c, 0x00b6, 0x00a7, 0x25ac, 0x21a8,

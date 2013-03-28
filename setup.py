@@ -28,7 +28,8 @@ CLASSIFIERS = (
     "Operating System :: OS Independent",
     "License :: OSI Approved :: GNU Library or Lesser General Public License (LGPL)",
     "Programming Language :: Python :: 2.6",
-    "Programming Language :: Python :: 3.2",
+    "Programming Language :: Python :: 2.7",
+    "Programming Language :: Python :: 3.3",
     "Topic :: Terminals :: Terminal Emulators/X Terminals",
 )
 
@@ -52,13 +53,13 @@ class PyTest(Command):
 
 
 setup(name="pyte",
-      version="0.4.6",
+      version="0.4.7",
       packages=["pyte"],
       cmdclass={"test": PyTest},
       platforms=["any"],
 
       author="Sergei Lebedev",
-      author_email="lebedev@selectel.ru",
+      author_email="superbobry@gmail.com",
       description=DESCRIPTION,
       long_description=LONG_DESCRIPTION,
       classifiers=CLASSIFIERS,

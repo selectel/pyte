@@ -3,15 +3,25 @@ pyte Changelog
 
 Here you can see the full list of changes between each pyte release.
 
+Version 0.4.7
+-------------
+
+Bugfix release, released on March 28th 2013
+
+- Updated `pyte` and tests suite to work under Python 3.3.
+- Changed `pyte.screens.Screen` so that `LNM` mode is reset by default,
+  see http://www.vt100.net/docs/vt510-rm/LNM and issue #11 on GitHub for
+  details.
+
 Version 0.4.6
 -------------
 
-Bugfix release, released on February 29th
+Bugfix release, released on February 29th 2012
 
 Version 0.4.5
 -------------
 
-Technical release, released on September 1st
+Technical release, released on September 1st 2011
 
 - Created MANIFEST.in file
 - Added CentOS spec file
@@ -19,7 +29,7 @@ Technical release, released on September 1st
 Version 0.4.4
 -------------
 
-Bugfix release, released on July 17th
+Bugfix release, released on July 17th 2011
 
 - Removed `pdb` calls, left from `HistoryScreen` debugging -- silly,
   I know :)
@@ -27,7 +37,7 @@ Bugfix release, released on July 17th
 Version 0.4.3
 -------------
 
-Bugfix release, released on July 12th
+Bugfix release, released on July 12th 2011
 
 - Fixed encoding issues in `DebugStream` -- Unicode was not converted
   to bytes properly.
@@ -37,7 +47,7 @@ Bugfix release, released on July 12th
 Version 0.4.2
 -------------
 
-Bugfix release, released on June 27th
+Bugfix release, released on June 27th 2011
 
 - Added a tiny debugging helper: ``python -m pyte your escape codes``
 - Added ``Screen.__{before,after}__()`` hooks to ``Screen`` -- now

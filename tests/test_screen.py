@@ -3,6 +3,11 @@
 from __future__ import unicode_literals
 
 import copy
+import sys
+
+if sys.version_info[0] == 2:
+    from future_builtins import map
+    str = unicode
 
 import pytest
 
@@ -93,6 +98,7 @@ def test_multi_attribs():
 
 def test_attributes_reset():
     screen = Screen(2, 2)
+    screen.set_mode(mo.LNM)
     assert screen == [[screen.default_char, screen.default_char]] * 2
     screen.select_graphic_rendition(1)
     screen.draw("f")
@@ -169,9 +175,12 @@ def test_resize():
 def test_draw():
     # ``DECAWM`` on (default).
     screen = Screen(3, 3)
+    screen.set_mode(mo.LNM)
     assert mo.DECAWM in screen.mode
 
-    map(screen.draw, "abc")
+    for ch in "abc":
+        screen.draw(ch)
+
     assert screen.display == ["abc", "   ", "   "]
     assert (screen.cursor.y, screen.cursor.x) == (0, 3)
 
@@ -183,7 +192,9 @@ def test_draw():
     screen = Screen(3, 3)
     screen.reset_mode(mo.DECAWM)
 
-    map(screen.draw, "abc")
+    for ch in "abc":
+        screen.draw(ch)
+
     assert screen.display == ["abc", "   ", "   "]
     assert (screen.cursor.y, screen.cursor.x) == (0, 3)
 
@@ -365,6 +376,7 @@ def test_reverse_index():
 
 def test_linefeed():
     screen = update(Screen(2, 2), ["bo", "sh"], [None, None])
+    screen.set_mode(mo.LNM)
 
     # a) LNM on by default (that's what `vttest` forces us to do).
     assert mo.LNM in screen.mode
@@ -1129,6 +1141,7 @@ def test_unicode():
 
 def test_alignment_display():
     screen = Screen(5, 5)
+    screen.set_mode(mo.LNM)
     screen.draw("a")
     screen.linefeed()
     screen.linefeed()
