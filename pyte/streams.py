@@ -399,7 +399,7 @@ class DebugStream(ByteStream):
             def __getattr__(self, event):
                 def inner(*args, **flags):
                     write(event.upper() + " ")
-                    write("; ".join(safestr(args)))
+                    write("; ".join(map(safestr, args)))
                     write(" ")
                     write(", ".join("{0}: {1}".format(name, safestr(arg))
                                     for name, arg in flags.iteritems()))
