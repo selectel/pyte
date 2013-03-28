@@ -25,7 +25,7 @@ if __name__ == "__main__":
     import sys
     import pyte
 
-    if len(sys.argv) is 1:
+    if len(sys.argv) == 1:
         pyte.dis(sys.stdin.read())
     else:
         pyte.dis("".join(sys.argv[1:]))

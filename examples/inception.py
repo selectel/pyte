@@ -6,15 +6,19 @@
     A terminal emulator within a terminal emulator within a terminal
     emulator -- tiny example to show how pagination works.
 
-    :copyright: (c) 2011 by Selectel, see AUTHORS for more details.
+    :copyright: (c) 2011-2013 by Selectel, see AUTHORS for details.
     :license: LGPL, see LICENSE for more details.
 """
 
 from __future__ import print_function, unicode_literals
 
+import os
 import random
 import sys
 sys.path.append("..")
+
+if sys.version_info[0] == 2:
+    input = raw_input
 
 import pyte
 
@@ -25,7 +29,7 @@ def print_screen(screen, text):
     for idx, line in enumerate(screen.display, 1):
         print("{0:2d} {1} ¶".format(idx, line))
 
-    raw_input("\n\n" + text)
+    input(os.linesep + os.linesep + text)
 
 
 if __name__ == "__main__":
@@ -33,7 +37,7 @@ if __name__ == "__main__":
     screen = pyte.HistoryScreen(80, 24, ratio=1)
     stream.attach(screen)
 
-    stream.feed("".join(random.choice("ABCDEFG \n") for _ in xrange(80 * 24 * 5)))
+    stream.feed("".join(random.choice("ABCDEFG \n") for _ in range(80 * 24 * 5)))
 
     print_screen(screen, "Hit ENTER to move up!")
     screen.prev_page()

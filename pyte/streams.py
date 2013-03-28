@@ -393,20 +393,17 @@ class DebugStream(ByteStream):
 
             return chunk
 
-        def write(chunk):
-            to.write(chunk.encode("utf-8"))
-
         class Bugger(object):
             __before__ = __after__ = lambda *args: None
 
             def __getattr__(self, event):
                 def inner(*args, **flags):
-                    write(event.upper() + " ")
-                    write("; ".join(map(safe_str, args)))
-                    write(" ")
-                    write(", ".join("{0}: {1}".format(name, safe_str(arg))
-                                    for name, arg in flags.items()))
-                    write(os.linesep)
+                    to.write(event.upper() + " ")
+                    to.write("; ".join(map(safe_str, args)))
+                    to.write(" ")
+                    to.write(", ".join("{0}: {1}".format(name, safe_str(arg))
+                                       for name, arg in flags.items()))
+                    to.write(os.linesep)
                 return inner
 
         self.attach(Bugger(), only=only)
