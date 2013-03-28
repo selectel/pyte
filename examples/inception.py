@@ -14,6 +14,7 @@ from __future__ import print_function, unicode_literals
 
 import os
 import random
+import string
 import sys
 sys.path.append("..")
 
@@ -21,6 +22,7 @@ if sys.version_info[0] == 2:
     input = raw_input
 
 import pyte
+from pyte import modes as mo
 
 
 def print_screen(screen, text):
@@ -32,12 +34,20 @@ def print_screen(screen, text):
     input(os.linesep + os.linesep + text)
 
 
+def random_string(n, alphabet=string.ascii_letters + " "):
+    return "".join(random.choice(alphabet) for _ in range(n))
+
+
 if __name__ == "__main__":
     stream = pyte.Stream()  #             v -- means scroll whole page.
-    screen = pyte.HistoryScreen(80, 24, ratio=1)
+    screen = pyte.HistoryScreen(80, 12, ratio=1)
+    screen.set_mode(mo.LNM)
     stream.attach(screen)
 
-    stream.feed("".join(random.choice("ABCDEFG \n") for _ in range(80 * 24 * 5)))
+    pages = 3
+    stream.feed(os.linesep.join(random_string(screen.columns)
+                                for _ in range(screen.lines * pages)))
+    screen.prev_page()
 
     print_screen(screen, "Hit ENTER to move up!")
     screen.prev_page()

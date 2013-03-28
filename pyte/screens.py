@@ -192,7 +192,7 @@ class Screen(list):
         """
         self[:] = (take(self.columns, self.default_line)
                    for _ in range(self.lines))
-        self.mode = set([mo.DECAWM, mo.DECTCEM, mo.LNM])
+        self.mode = set([mo.DECAWM, mo.DECTCEM])
         self.margins = Margins(0, self.lines - 1)
 
         # According to VT220 manual and ``linux/drivers/tty/vt.c``
@@ -445,6 +445,8 @@ class Screen(list):
 
         if mo.LNM in self.mode:
             self.carriage_return()
+
+        self.ensure_bounds()
 
     def tab(self):
         """Move to the next tab space, or the end of the screen if there

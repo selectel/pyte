@@ -10,7 +10,7 @@ if sys.version_info[0] == 2:
     from future_builtins import map
     str = unicode
 
-from pyte import HistoryScreen, Stream, ctrl
+from pyte import HistoryScreen, Stream, ctrl, modes as mo
 
 
 
@@ -87,6 +87,7 @@ def test_reverse_index():
 
 def test_prev_page():
     screen = HistoryScreen(4, 4, history=40)
+    screen.set_mode(mo.LNM)
 
     assert screen.history.position == 40
 
@@ -161,6 +162,7 @@ def test_prev_page():
 
     # c) same with odd number of lines.
     screen = HistoryScreen(5, 5, history=50)
+    screen.set_mode(mo.LNM)
 
     for idx in range(len(screen) * 10):
         for ch in str(idx):
@@ -199,6 +201,7 @@ def test_prev_page():
 
     # d) same with cursor in the middle of the screen.
     screen = HistoryScreen(5, 5, history=50)
+    screen.set_mode(mo.LNM)
 
     for idx in range(len(screen) * 10):
         for ch in str(idx):
@@ -247,6 +250,7 @@ def test_prev_page():
 
     # e) same with cursor near the middle of the screen.
     screen = HistoryScreen(5, 5, history=50)
+    screen.set_mode(mo.LNM)
 
     for idx in range(len(screen) * 10):
         for ch in str(idx):
@@ -295,6 +299,7 @@ def test_prev_page():
 
 def test_next_page():
     screen = HistoryScreen(5, 5, history=50)
+    screen.set_mode(mo.LNM)
 
     # Once again filling the screen with line numbers, but this time,
     # we need them to span on multiple lines.
@@ -370,6 +375,7 @@ def test_next_page():
 
 def test_ensure_width():
     screen = HistoryScreen(5, 5, history=50)
+    screen.set_mode(mo.LNM)
     stream = Stream()
     stream.attach(screen)
     stream.escape["N"] = "next_page"
@@ -420,6 +426,7 @@ def test_ensure_width():
 
 def test_not_enough_lines():
     screen = HistoryScreen(5, 5, history=6)
+    screen.set_mode(mo.LNM)
 
     for idx in range(len(screen)):
         for ch in str(idx):
@@ -464,6 +471,7 @@ def test_not_enough_lines():
 
 def test_draw():
     screen = HistoryScreen(5, 5, history=50)
+    screen.set_mode(mo.LNM)
     stream = Stream()
     stream.attach(screen)
     stream.escape["N"] = "next_page"
