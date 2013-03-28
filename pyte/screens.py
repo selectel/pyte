@@ -153,14 +153,14 @@ class Screen(list):
         """Hook, called **before** a command is dispatched to the
         :class:`Screen` instance.
 
-        :param unicode command: command name, for example ``"LINEFEED"``.
+        :param str command: command name, for example ``"LINEFEED"``.
         """
 
     def __after__(self, command):
         """Hook, called **after** a command is dispatched to the
         :class:`Screen` instance.
 
-        :param unicode command: command name, for example ``"LINEFEED"``.
+        :param str command: command name, for example ``"LINEFEED"``.
         """
 
     @property
@@ -292,10 +292,10 @@ class Screen(list):
     def set_charset(self, code, mode):
         """Set active ``G0`` or ``G1`` charset.
 
-        :param unicode code: character set code, should be a character
-                             from ``"B0UK"`` -- otherwise ignored.
-        :param unicode mode: if ``"("`` ``G0`` charset is set, if
-                             ``")"`` -- we operate on ``G1``.
+        :param str code: character set code, should be a character
+                         from ``"B0UK"`` -- otherwise ignored.
+        :param str mode: if ``"("`` ``G0`` charset is set, if
+                         ``")"`` -- we operate on ``G1``.
 
         .. warning:: User-defined charsets are currently not supported.
         """
@@ -381,7 +381,7 @@ class Screen(list):
         """Display a character at the current cursor position and advance
         the cursor if :data:`~pyte.modes.DECAWM` is set.
 
-        :param unicode char: a character to display.
+        :param str char: a character to display.
         """
         # Translating a given character.
         char = char.translate([self.g0_charset,
