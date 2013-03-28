@@ -6,8 +6,11 @@ Here you can see the full list of changes between each pyte release.
 Version 0.4.7
 -------------
 
-Bugfix release
+Bugfix release, released on March 28th 2013
 
+- Updated `pyte` and tests suite to work under Python 3.3.
+- Changed `pyte.screens.Screen` so that `LNM` mode is reset by default,
+  see http://www.vt100.net/docs/vt510-rm/LNM for details.
 
 Version 0.4.6
 -------------
