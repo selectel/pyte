@@ -197,7 +197,7 @@ class Screen(list):
         """
         self[:] = (take(self.columns, self.default_line)
                    for _ in range(self.lines))
-        self.mode = set([mo.DECAWM, mo.DECTCEM, mo.LNM, mo.DECTCEM])
+        self.mode = set([mo.DECAWM, mo.DECTCEM, mo.LNM])
         self.margins = Margins(0, self.lines - 1)
 
         # According to VT220 manual and ``linux/drivers/tty/vt.c``
