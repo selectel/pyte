@@ -2,7 +2,8 @@
 
 from __future__ import unicode_literals
 
-from StringIO import StringIO
+import operator
+from cStringIO import StringIO
 
 import pytest
 
@@ -194,19 +195,16 @@ def test_control_characters():
     assert handler.args == (10, 10)
 
 def test_debug_stream():
-    # TODO doctest module docstrings instead
     tests = [
-        (b'foo', '''DRAW f
-                    DRAW o
-                    DRAW o'''),
-        (b'\x1b[1;24r\x1b[4l\x1b[24;1H', '''SET_MARGINS 1; 24
-                                            RESET_MODE 4
-                                            CURSOR_POSITION 24; 1'''),
+        (b"foo", b"DRAW f\nDRAW o\nDRAW o"),
+        (b"\x1b[1;24r\x1b[4l\x1b[24;1H",
+         b"SET_MARGINS 1; 24\nRESET_MODE 4\nCURSOR_POSITION 24; 1"),
     ]
 
     for input, expected in tests:
         output = StringIO()
         stream = DebugStream(to=output)
         stream.feed(input)
-        lines = [s.rstrip() for s in output.getvalue().split('\n') if s]
-        assert lines == [s.strip() for s in expected.split('\n')]
+
+        lines = [l.rstrip() for l in output.getvalue().splitlines()]
+        assert lines == expected.splitlines()
