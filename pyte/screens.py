@@ -125,8 +125,10 @@ class Screen(list):
        -- move cursor to position (9, 9) in the display matrix.
 
     .. versionchanged:: 0.4.7
+    .. warning::
 
-       :data:`~pyte.modes.LNM` is reset by default.
+       :data:`~pyte.modes.LNM` is reset by default, to match VT220
+       specification.
 
     .. seealso::
 
