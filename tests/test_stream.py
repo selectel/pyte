@@ -6,9 +6,9 @@ import operator
 import sys
 
 if sys.version_info[0] == 2:
-    from cStringIO import StringIO as BytesIO
+    from cStringIO import StringIO
 else:
-    from io import BytesIO
+    from io import StringIO
 
 import pytest
 
@@ -204,13 +204,13 @@ def test_control_characters():
 
 def test_debug_stream():
     tests = [
-        (b"foo", b"DRAW f\nDRAW o\nDRAW o"),
+        (b"foo", "DRAW f\nDRAW o\nDRAW o"),
         (b"\x1b[1;24r\x1b[4l\x1b[24;1H",
-         b"SET_MARGINS 1; 24\nRESET_MODE 4\nCURSOR_POSITION 24; 1"),
+         "SET_MARGINS 1; 24\nRESET_MODE 4\nCURSOR_POSITION 24; 1"),
     ]
 
     for input, expected in tests:
-        output = BytesIO()
+        output = StringIO()
         stream = DebugStream(to=output)
         stream.feed(input)
 
