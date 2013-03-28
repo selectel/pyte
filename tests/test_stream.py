@@ -2,9 +2,12 @@
 
 from __future__ import unicode_literals
 
+from StringIO import StringIO
+
 import pytest
 
 from pyte import ctrl, esc
+from pyte.streams import DebugStream
 from . import TestStream, TestByteStream
 
 
@@ -190,3 +193,20 @@ def test_control_characters():
     assert handler.count == 1
     assert handler.args == (10, 10)
 
+def test_debug_stream():
+    # TODO doctest module docstrings instead
+    tests = [
+        (b'foo', '''DRAW f
+                    DRAW o
+                    DRAW o'''),
+        (b'\x1b[1;24r\x1b[4l\x1b[24;1H', '''SET_MARGINS 1; 24
+                                            RESET_MODE 4
+                                            CURSOR_POSITION 24; 1'''),
+    ]
+
+    for input, expected in tests:
+        output = StringIO()
+        stream = DebugStream(to=output)
+        stream.feed(input)
+        lines = [s.rstrip() for s in output.getvalue().split('\n') if s]
+        assert lines == [s.strip() for s in expected.split('\n')]
