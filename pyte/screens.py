@@ -124,6 +124,10 @@ class Screen(list):
        1-indexed**, so, for instance ``ESC [ 10;10 f`` really means
        -- move cursor to position (9, 9) in the display matrix.
 
+    .. versionchanged:: 0.4.7
+
+       :data:`~pyte.modes.LNM` is reset by default.
+
     .. seealso::
 
        `Standard ECMA-48, Section 6.1.1 \
