@@ -398,6 +398,7 @@ class Screen(list):
         # characters already displayed with newly entered.
         if self.cursor.x == self.columns:
             if mo.DECAWM in self.mode:
+                self.carriage_return()
                 self.linefeed()
             else:
                 self.cursor.x -= 1
