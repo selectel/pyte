@@ -227,9 +227,6 @@ class Screen(list):
         be added at the right, and if it has more -- columns will be
         clipped at the right.
 
-        .. note:: According to `xterm`, we should also reset origin
-                  mode and screen margins, see ``xterm/screen.c:1761``.
-
         :param int lines: number of lines in the new screen.
         :param int columns: number of columns in the new screen.
         """
@@ -248,6 +245,7 @@ class Screen(list):
         #    size, take lines off the top.
         elif diff > 0:
             self[:diff] = ()
+            self.cursor.y += diff
 
         # Then resize the columns:
         diff = self.columns - columns
@@ -264,7 +262,6 @@ class Screen(list):
 
         self.lines, self.columns = lines, columns
         self.margins = Margins(0, self.lines - 1)
-        self.reset_mode(mo.DECOM)
 
     def set_margins(self, top=None, bottom=None):
         """Selects top and bottom margins for the scrolling region.
