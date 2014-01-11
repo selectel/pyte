@@ -11,14 +11,12 @@
         | |      __/ |
         |_|     |___/      0.4.8
 
-        -- chicks dig dudes with terminals (c) @samfoo
-
 
 What is ``pyte``?
 -----------------
 
-What is ``pyte``? It's an in memory VTXXX-compatible terminal emulator.
-*XXX* stands for a series video terminals, developed by
+It's an in memory VTXXX-compatible terminal emulator.
+*XXX* stands for a series of video terminals, developed by
 `DEC <http://en.wikipedia.org/wiki/Digital_Equipment_Corporation>`_ between
 1970 and 1995. The first, and probably the most famous one, was VT100
 terminal, which is now a de-facto standard for all virtual terminal
@@ -52,6 +50,6 @@ Similar projects
 here's a few other options worth checking out:
 `Termemulator <http://sourceforge.net/projects/termemulator/>`_,
 `pyqonsole <http://hg.logilab.org/pyqonsole/>`_,
-`webtty <http://code.google.com/p/webtty/>`_
+`webtty <http://code.google.com/p/webtty/>`_,
 `AjaxTerm <http://antony.lesuisse.org/software/ajaxterm/>`_ and of course
 `vt102 <http://github.com/samfoo/vt102>`_.
