@@ -14,9 +14,9 @@ Version 0.4.8
 - `pyte.charsets.LAT1_MAP` was an iterator because of the change in map
   semantics in Python 3
 - Changed `pyte.screens.Screen` to issues a CR in addition to LF when
-  `DECAWM` mode is set and cursor is at the right border of the screen.
-  See http://www.vt100.net/docs/vt510-rm/DECAWM and issue #20 on GitHub
-  for details.
+  `DECAWM` mode is set and the cursor is at the right border of the
+  screen. See http://www.vt100.net/docs/vt510-rm/DECAWM and issue #20
+  on GitHub for details.
 
 Version 0.4.7
 -------------
