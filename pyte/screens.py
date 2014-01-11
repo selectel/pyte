@@ -138,6 +138,13 @@ class Screen(object):
        :data:`~pyte.modes.LNM` is reset by default, to match VT220
        specification.
 
+    .. versionchanged:: 0.4.8
+    .. warning::
+
+       If `DECAWM` mode is set than a cursor will be wrapped to the
+       **beginning* of the next line, which is the behaviour described
+       in ``man console_codes``.
+
     .. seealso::
 
        `Standard ECMA-48, Section 6.1.1 \
