@@ -24,28 +24,28 @@ def test_index():
 
     # Filling the screen with line numbers, so it's easier to
     # track history contents.
-    for idx in range(len(screen)):
+    for idx in range(len(screen.buffer)):
         screen.draw(str(idx))
-        if idx is not len(screen) - 1:
+        if idx is not len(screen.buffer) - 1:
             screen.linefeed()
 
     assert not screen.history.top
     assert not screen.history.bottom
 
     # a) first index, expecting top history to be updated.
-    line = screen[0]
+    line = screen.buffer[0]
     screen.index()
     assert screen.history.top
     assert screen.history.top[-1] == line
 
     # b) second index.
-    line = screen[0]
+    line = screen.buffer[0]
     screen.index()
     assert len(screen.history.top) == 2
     assert screen.history.top[-1] == line
 
     # c) rotation.
-    for _ in range(len(screen) * screen.lines):
+    for _ in range(len(screen.buffer) * screen.lines):
         screen.index()
 
     assert len(screen.history.top) == 25  # pages // 2 * lines
@@ -56,9 +56,9 @@ def test_reverse_index():
 
     # Filling the screen with line numbers, so it's easier to
     # track history contents.
-    for idx in range(len(screen)):
+    for idx in range(len(screen.buffer)):
         screen.draw(str(idx))
-        if idx is not len(screen) - 1:
+        if idx is not len(screen.buffer) - 1:
             screen.linefeed()
 
     assert not screen.history.top
@@ -67,19 +67,19 @@ def test_reverse_index():
     screen.cursor_position()
 
     # a) first index, expecting top history to be updated.
-    line = screen[-1]
+    line = screen.buffer[-1]
     screen.reverse_index()
     assert screen.history.bottom
     assert screen.history.bottom[0] == line
 
     # b) second index.
-    line = screen[-1]
+    line = screen.buffer[-1]
     screen.reverse_index()
     assert len(screen.history.bottom) == 2
     assert screen.history.bottom[1] == line
 
     # c) rotation.
-    for _ in range(len(screen) ** screen.lines):
+    for _ in range(len(screen.buffer) ** screen.lines):
         screen.reverse_index()
 
     assert len(screen.history.bottom) == 50
@@ -93,7 +93,7 @@ def test_prev_page():
 
     # Once again filling the screen with line numbers, but this time,
     # we need them to span on multiple lines.
-    for idx in range(len(screen) * 10):
+    for idx in range(len(screen.buffer) * 10):
         for ch in str(idx):
             screen.draw(ch)
 
@@ -102,7 +102,7 @@ def test_prev_page():
     assert screen.history.top
     assert not screen.history.bottom
     assert screen.history.position == 40
-    assert len(screen) == screen.lines
+    assert len(screen.buffer) == screen.lines
     assert screen.display == [
         "37  ",
         "38  ",
@@ -120,7 +120,7 @@ def test_prev_page():
     # a) first page up.
     screen.prev_page()
     assert screen.history.position == 36
-    assert len(screen) == screen.lines
+    assert len(screen.buffer) == screen.lines
     assert screen.display == [
         "35  ",
         "36  ",
@@ -144,7 +144,7 @@ def test_prev_page():
     # b) second page up.
     screen.prev_page()
     assert screen.history.position == 32
-    assert len(screen) == screen.lines
+    assert len(screen.buffer) == screen.lines
     assert screen.display == [
         "33  ",
         "34  ",
@@ -164,7 +164,7 @@ def test_prev_page():
     screen = HistoryScreen(5, 5, history=50)
     screen.set_mode(mo.LNM)
 
-    for idx in range(len(screen) * 10):
+    for idx in range(len(screen.buffer) * 10):
         for ch in str(idx):
             screen.draw(ch)
 
@@ -183,7 +183,7 @@ def test_prev_page():
 
     screen.prev_page()
     assert screen.history.position == 45
-    assert len(screen) == screen.lines
+    assert len(screen.buffer) == screen.lines
     assert screen.display == [
         "43   ",
         "44   ",
@@ -203,7 +203,7 @@ def test_prev_page():
     screen = HistoryScreen(5, 5, history=50)
     screen.set_mode(mo.LNM)
 
-    for idx in range(len(screen) * 10):
+    for idx in range(len(screen.buffer) * 10):
         for ch in str(idx):
             screen.draw(ch)
 
@@ -226,7 +226,7 @@ def test_prev_page():
         screen.prev_page()
 
     assert screen.history.position == screen.lines
-    assert len(screen) == screen.lines
+    assert len(screen.buffer) == screen.lines
     assert screen.display == [
         "21   ",
         "22   ",
@@ -239,7 +239,7 @@ def test_prev_page():
         screen.next_page()
 
     assert screen.history.position == screen.history.size
-    assert len(screen) == screen.lines
+    assert len(screen.buffer) == screen.lines
     assert screen.display == [
         "46   ",
         "47   ",
@@ -252,7 +252,7 @@ def test_prev_page():
     screen = HistoryScreen(5, 5, history=50)
     screen.set_mode(mo.LNM)
 
-    for idx in range(len(screen) * 10):
+    for idx in range(len(screen.buffer) * 10):
         for ch in str(idx):
             screen.draw(ch)
 
@@ -275,7 +275,7 @@ def test_prev_page():
         screen.prev_page()
 
     assert screen.history.position == screen.lines
-    assert len(screen) == screen.lines
+    assert len(screen.buffer) == screen.lines
     assert screen.display == [
         "21   ",
         "22   ",
@@ -288,7 +288,7 @@ def test_prev_page():
         screen.next_page()
 
     assert screen.history.position == screen.history.size
-    assert len(screen) == screen.lines
+    assert len(screen.buffer) == screen.lines
     assert screen.display == [
         "46   ",
         "47   ",
@@ -303,7 +303,7 @@ def test_next_page():
 
     # Once again filling the screen with line numbers, but this time,
     # we need them to span on multiple lines.
-    for idx in range(len(screen) * 5):
+    for idx in range(len(screen.buffer) * 5):
         for ch in str(idx):
             screen.draw(ch)
 
@@ -312,7 +312,7 @@ def test_next_page():
     assert screen.history.top
     assert not screen.history.bottom
     assert screen.history.position == 50
-    assert len(screen) == screen.lines
+    assert len(screen.buffer) == screen.lines
     assert screen.display == [
         "21   ",
         "22   ",
@@ -347,7 +347,7 @@ def test_next_page():
         "     "
     ]
 
-    assert len(screen) == screen.lines
+    assert len(screen.buffer) == screen.lines
     assert screen.display == [
         "18   ",
         "19   ",
@@ -363,7 +363,7 @@ def test_next_page():
     screen.next_page()
     screen.next_page()
     assert screen.history.position == 45
-    assert len(screen) == screen.lines
+    assert len(screen.buffer) == screen.lines
     assert screen.display == [
         "18   ",
         "19   ",
@@ -381,7 +381,7 @@ def test_ensure_width():
     stream.escape["N"] = "next_page"
     stream.escape["P"] = "prev_page"
 
-    for idx in range(len(screen) * 5):
+    for idx in range(len(screen.buffer) * 5):
         for ch in str(idx) + os.linesep:
             stream.feed(ch)
 
@@ -428,7 +428,7 @@ def test_not_enough_lines():
     screen = HistoryScreen(5, 5, history=6)
     screen.set_mode(mo.LNM)
 
-    for idx in range(len(screen)):
+    for idx in range(len(screen.buffer)):
         for ch in str(idx):
             screen.draw(ch)
 
@@ -477,7 +477,7 @@ def test_draw():
     stream.escape["N"] = "next_page"
     stream.escape["P"] = "prev_page"
 
-    for idx in range(len(screen) * 5):
+    for idx in range(len(screen.buffer) * 5):
         for ch in str(idx) + os.linesep:
             stream.feed(ch)
 
@@ -512,7 +512,7 @@ def test_cursor_is_hidden():
     stream.escape["N"] = "next_page"
     stream.escape["P"] = "prev_page"
 
-    for idx in range(len(screen) * 5):
+    for idx in range(len(screen.buffer) * 5):
         for ch in str(idx) + os.linesep:
             stream.feed(ch)
 
