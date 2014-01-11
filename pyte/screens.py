@@ -396,10 +396,12 @@ class Screen(list):
                                self.g1_charset][self.charset])
 
         # If this was the last column in a line and auto wrap mode is
-        # enabled, move the cursor to the next line. Otherwise replace
-        # characters already displayed with newly entered.
+        # enabled, move the cursor to the beginning of the next line,
+        # otherwise replace characters already displayed with newly
+        # entered.
         if self.cursor.x == self.columns:
             if mo.DECAWM in self.mode:
+                self.carriage_return()
                 self.linefeed()
             else:
                 self.cursor.x -= 1
