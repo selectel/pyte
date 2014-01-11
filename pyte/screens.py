@@ -76,6 +76,8 @@ class Char(_Char):
     """A wrapper around :class:`_Char`, providing some useful defaults
     for most of the attributes.
     """
+    __slots__ = ()
+
     def __new__(cls, data, fg="default", bg="default", bold=False,
                 italics=False, underscore=False, reverse=False,
                 strikethrough=False):
