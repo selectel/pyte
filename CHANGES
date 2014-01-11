@@ -6,8 +6,9 @@ Here you can see the full list of changes between each pyte release.
 Version 0.4.8
 -------------
 
-Bugfix release
-
+- `pyte.screens.Screen` does NOT inherit from builtin `list`, use
+  `screen.buffer` to access individual characters directly. This is
+  a backward INCOMPATIBLE change.
 - `pyte.screens.Char._asdict` was broken on Python 3.3 because of the
   changes in `namedtuple` implementation.
 - `pyte.charsets.LAT1_MAP` was an iterator because of the change in map
