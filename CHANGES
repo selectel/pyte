@@ -6,6 +6,8 @@ Here you can see the full list of changes between each pyte release.
 Version 0.4.8
 -------------
 
+Released on January 13th 2014
+
 - `pyte.screens.Screen` does NOT inherit from builtin `list`, use
   `screen.buffer` to access individual characters directly. This is
   a backward INCOMPATIBLE change.
