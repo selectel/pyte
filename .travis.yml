@@ -4,4 +4,4 @@ python:
   - "2.7"
   - "3.3"
   - "pypy"
-script: python runtests.py
+script: python setup.py test
