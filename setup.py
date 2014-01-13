@@ -2,13 +2,10 @@
 # -*- coding: utf-8 -*-
 
 import os
-import subprocess
 import sys
 
-try:
-    from setuptools import setup, Command
-except ImportError:
-    from distutils.core import setup, Command
+from setuptools import setup
+from setuptools.command.test import test as TestCommand
 
 
 here = os.path.abspath(os.path.dirname(__file__))
@@ -34,28 +31,26 @@ CLASSIFIERS = (
 )
 
 
-class PyTest(Command):
+class PyTest(TestCommand):
     """Unfortunately :mod:`setuptools` support only :mod:`unittest`
     based tests, thus, we have to overider build-in ``test`` command
     to run :mod:`pytest`.
-
-    .. note::
-
-       Please pack your tests, using ``py.test --genscript=runtests.py``
-       before commiting, this will eliminate `pytest` dependency.
     """
-    user_options = []
-    initialize_options = finalize_options = lambda self: None
+    def finalize_options(self):
+        TestCommand.finalize_options(self)
+        self.test_args = []
+        self.test_suite = True
 
-    def run(self):
-        errno = subprocess.call([sys.executable, "runtests.py"])
-        raise SystemExit(errno)
+    def run_tests(self):
+        import pytest
+        sys.exit(pytest.main(self.test_args + ["./tests"]))
 
 
 setup(name="pyte",
       version="0.4.8",
       packages=["pyte"],
       cmdclass={"test": PyTest},
+      tests_require=["pytest"],
       platforms=["any"],
 
       author="Sergei Lebedev",
