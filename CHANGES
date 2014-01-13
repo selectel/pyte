@@ -3,6 +3,21 @@ pyte Changelog
 
 Here you can see the full list of changes between each pyte release.
 
+Version 0.4.8
+-------------
+
+- `pyte.screens.Screen` does NOT inherit from builtin `list`, use
+  `screen.buffer` to access individual characters directly. This is
+  a backward INCOMPATIBLE change.
+- `pyte.screens.Char._asdict` was broken on Python 3.3 because of the
+  changes in `namedtuple` implementation.
+- `pyte.charsets.LAT1_MAP` was an iterator because of the change in map
+  semantics in Python 3
+- Changed `pyte.screens.Screen` to issues a CR in addition to LF when
+  `DECAWM` mode is set and the cursor is at the right border of the
+  screen. See http://www.vt100.net/docs/vt510-rm/DECAWM and issue #20
+  on GitHub for details.
+
 Version 0.4.7
 -------------
 

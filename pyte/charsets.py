@@ -24,7 +24,7 @@ if sys.version_info[0] == 2:
 
 
 #: Latin1.
-LAT1_MAP = map(chr, range(256))
+LAT1_MAP = list(map(chr, range(256)))
 
 #: VT100 graphic character set.
 VT100_MAP = "".join(chr(c) for c in [
