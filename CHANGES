@@ -3,6 +3,13 @@ pyte Changelog
 
 Here you can see the full list of changes between each pyte release.
 
+Version 0.4.9
+-------------
+
+- Fixed a bug in `pyte.screens.Char` initialisation, see issue #24
+  on GitHub for details.
+
+
 Version 0.4.8
 -------------
 
