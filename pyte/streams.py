@@ -140,8 +140,9 @@ class Stream(object):
 
         :param str char: a character to consume.
         """
-        if not isinstance(char, str):
+        if not isinstance(char, basestring):
             raise TypeError("%s requires str input" % self.__class__.__name__)
+        char = str(char)
 
         try:
             self.handlers.get(self.state)(char)
@@ -161,8 +162,9 @@ class Stream(object):
 
         :param str chars: a string to feed from.
         """
-        if not isinstance(chars, str):
+        if not isinstance(chars, basestring):
             raise TypeError("%s requires str input" % self.__class__.__name__)
+        chars = str(chars)
 
         for char in chars: self.consume(char)
 
