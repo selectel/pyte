@@ -8,6 +8,8 @@ Version 0.4.9
 
 - Fixed a bug in `pyte.screens.Char` initialisation, see issue #24
   on GitHub for details.
+- Updated error message in `pyte.streams.Stream`, referencing `str`
+  is relevant for Python 3, but not Python 2.
 
 
 Version 0.4.8
