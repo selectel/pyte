@@ -21,7 +21,7 @@ class counter(object):
     def __init__(self):
         self.count = 0
 
-    def __call__(self, *args):
+    def __call__(self, *args, **kwargs):
         self.count += 1
 
 

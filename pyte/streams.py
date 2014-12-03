@@ -112,7 +112,7 @@ class Stream(object):
         esc.RM: "reset_mode",
         esc.SGR: "select_graphic_rendition",
         esc.DECSTBM: "set_margins",
-        esc.HPA: "cursor_to_column",
+        esc.HPA: "cursor_to_column"
     }
 
     def __init__(self):
@@ -162,9 +162,10 @@ class Stream(object):
         :param str chars: a string to feed from.
         """
         if not isinstance(chars, str):
-            raise TypeError("%s requires str input" % self.__class__.__name__)
+            raise TypeError("%s requires text input" % self.__class__.__name__)
 
-        for char in chars: self.consume(char)
+        for char in chars:
+            self.consume(char)
 
     def attach(self, screen, only=()):
         """Adds a given screen to the listeners queue.
@@ -219,7 +220,8 @@ class Stream(object):
             if hasattr(listener, "__after__"):
                 listener.__after__(event)
         else:
-            if kwargs.get("reset", True): self.reset()
+            if kwargs.get("reset", True):
+                self.reset()
 
     # State transformers.
     # ...................
