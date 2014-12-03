@@ -27,6 +27,7 @@ CLASSIFIERS = (
     "Programming Language :: Python :: 2.6",
     "Programming Language :: Python :: 2.7",
     "Programming Language :: Python :: 3.3",
+    "Programming Language :: Python :: 3.4",
     "Topic :: Terminals :: Terminal Emulators/X Terminals",
 )
 
@@ -47,7 +48,7 @@ class PyTest(TestCommand):
 
 
 setup(name="pyte",
-      version="0.4.8",
+      version="0.4.9",
       packages=["pyte"],
       cmdclass={"test": PyTest},
       tests_require=["pytest"],
@@ -59,5 +60,5 @@ setup(name="pyte",
       long_description=LONG_DESCRIPTION,
       classifiers=CLASSIFIERS,
       keywords=["vt102", "vte", "terminal emulator"],
-      url="https://github.com/selectel/pyte",
+      url="https://github.com/selectel/pyte"
 )
