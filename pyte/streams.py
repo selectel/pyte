@@ -369,7 +369,7 @@ class ByteStream(Stream):
 
 
 class DebugStream(ByteStream):
-    """Stream, which dumps a subset of the dispatched events to a given
+    r"""Stream, which dumps a subset of the dispatched events to a given
     file-like object (:data:`sys.stdout` by default).
 
     >>> stream = DebugStream()
