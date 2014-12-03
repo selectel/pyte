@@ -34,6 +34,14 @@ def update(screen, lines, colored=[]):
 
 # Tests.
 
+def test_initialize_char():
+    # Make sure that char can be correctly initialized with keyword
+    # arguments. See #24 on GitHub for details.
+    for field in Char._fields[1:]:
+        char = Char(field[0], **{field: True})
+        assert getattr(char, field)
+
+
 def test_remove_non_existant_attribute():
     screen = Screen(2, 2)
     assert screen.buffer == [[screen.default_char, screen.default_char]] * 2

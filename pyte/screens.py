@@ -84,7 +84,7 @@ class Char(_Char):
                 italics=False, underscore=False, reverse=False,
                 strikethrough=False):
         return _Char.__new__(cls, data, fg, bg, bold, italics, underscore,
-                             reverse, strikethrough)
+                             strikethrough, reverse)
 
 
 class Cursor(object):

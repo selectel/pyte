@@ -3,6 +3,17 @@ pyte Changelog
 
 Here you can see the full list of changes between each pyte release.
 
+Version 0.4.9
+-------------
+
+Bugfix release, released on December 3rd 2014
+
+- Fixed a bug in `pyte.screens.Char` initialisation, see issue #24
+  on GitHub for details.
+- Updated error message in `pyte.streams.Stream`, referencing `str`
+  is relevant for Python 3, but not Python 2.
+
+
 Version 0.4.8
 -------------
 
