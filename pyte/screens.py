@@ -624,7 +624,7 @@ class Screen(object):
             * ``1`` -- Erases from beginning of line to cursor,
               including cursor position.
             * ``2`` -- Erases complete line.
-        :param bool private: when ``True`` character attributes aren left
+        :param bool private: when ``True`` character attributes are left
                              unchanged **not implemented**.
         """
         interval = (
@@ -652,7 +652,7 @@ class Screen(object):
               including cursor position.
             * ``2`` -- Erases complete display. All lines are erased
               and changed to single-width. Cursor does not move.
-        :param bool private: when ``True`` character attributes aren left
+        :param bool private: when ``True`` character attributes are left
                              unchanged **not implemented**.
         """
         interval = (

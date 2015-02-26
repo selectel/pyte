@@ -314,11 +314,11 @@ class ByteStream(Stream):
 
     By default, the following decoding strategy is used:
 
-    * First, try strict ``"utf-8"``, proceed if recieved and
+    * First, try strict ``"utf-8"``, proceed if received and
       :exc:`UnicodeDecodeError` ...
     * Try strict ``"cp437"``, failed? move on ...
     * Use ``"utf-8"`` with invalid bytes replaced -- this one will
-      allways succeed.
+      always succeed.
 
     >>> stream = ByteStream()
     >>> stream.feed(b"foo".decode("utf-8"))
