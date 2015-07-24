@@ -3,6 +3,14 @@ pyte Changelog
 
 Here you can see the full list of changes between each pyte release.
 
+Version 0.4.10
+--------------
+
+Bugfix release
+
+- Fixed a bug in `pyte.screens.DiffScreen.draw` which marked the wrong
+  line as changed when `DECAWM` was enabled.
+
 Version 0.4.9
 -------------
 
