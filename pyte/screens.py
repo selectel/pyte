@@ -883,8 +883,11 @@ class DiffScreen(Screen):
         super(DiffScreen, self).resize(*args, **kwargs)
 
     def draw(self, *args):
-        self.dirty.add(self.cursor.y)
+        # Call the superclass's method before marking the row as
+        # dirty, as when wrapping is enabled, draw() might change
+        # self.cursor.y.
         super(DiffScreen, self).draw(*args)
+        self.dirty.add(self.cursor.y)
 
     def index(self):
         if self.cursor.y == self.margins.bottom:
