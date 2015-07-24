@@ -120,3 +120,21 @@ def test_erase_in_display():
     screen.dirty.clear()
     screen.erase_in_display(2)
     assert screen.dirty == set(range(0, screen.lines))
+
+
+def test_draw_wrap():
+    screen = DiffScreen(80, 24)
+    screen.set_mode(mo.DECAWM)
+
+    # fill every character cell on the first row
+    for _ in range(80):
+        screen.draw("g")
+    assert screen.cursor.y == 0
+    screen.dirty.clear()
+
+    # now write one more character which should cause wrapping
+    screen.draw("h")
+    assert screen.cursor.y == 1
+    # regression test issue #36 where the wrong line was marked as
+    # dirty
+    assert screen.dirty == set([1])
