@@ -48,7 +48,7 @@ class PyTest(TestCommand):
 
 
 setup(name="pyte",
-      version="0.4.9",
+      version="0.4.10",
       packages=["pyte"],
       cmdclass={"test": PyTest},
       tests_require=["pytest"],
@@ -60,5 +60,4 @@ setup(name="pyte",
       long_description=LONG_DESCRIPTION,
       classifiers=CLASSIFIERS,
       keywords=["vt102", "vte", "terminal emulator"],
-      url="https://github.com/selectel/pyte"
-)
+      url="https://github.com/selectel/pyte")
