@@ -54,7 +54,7 @@ class Stream(object):
 
         `man console_codes <http://linux.die.net/man/4/console_codes>`_
             For details on console codes listed bellow in :attr:`basic`,
-            :attr:`escape`, :attr:`csi` and :attr:`sharp`.
+            :attr:`escape`, :attr:`csi`, :attr:`sharp` and :attr:`percent`.
     """
 
     #: Control sequences, which don't require any arguments.
@@ -84,6 +84,14 @@ class Stream(object):
     #: "sharp" escape sequences -- ``ESC # <N>``.
     sharp = {
         esc.DECALN: "alignment_display",
+    }
+
+    #: "percent" escape sequences (Linux sequence to select character
+    #  set) -- ``ESC % <C>``.
+    percent = {
+        esc.DEFAULT: "charset_default",
+        esc.UTF8: "charset_utf8",
+        esc.UTF8_OBSOLETE: "charset_utf8",
     }
 
     #: CSI escape sequences -- ``CSI P1;P2;...;Pn <fn>``.
@@ -121,6 +129,7 @@ class Stream(object):
             "escape": self._escape,
             "arguments": self._arguments,
             "sharp": self._sharp,
+            "percent": self._percent,
             "charset": self._charset
         }
 
@@ -243,10 +252,13 @@ class Stream(object):
         Most non-VT52 commands start with a left-bracket after the
         escape and then a stream of parameters and a command; with
         a single notable exception -- :data:`escape.DECOM` sequence,
-        which starts with a sharp.
+        which starts with a sharp. [FIXME: I don't know how to
+        update this comment to account for the percent.]
         """
         if char == "#":
             self.state = "sharp"
+        elif char == "%":
+            self.state = "percent"
         elif char == "[":
             self.state = "arguments"
         elif char in "()":
@@ -258,6 +270,10 @@ class Stream(object):
     def _sharp(self, char):
         """Parse arguments of a `"#"` seqence."""
         self.dispatch(self.sharp[char])
+
+    def _percent(self, char):
+        """Parse arguments of a `"%"` seqence."""
+        self.dispatch(self.percent[char])
 
     def _charset(self, char):
         """Parse ``G0`` or ``G1`` charset code."""
