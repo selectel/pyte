@@ -144,7 +144,7 @@ class Stream(object):
         self.current = ""
 
     def consume(self, char):
-        """Consume a single string character and advance the state as
+        """Consumes a single string character and advance the state as
         necessary.
 
         :param str char: a character to consume.
@@ -166,7 +166,7 @@ class Stream(object):
                 raise
 
     def feed(self, chars):
-        """Consume a string and advance the state as necessary.
+        """Consumes a string and advance the state as necessary.
 
         :param str chars: a string to feed from.
         """
@@ -197,7 +197,7 @@ class Stream(object):
                 self.listeners.pop(idx)
 
     def dispatch(self, event, *args, **kwargs):
-        """Dispatch an event.
+        """Dispatches an event.
 
         Event handlers are looked up implicitly in the listeners'
         ``__dict__``, so, if a listener only wants to handle ``DRAW``
@@ -236,7 +236,7 @@ class Stream(object):
     # ...................
 
     def _stream(self, char):
-        """Process a character when in the default ``"stream"`` state."""
+        """Processes a character when in the default ``"stream"`` state."""
         if char in self.basic:
             self.dispatch(self.basic[char])
         elif char == ctrl.ESC:
@@ -247,13 +247,18 @@ class Stream(object):
             self.dispatch("draw", char)
 
     def _escape(self, char):
-        """Handle characters seen when in an escape sequence.
+        """Handles characters seen when in an escape sequence.
 
         Most non-VT52 commands start with a left-bracket after the
         escape and then a stream of parameters and a command; with
         a single notable exception -- :data:`escape.DECOM` sequence,
-        which starts with a sharp. [FIXME: I don't know how to
-        update this comment to account for the percent.]
+        which starts with a sharp.
+
+        .. versionchanged:: 0.4.10
+
+        For compatibility with Linux terminal stream also recognizes
+        ``ESC % C`` sequences for selecting control character set.
+        However, in the current version these are no-op.
         """
         if char == "#":
             self.state = "sharp"
@@ -268,19 +273,19 @@ class Stream(object):
             self.dispatch(self.escape[char])
 
     def _sharp(self, char):
-        """Parse arguments of a `"#"` seqence."""
+        """Parses arguments of a `"#"` sequence."""
         self.dispatch(self.sharp[char])
 
     def _percent(self, char):
-        """Parse arguments of a `"%"` seqence."""
+        """Parses arguments of a `"%"` sequence."""
         self.dispatch(self.percent[char])
 
     def _charset(self, char):
-        """Parse ``G0`` or ``G1`` charset code."""
+        """Parses ``G0`` or ``G1`` charset code."""
         self.dispatch("set_charset", char)
 
     def _arguments(self, char):
-        """Parse arguments of an escape sequence.
+        """Parses arguments of an escape sequence.
 
         All parameters are unsigned, positive decimal integers, with
         the most significant digit sent first. Any parameter greater
@@ -326,7 +331,7 @@ class ByteStream(Stream):
     """A stream, which takes bytes (instead of strings) as input
     and tries to decode them using a given list of possible encodings.
     It uses :class:`codecs.IncrementalDecoder` internally, so broken
-    bytes is not an issue.
+    bytes are not an issue.
 
     By default, the following decoding strategy is used:
 

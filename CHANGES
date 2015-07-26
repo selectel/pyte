@@ -10,6 +10,11 @@ Bugfix release
 
 - Fixed a bug in `pyte.screens.DiffScreen.draw` which marked the wrong
   line as changed when `DECAWM` was enabled.
+- `pyte.streams.Stream` now recognizes ESC % sequences for selecting control
+  character set. However, these operations are no-op in the current version
+  in a sense that `pyte.streams.ByteStream` does not handle them to change
+  encoding.
+
 
 Version 0.4.9
 -------------
