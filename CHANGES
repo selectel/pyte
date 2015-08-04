@@ -6,7 +6,7 @@ Here you can see the full list of changes between each pyte release.
 Version 0.4.10
 --------------
 
-Bugfix release
+Bugfix release, released on August 4th 2015
 
 - Fixed a bug in `pyte.screens.DiffScreen.draw` which marked the wrong
   line as changed when `DECAWM` was enabled.

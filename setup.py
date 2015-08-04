@@ -18,7 +18,7 @@ except IOError:
     LONG_DESCRIPTION = ""
 
 
-CLASSIFIERS = (
+CLASSIFIERS = [
     "Development Status :: 5 - Production/Stable",
     "Environment :: Console",
     "Intended Audience :: Developers",
@@ -29,7 +29,7 @@ CLASSIFIERS = (
     "Programming Language :: Python :: 3.3",
     "Programming Language :: Python :: 3.4",
     "Topic :: Terminals :: Terminal Emulators/X Terminals",
-)
+]
 
 
 class PyTest(TestCommand):
