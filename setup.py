@@ -48,7 +48,7 @@ class PyTest(TestCommand):
 
 
 setup(name="pyte",
-      version="0.4.10",
+      version="0.5.0",
       packages=["pyte"],
       cmdclass={"test": PyTest},
       tests_require=["pytest"],
