@@ -36,11 +36,7 @@ import warnings
 from collections import defaultdict, namedtuple
 
 from . import control as ctrl, escape as esc
-
-
-if sys.version_info[0] == 2:
-    str = unicode
-
+from .compat import str
 
 #: An entry in the :class:`~pyte.streams.Screen` listeners queue.
 ListenerSpec = namedtuple("ListenerSpec", "screen only before after")

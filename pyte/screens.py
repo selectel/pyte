@@ -34,12 +34,7 @@ from collections import deque, namedtuple
 from itertools import islice, repeat
 
 from . import modes as mo, graphics as g, charsets as cs
-
-
-if sys.version_info[0] == 2:
-    from future_builtins import map
-
-    range = xrange
+from .compat import map, range
 
 
 def take(n, iterable):
@@ -354,7 +349,7 @@ class Screen(object):
         # Mark all displayed characters as reverse.
         if mo.DECSCNM in modes:
             self.buffer[:] = ([char._replace(reverse=True) for char in line]
-                       for line in self.buffer)
+                              for line in self.buffer)
             self.select_graphic_rendition(g._SGR["+reverse"])
 
         # Make the cursor visible.
@@ -385,7 +380,7 @@ class Screen(object):
 
         if mo.DECSCNM in modes:
             self.buffer[:] = ([char._replace(reverse=False) for char in line]
-                       for line in self.buffer)
+                              for line in self.buffer)
             self.select_graphic_rendition(g._SGR["-reverse"])
 
         # Hide the cursor.
