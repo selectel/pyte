@@ -9,44 +9,42 @@ Version 0.5.0
 - Deprecated ``Stream.consume`` in favour of ``Stream.feed``. The latter
   allows for a more efficient implementation because it operates on the
   whole input string.
+- Improved ``Stream`` performance by converting FSM to a coroutine as
+  suggested by Jonathan Slenders in issue #41 on GitHub.
 
 Version 0.4.10
 --------------
 
 Bugfix release, released on August 4th 2015
 
-- Fixed a bug in `pyte.screens.DiffScreen.draw` which marked the wrong
+- Fixed a bug in ``DiffScreen.draw`` which marked the wrong
   line as changed when `DECAWM` was enabled.
-- `pyte.streams.Stream` now recognizes ESC % sequences for selecting control
+- ``Stream`` now recognizes ESC % sequences for selecting control
   character set. However, these operations are no-op in the current version
-  in a sense that `pyte.streams.ByteStream` does not handle them to change
-  encoding.
-
+  in a sense that ``ByteStream`` does not handle them to change encoding.
 
 Version 0.4.9
 -------------
 
 Bugfix release, released on December 3rd 2014
 
-- Fixed a bug in `pyte.screens.Char` initialisation, see issue #24
-  on GitHub for details.
-- Updated error message in `pyte.streams.Stream`, referencing `str`
-  is relevant for Python 3, but not Python 2.
-
+- Fixed a bug in ``Char`` initialisation, see issue #24 on GitHub for details.
+- Updated error message in ``Stream``, referencing ``str`` is relevant
+  for Python 3, but not Python 2.
 
 Version 0.4.8
 -------------
 
 Released on January 13th 2014
 
-- `pyte.screens.Screen` does NOT inherit from builtin `list`, use
-  `screen.buffer` to access individual characters directly. This is
-  a backward INCOMPATIBLE change.
-- `pyte.screens.Char._asdict` was broken on Python 3.3 because of the
-  changes in `namedtuple` implementation.
-- `pyte.charsets.LAT1_MAP` was an iterator because of the change in map
-  semantics in Python 3
-- Changed `pyte.screens.Screen` to issues a CR in addition to LF when
+- ``Screen`` does NOT inherit from builtin ``list``, use ``Screen.buffer``
+  to access individual characters directly. This is a backward INCOMPATIBLE
+  change.
+- ``Char._asdict`` was broken on Python 3.3 because of the
+  changes in ``namedtuple`` implementation.
+- ``LAT1_MAP`` was an iterator because of the change in map semantics
+  in Python 3.
+- Changed ``Screen`` to issues a CR in addition to LF when
   `DECAWM` mode is set and the cursor is at the right border of the
   screen. See http://www.vt100.net/docs/vt510-rm/DECAWM and issue #20
   on GitHub for details.
@@ -56,8 +54,8 @@ Version 0.4.7
 
 Bugfix release, released on March 28th 2013
 
-- Updated `pyte` and tests suite to work under Python 3.3.
-- Changed `pyte.screens.Screen` so that `LNM` mode is reset by default,
+- Updated ``pyte`` and tests suite to work under Python 3.3.
+- Changed ``Screen`` so that `LNM` mode is reset by default,
   see http://www.vt100.net/docs/vt510-rm/LNM and issue #11 on GitHub for
   details.
 
@@ -71,15 +69,14 @@ Version 0.4.5
 
 Technical release, released on September 1st 2011
 
-- Created MANIFEST.in file
-- Added CentOS spec file
+- Added MANIFEST.in and CenOS spec file
 
 Version 0.4.4
 -------------
 
 Bugfix release, released on July 17th 2011
 
-- Removed `pdb` calls, left from `HistoryScreen` debugging -- silly,
+- Removed ``pdb`` calls, left from ``HistoryScreen`` debugging -- silly,
   I know :)
 
 Version 0.4.3
@@ -87,7 +84,7 @@ Version 0.4.3
 
 Bugfix release, released on July 12th 2011
 
-- Fixed encoding issues in `DebugStream` -- Unicode was not converted
+- Fixed encoding issues in ``DebugStream`` -- Unicode was not converted
   to bytes properly.
 - Fixed G0-1 charset handling and added VAX42 charset for the ancient
   stuff to work correctly.
