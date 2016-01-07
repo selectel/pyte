@@ -26,7 +26,7 @@ def test_index():
     # track history contents.
     for idx in range(len(screen.buffer)):
         screen.draw(str(idx))
-        if idx is not len(screen.buffer) - 1:
+        if idx != len(screen.buffer) - 1:
             screen.linefeed()
 
     assert not screen.history.top
@@ -58,7 +58,7 @@ def test_reverse_index():
     # track history contents.
     for idx in range(len(screen.buffer)):
         screen.draw(str(idx))
-        if idx is not len(screen.buffer) - 1:
+        if idx != len(screen.buffer) - 1:
             screen.linefeed()
 
     assert not screen.history.top
@@ -373,13 +373,14 @@ def test_next_page():
     ]
 
 
-def test_ensure_width():
+def test_ensure_width(monkeypatch):
     screen = HistoryScreen(5, 5, history=50)
     screen.set_mode(mo.LNM)
+
+    monkeypatch.setattr(Stream, "escape",
+                        dict(N="next_page", P="prev_page", **Stream.escape))
     stream = Stream()
     stream.attach(screen)
-    stream.escape["N"] = "next_page"
-    stream.escape["P"] = "prev_page"
 
     for idx in range(len(screen.buffer) * 5):
         for ch in str(idx) + os.linesep:
@@ -398,8 +399,8 @@ def test_ensure_width():
     screen.resize(5, 2)
     stream.feed(ctrl.ESC + "P")
 
-    assert all(len(l) is not 2 for l in screen.history.top)
-    assert all(len(l) is 2 for l in screen.history.bottom)
+    assert all(len(l) != 2 for l in screen.history.top)
+    assert all(len(l) == 2 for l in screen.history.bottom)
     assert screen.display == [
         "18",
         "19",
@@ -413,8 +414,8 @@ def test_ensure_width():
     screen.resize(5, 10)
     stream.feed(ctrl.ESC + "N")
 
-    assert all(len(l) is 10 for l in list(screen.history.top)[-3:])
-    assert all(len(l) is not 10 for l in screen.history.bottom)
+    assert all(len(l) == 10 for l in list(screen.history.top)[-3:])
+    assert all(len(l) != 10 for l in screen.history.bottom)
     assert screen.display == [
         "21        ",
         "22        ",

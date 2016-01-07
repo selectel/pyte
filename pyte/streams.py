@@ -33,6 +33,7 @@ import os
 import codecs
 import sys
 import warnings
+from collections import defaultdict
 
 from . import control as ctrl, escape as esc
 
@@ -126,18 +127,9 @@ class Stream(object):
 
     def __init__(self):
         self.listeners = []
-        self.reset()
-
-    @property
-    def state(self):
-        return self.handler.__name__[1:]
-
-    def reset(self):
-        """Resets handler to ``"stream"`` and empties parameter attributes."""
-        self.handler = self._stream
-        self.flags = {}
-        self.params = []
-        self.current = ""
+        self.state = "stream"
+        self.parser = self._parser_fsm()
+        self.parser.send(None)
 
     def consume(self, char):
         """Consumes a single string character and advance the state as
@@ -164,18 +156,7 @@ class Stream(object):
                             .format(self.__class__.__name__))
 
         for char in chars:
-            try:
-                self.handler(char)
-            except TypeError:
-                pass
-            except KeyError:
-                if __debug__:
-                    self.flags["state"] = self.state
-                    self.flags["unhandled"] = char
-                    self.dispatch("debug", *self.params)
-                    self.reset()
-                else:
-                    raise
+            self.parser.send(char)
 
     def attach(self, screen, only=()):
         """Adds a given screen to the listeners queue.
@@ -197,7 +178,7 @@ class Stream(object):
             if screen is listener:
                 self.listeners.pop(idx)
 
-    def dispatch(self, event, *args, **kwargs):
+    def dispatch(self, event, *args, **flags):
         """Dispatches an event.
 
         Event handlers are looked up implicitly in the listeners'
@@ -211,7 +192,8 @@ class Stream(object):
            subsequent callbacks are be aborted.
 
         :param str event: event to dispatch.
-        :param list args: arguments to pass to event handlers.
+        :param tuple args: positional arguments to pass to event handler.
+        :param dict flags: keyword arguments to pass to event handler.
         """
         for listener, only in self.listeners:
             if only and event not in only:
@@ -225,107 +207,111 @@ class Stream(object):
             if hasattr(listener, "__before__"):
                 listener.__before__(event)
 
-            handler(*args, **self.flags)
+            handler(*args, **flags)
 
             if hasattr(listener, "__after__"):
                 listener.__after__(event)
-        else:
-            if kwargs.get("reset", True):
-                self.reset()
 
-    # State transformers.
-    # ...................
+    def _parser_fsm(self):
+        # In order to avoid getting KeyError exceptions below, we make sure
+        # that these dictionaries resolve to ``"debug"``.
+        basic = defaultdict(lambda: "debug", self.basic)
+        escape = defaultdict(lambda: "debug", self.escape)
+        sharp = defaultdict(lambda: "debug", self.sharp)
+        percent = defaultdict(lambda: "debug", self.percent)
+        csi = defaultdict(lambda: "debug", self.csi)
 
-    def _stream(self, char):
-        """Processes a character when in the default ``"stream"`` state."""
-        if char in self.basic:
-            self.dispatch(self.basic[char])
-        elif char == ctrl.ESC:
-            self.handler = self._escape
-        elif char == ctrl.CSI:
-            self.handler = self._arguments
-        elif char not in [ctrl.NUL, ctrl.DEL]:
-            self.dispatch("draw", char)
+        dispatch = self.dispatch
 
-    def _escape(self, char):
-        """Handles characters seen when in an escape sequence.
+        ESC, CSI, SP = ctrl.ESC, ctrl.CSI, ctrl.SP
+        NUL_OR_DEL = [ctrl.NUL, ctrl.DEL]
+        CAN_OR_SUB = [ctrl.CAN, ctrl.SUB]
+        ALLOWED_IN_CSI = [ctrl.BEL, ctrl.BS, ctrl.HT, ctrl.LF, ctrl.VT,
+                          ctrl.FF, ctrl.CR]
+        while True:
+            self.state = "stream"
+            char = yield
+            if char == ESC:
+                # Most non-VT52 commands start with a left-bracket after the
+                # escape and then a stream of parameters and a command; with
+                # a single notable exception -- :data:`escape.DECOM` sequence,
+                # which starts with a sharp.
+                #
+                # .. versionchanged:: 0.4.10
+                #
+                #    For compatibility with Linux terminal stream also
+                #    recognizes ``ESC % C`` sequences for selecting control
+                #    character set. However, in the current version these
+                #    are no-op.
+                self.state = "escape"
+                char = yield
+                if char == "[":
+                    char = CSI  # Go to CSI.
+                else:
+                    if char == "#":
+                        self.state = "sharp"
+                        dispatch(sharp[(yield)])
+                    if char == "%":
+                        self.state = "percent"
+                        dispatch(percent[(yield)])
+                    elif char in "()":
+                        self.state = "charset"
+                        dispatch("set_charset", (yield), mode=char)
+                    else:
+                        dispatch(escape[char])
+                    continue  # Don't go to CSI.
 
-        Most non-VT52 commands start with a left-bracket after the
-        escape and then a stream of parameters and a command; with
-        a single notable exception -- :data:`escape.DECOM` sequence,
-        which starts with a sharp.
+            if char in basic:
+                dispatch(basic[char])
+            elif char == CSI:
+                # All parameters are unsigned, positive decimal integers, with
+                # the most significant digit sent first. Any parameter greater
+                # than 9999 is set to 9999. If you do not specify a value, a 0
+                # value is assumed.
+                #
+                # .. seealso::
+                #
+                #    `VT102 User Guide <http://vt100.net/docs/vt102-ug/>`_
+                #        For details on the formatting of escape arguments.
+                #
+                #    `VT220 Programmer Reference <http://vt100.net/docs/vt220-rm/>`_
+                #        For details on the characters valid for use as
+                #        arguments.
+                self.state = "arguments"
 
-        .. versionchanged:: 0.4.10
+                params = []
+                current = ""
+                private = False
+                while True:
+                    char = yield
+                    if char == "?":
+                        private = True
+                    elif char in ALLOWED_IN_CSI:
+                        dispatch(basic[char])
+                    elif char == SP:
+                        pass
+                    elif char in CAN_OR_SUB:
+                        # If CAN or SUB is received during a sequence, the
+                        # current sequence is aborted; terminal displays the
+                        # substitute character, followed by characters in the
+                        # sequence received after CAN or SUB.
+                        dispatch("draw", char)
+                        break
+                    elif char.isdigit():
+                        current += char
+                    else:
+                        params.append(min(int(current or 0), 9999))
 
-           For compatibility with Linux terminal stream also recognizes
-           ``ESC % C`` sequences for selecting control character set.
-           However, in the current version these are no-op.
-        """
-        if char == "#":
-            self.handler = self._sharp
-        elif char == "%":
-            self.handler = self._percent
-        elif char == "[":
-            self.handler = self._arguments
-        elif char in "()":
-            self.handler = self._charset
-            self.flags["mode"] = char
-        else:
-            self.dispatch(self.escape[char])
-
-    def _sharp(self, char):
-        """Parses arguments of a `"#"` sequence."""
-        self.dispatch(self.sharp[char])
-
-    def _percent(self, char):
-        """Parses arguments of a `"%"` sequence."""
-        self.dispatch(self.percent[char])
-
-    def _charset(self, char):
-        """Parses ``G0`` or ``G1`` charset code."""
-        self.dispatch("set_charset", char)
-
-    def _arguments(self, char):
-        """Parses arguments of an escape sequence.
-
-        All parameters are unsigned, positive decimal integers, with
-        the most significant digit sent first. Any parameter greater
-        than 9999 is set to 9999. If you do not specify a value, a 0
-        value is assumed.
-
-        .. seealso::
-
-           `VT102 User Guide <http://vt100.net/docs/vt102-ug/>`_
-               For details on the formatting of escape arguments.
-
-           `VT220 Programmer Reference <http://vt100.net/docs/vt220-rm/>`_
-               For details on the characters valid for use as arguments.
-        """
-        if char == "?":
-            self.flags["private"] = True
-        elif char in [ctrl.BEL, ctrl.BS, ctrl.HT, ctrl.LF, ctrl.VT,
-                      ctrl.FF, ctrl.CR]:
-            # Not sure why, but those seem to be allowed between CSI
-            # sequence arguments.
-            self.dispatch(self.basic[char], reset=False)
-        elif char == ctrl.SP:
-            pass
-        elif char in [ctrl.CAN, ctrl.SUB]:
-            # If CAN or SUB is received during a sequence, the current
-            # sequence is aborted; terminal displays the substitute
-            # character, followed by characters in the sequence received
-            # after CAN or SUB.
-            self.dispatch("draw", char)
-            self.handler = self._stream
-        elif char.isdigit():
-            self.current += char
-        else:
-            self.params.append(min(int(self.current or 0), 9999))
-
-            if char == ";":
-                self.current = ""
-            else:
-                self.dispatch(self.csi[char], *self.params)
+                        if char == ";":
+                            current = ""
+                        else:
+                            if private:
+                                dispatch(csi[char], *params, private=True)
+                            else:
+                                dispatch(csi[char], *params)
+                            break  # CSI is finished.
+            elif char not in NUL_OR_DEL:
+                dispatch("draw", char)
 
 
 class ByteStream(Stream):
