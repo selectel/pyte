@@ -33,13 +33,21 @@ import os
 import codecs
 import sys
 import warnings
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 
 from . import control as ctrl, escape as esc
 
 
 if sys.version_info[0] == 2:
     str = unicode
+
+
+#: An entry in the :class:`~pyte.streams.Screen` listeners queue.
+ListenerSpec = namedtuple("ListenerSpec", "screen only before after")
+
+
+def noop(event):
+    """A noop before-after hook for :class:`~pyte.streams.ListenerSpec`."""
 
 
 class Stream(object):
@@ -127,7 +135,7 @@ class Stream(object):
 
     def __init__(self):
         self.listeners = []
-        self.state = "stream"
+        self.state = "stream"  # Only used for testing.
         self.parser = self._parser_fsm()
         self.parser.send(None)
 
@@ -155,34 +163,37 @@ class Stream(object):
             raise TypeError("{0} requires text input"
                             .format(self.__class__.__name__))
 
+        send = self.parser.send
         for char in chars:
-            self.parser.send(char)
+            send(char)
 
     def attach(self, screen, only=()):
-        """Adds a given screen to the listeners queue.
+        """Adds a given screen to the listener queue.
 
         :param pyte.screens.Screen screen: a screen to attach to.
         :param list only: a list of events you want to dispatch to a
                           given screen (empty by default, which means
                           -- dispatch all events).
         """
-        self.listeners.append((screen, set(only)))
+        before = getattr(screen, "__before__", noop)
+        after = getattr(screen, "__after__", noop)
+        self.listeners.append(ListenerSpec(screen, set(only), before, after))
 
     def detach(self, screen):
-        """Removes a given screen from the listeners queue and failes
+        """Removes a given screen from the listener queue and failes
         silently if it's not attached.
 
         :param pyte.screens.Screen screen: a screen to detach.
         """
-        for idx, (listener, _) in enumerate(self.listeners):
-            if screen is listener:
+        for idx, spec in enumerate(self.listeners):
+            if screen is spec.screen:
                 self.listeners.pop(idx)
 
     def dispatch(self, event, *args, **flags):
         """Dispatches an event.
 
-        Event handlers are looked up implicitly in the listeners'
-        ``__dict__``, so, if a listener only wants to handle ``DRAW``
+        Event handlers are looked up implicitly in the screen's
+        ``__dict__``, so, if a screen only wants to handle ``DRAW``
         events it should define a ``draw()`` method or pass
         ``only=["draw"]`` argument to :meth:`attach`.
 
@@ -195,22 +206,18 @@ class Stream(object):
         :param tuple args: positional arguments to pass to event handler.
         :param dict flags: keyword arguments to pass to event handler.
         """
-        for listener, only in self.listeners:
+        for screen, only, before, after in self.listeners:
             if only and event not in only:
                 continue
 
             try:
-                handler = getattr(listener, event)
+                handler = getattr(screen, event)
             except AttributeError:
                 continue
 
-            if hasattr(listener, "__before__"):
-                listener.__before__(event)
-
+            before(event)
             handler(*args, **flags)
-
-            if hasattr(listener, "__after__"):
-                listener.__after__(event)
+            after(event)
 
     def _parser_fsm(self):
         # In order to avoid getting KeyError exceptions below, we make sure
@@ -242,7 +249,7 @@ class Stream(object):
                 #    For compatibility with Linux terminal stream also
                 #    recognizes ``ESC % C`` sequences for selecting control
                 #    character set. However, in the current version these
-                #    are no-op.
+                #    are noop.
                 self.state = "escape"
                 char = yield
                 if char == "[":
@@ -274,7 +281,7 @@ class Stream(object):
                 #    `VT102 User Guide <http://vt100.net/docs/vt102-ug/>`_
                 #        For details on the formatting of escape arguments.
                 #
-                #    `VT220 Programmer Reference <http://vt100.net/docs/vt220-rm/>`_
+                #    `VT220 Programmer Ref. <http://vt100.net/docs/vt220-rm/>`_
                 #        For details on the characters valid for use as
                 #        arguments.
                 self.state = "arguments"
