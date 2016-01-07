@@ -32,6 +32,7 @@ from __future__ import absolute_import, unicode_literals
 import os
 import codecs
 import sys
+import warnings
 
 from . import control as ctrl, escape as esc
 
@@ -124,21 +125,16 @@ class Stream(object):
     }
 
     def __init__(self):
-        self.handlers = {
-            "stream": self._stream,
-            "escape": self._escape,
-            "arguments": self._arguments,
-            "sharp": self._sharp,
-            "percent": self._percent,
-            "charset": self._charset
-        }
-
         self.listeners = []
         self.reset()
 
+    @property
+    def state(self):
+        return self.handler.__name__[1:]
+
     def reset(self):
-        """Reset state to ``"stream"`` and empty parameter attributes."""
-        self.state = "stream"
+        """Resets handler to ``"stream"`` and empties parameter attributes."""
+        self.handler = self._stream
         self.flags = {}
         self.params = []
         self.current = ""
@@ -148,22 +144,15 @@ class Stream(object):
         necessary.
 
         :param str char: a character to consume.
-        """
-        if not isinstance(char, str):
-            raise TypeError("%s requires str input" % self.__class__.__name__)
 
-        try:
-            self.handlers.get(self.state)(char)
-        except TypeError:
-            pass
-        except KeyError:
-            if __debug__:
-                self.flags["state"] = self.state
-                self.flags["unhandled"] = char
-                self.dispatch("debug", *self.params)
-                self.reset()
-            else:
-                raise
+        .. deprecated:: 0.5.0
+
+           Use :meth:`feed` instead.
+        """
+        warnings.warn(".consume is deprecated and will be removed in "
+                      "pyte 0.5.1. Please use .feed instead.",
+                      category=DeprecationWarning)
+        return self.feed(char)
 
     def feed(self, chars):
         """Consumes a string and advance the state as necessary.
@@ -171,10 +160,22 @@ class Stream(object):
         :param str chars: a string to feed from.
         """
         if not isinstance(chars, str):
-            raise TypeError("%s requires text input" % self.__class__.__name__)
+            raise TypeError("{0} requires text input"
+                            .format(self.__class__.__name__))
 
         for char in chars:
-            self.consume(char)
+            try:
+                self.handler(char)
+            except TypeError:
+                pass
+            except KeyError:
+                if __debug__:
+                    self.flags["state"] = self.state
+                    self.flags["unhandled"] = char
+                    self.dispatch("debug", *self.params)
+                    self.reset()
+                else:
+                    raise
 
     def attach(self, screen, only=()):
         """Adds a given screen to the listeners queue.
@@ -240,9 +241,9 @@ class Stream(object):
         if char in self.basic:
             self.dispatch(self.basic[char])
         elif char == ctrl.ESC:
-            self.state = "escape"
+            self.handler = self._escape
         elif char == ctrl.CSI:
-            self.state = "arguments"
+            self.handler = self._arguments
         elif char not in [ctrl.NUL, ctrl.DEL]:
             self.dispatch("draw", char)
 
@@ -256,18 +257,18 @@ class Stream(object):
 
         .. versionchanged:: 0.4.10
 
-        For compatibility with Linux terminal stream also recognizes
-        ``ESC % C`` sequences for selecting control character set.
-        However, in the current version these are no-op.
+           For compatibility with Linux terminal stream also recognizes
+           ``ESC % C`` sequences for selecting control character set.
+           However, in the current version these are no-op.
         """
         if char == "#":
-            self.state = "sharp"
+            self.handler = self._sharp
         elif char == "%":
-            self.state = "percent"
+            self.handler = self._percent
         elif char == "[":
-            self.state = "arguments"
+            self.handler = self._arguments
         elif char in "()":
-            self.state = "charset"
+            self.handler = self._charset
             self.flags["mode"] = char
         else:
             self.dispatch(self.escape[char])
@@ -297,7 +298,7 @@ class Stream(object):
            `VT102 User Guide <http://vt100.net/docs/vt102-ug/>`_
                For details on the formatting of escape arguments.
 
-           `VT220 Programmer Reference <http://http://vt100.net/docs/vt220-rm/>`_
+           `VT220 Programmer Reference <http://vt100.net/docs/vt220-rm/>`_
                For details on the characters valid for use as arguments.
         """
         if char == "?":
@@ -315,7 +316,7 @@ class Stream(object):
             # character, followed by characters in the sequence received
             # after CAN or SUB.
             self.dispatch("draw", char)
-            self.state = "stream"
+            self.handler = self._stream
         elif char.isdigit():
             self.current += char
         else:

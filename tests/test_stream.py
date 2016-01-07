@@ -47,11 +47,11 @@ def test_basic_sequences():
         handler = counter()
         stream.connect(event, handler)
 
-        stream.consume(ctrl.ESC)
+        stream.feed(ctrl.ESC)
         assert stream.state == "escape"
         assert not handler.count
 
-        stream.consume(cmd)
+        stream.feed(cmd)
         assert stream.state == "stream"
         assert handler.count == 1
 
@@ -88,14 +88,14 @@ def test_non_csi_sequences():
         # a) single param
         handler = argcheck()
         stream.connect(event, handler)
-        stream.consume(ctrl.ESC)
+        stream.feed(ctrl.ESC)
         assert stream.state == "escape"
 
-        stream.consume("[")
+        stream.feed("[")
         assert stream.state == "arguments"
 
-        stream.consume("5")
-        stream.consume(cmd)
+        stream.feed("5")
+        stream.feed(cmd)
 
         assert handler.count == 1
         assert handler.args == (5, )
@@ -104,13 +104,13 @@ def test_non_csi_sequences():
         # b) multiple params, and starts with CSI, not ESC [
         handler = argcheck()
         stream.connect(event, handler)
-        stream.consume(ctrl.CSI)
+        stream.feed(ctrl.CSI)
         assert stream.state == "arguments"
 
-        stream.consume("5")
-        stream.consume(";")
-        stream.consume("12")
-        stream.consume(cmd)
+        stream.feed("5")
+        stream.feed(";")
+        stream.feed("12")
+        stream.feed(cmd)
 
         assert handler.count == 1
         assert handler.args == (5, 12)
