@@ -185,7 +185,7 @@ class Stream(object):
             if screen is spec.screen:
                 self.listeners.pop(idx)
 
-    def dispatch(self, event, *args, **flags):
+    def dispatch(self, event, *args, **kwargs):
         """Dispatches an event.
 
         Event handlers are looked up implicitly in the screen's
@@ -199,8 +199,6 @@ class Stream(object):
            subsequent callbacks are be aborted.
 
         :param str event: event to dispatch.
-        :param tuple args: positional arguments to pass to event handler.
-        :param dict flags: keyword arguments to pass to event handler.
         """
         for screen, only, before, after in self.listeners:
             if only and event not in only:
@@ -212,7 +210,7 @@ class Stream(object):
                 continue
 
             before(event)
-            handler(*args, **flags)
+            handler(*args, **kwargs)
             after(event)
 
     def _parser_fsm(self):
@@ -410,12 +408,12 @@ class DebugStream(ByteStream):
             __before__ = __after__ = lambda *args: None
 
             def __getattr__(self, event):
-                def inner(*args, **flags):
+                def inner(*args, **kwargs):
                     to.write(event.upper() + " ")
                     to.write("; ".join(map(safe_str, args)))
                     to.write(" ")
-                    to.write(", ".join("{0}: {1}".format(name, safe_str(arg))
-                                       for name, arg in flags.items()))
+                    to.write(", ".join("{0}: {1}".format(k, safe_str(v))
+                                       for k, v in kwargs.items()))
                     to.write(os.linesep)
                 return inner
 
