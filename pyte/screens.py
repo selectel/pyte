@@ -88,7 +88,7 @@ class Cursor(object):
     :param int x: horizontal cursor position.
     :param int y: vertical cursor position.
     :param pyte.screens.Char attrs: cursor attributes (see
-        :meth:`~pyte.screens.Screen.selectel_graphic_rendition`
+        :meth:`~pyte.screens.Screen.select_graphic_rendition`
         for details).
     """
     def __init__(self, x, y, attrs=Char(" ")):
@@ -137,16 +137,15 @@ class Screen(object):
     .. warning::
 
        If `DECAWM` mode is set than a cursor will be wrapped to the
-       **beginning* of the next line, which is the behaviour described
+       **beginning** of the next line, which is the behaviour described
        in ``man console_codes``.
 
     .. seealso::
 
        `Standard ECMA-48, Section 6.1.1 \
-       <http://www.ecma-international.org/publications
-       /standards/Ecma-048.htm>`_
-         For a description of the presentational component, implemented
-         by ``Screen``.
+       <http://www.ecma-international.org/publications/standards/Ecma-048.htm>`_
+       for a description of the presentational component, implemented
+       by ``Screen``.
     """
     #: A plain empty character with default foreground and background
     #: colors.

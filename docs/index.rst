@@ -9,8 +9,8 @@
 ``pyte`` users
 --------------
 
-Believe it or not, there're projects which actually **need** a terminal emulator
-library, not many of them use ``pyte`` though:
+Believe it or not, there're projects which actually need a terminal emulator
+library. Not many of them use ``pyte``, though. Here's a shortlist:
 
 * `Selectel <http://selectel.com>`_ -- hey, we wrote this thing :)
 * `Ajenti <http://github.com/ajenti/ajenti>`_ -- easy to use weadmin panel for Linux
@@ -22,8 +22,8 @@ Show me the code!
 -----------------
 
 Head over to our brief :ref:`tutorial` or, if you're feeling brave, dive right
-into the :ref:`api` -- ``pyte`` also has a couple of
-minimal examples in the ``examples/`` directory.
+into the :ref:`api`; ``pyte`` also has a couple of minimal examples in the
+``examples/`` directory.
 
 
 .. toctree::
