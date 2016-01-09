@@ -2,7 +2,6 @@
 
 from __future__ import unicode_literals
 
-import operator
 import sys
 
 if sys.version_info[0] == 2:
@@ -12,7 +11,7 @@ else:
 
 import pytest
 
-from pyte import ctrl, esc
+from pyte import (control as ctrl, escape as esc)
 from pyte.streams import DebugStream
 from . import TestStream, TestByteStream
 

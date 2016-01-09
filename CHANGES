@@ -17,6 +17,8 @@ Version 0.5.0
 - ``Screen.draw`` now properly handles full/ambigous-width characters.
   Thanks to the excellent `wcwidth <https://github.com/jquast/wcwidth>`_
   library by Jeff Quast.
+- Removed re-exports of abrreviated modules (e.g. ``mo`` as a synonym for
+  ``modes``) from ``pyte``.
 
 Version 0.4.10
 --------------

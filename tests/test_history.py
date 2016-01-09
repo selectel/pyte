@@ -4,14 +4,9 @@ from __future__ import unicode_literals
 
 import operator
 import os
-import sys
 
-if sys.version_info[0] == 2:
-    from future_builtins import map
-    str = unicode
-
-from pyte import HistoryScreen, Stream, ctrl, modes as mo
-
+from pyte import HistoryScreen, Stream, control as ctrl, modes as mo
+from pyte.compat import map, str
 
 
 def chars(lines):
@@ -297,6 +292,7 @@ def test_prev_page():
         "     "
     ]
 
+
 def test_next_page():
     screen = HistoryScreen(5, 5, history=50)
     screen.set_mode(mo.LNM)
@@ -355,7 +351,6 @@ def test_next_page():
         "21   ",
         "22   "
     ]
-
 
     # c) double page up -- double page down
     screen.prev_page()

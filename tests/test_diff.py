@@ -2,7 +2,7 @@
 
 from __future__ import unicode_literals
 
-from pyte import DiffScreen, mo
+from pyte import DiffScreen, modes as mo
 
 
 def test_mark_whole_screen():
@@ -42,8 +42,8 @@ def test_mark_single_line():
     assert screen.cursor.y in screen.dirty
 
     # b) rest ...
-    for method in ["insert_characters", "delete_characters", "erase_characters",
-                   "erase_in_line"]:
+    for method in ["insert_characters", "delete_characters",
+                   "erase_characters", "erase_in_line"]:
         screen.dirty.clear()
         getattr(screen, method)()
         assert len(screen.dirty) is 1

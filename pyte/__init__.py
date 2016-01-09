@@ -24,27 +24,14 @@
 from __future__ import absolute_import
 
 __all__ = ("Screen", "DiffScreen", "HistoryScreen",
-           "Stream", "ByteStream", "DebugStream",
-           "ctrl", "esc", "mo", "g", "cs")
-
-from . import (
-    control as ctrl,
-    charsets as cs,
-    escape as esc,
-    graphics as g,
-    modes as mo
-)
+           "Stream", "ByteStream", "DebugStream")
 
 from .screens import Screen, DiffScreen, HistoryScreen
 from .streams import Stream, ByteStream, DebugStream
 
 
 if __debug__:
-    import sys
-
-    if sys.version_info[0] == 2:
-        str = unicode
-
+    from .compat import str
 
     def dis(chars):
         """A :func:`dis.dis` for terminals.
