@@ -9,7 +9,7 @@ License:    	LGPL
 Group:	    	Development/Libraries/Python
 URL:            https://github.com/selectel/pyte
 Source0:        http://pypi.python.org/packages/source/p/pyte/pyte-%{version}.tar.gz
-Requires:       python26
+Requires:       python26 python26-wcwidth
 BuildRequires:  python26-setuptools
 BuildRoot:      %{_tmppath}/pyte-%{version}-%{release}-root-%(%{__id_u} -n)
 
@@ -40,5 +40,7 @@ rm -rf %{buildroot}
 %defattr(-,root,root,-)
 
 %changelog
+* Sun Jan 10 2015 Sergei Leebdev <superbobry@gmail.com>
+- Added wcwidth to requirements
 * Thu Sep 1 2011  Fedor Gogolev <knsd@knsd.net>
 - Initial packaging for CentOS

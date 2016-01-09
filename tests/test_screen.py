@@ -216,6 +216,15 @@ def test_draw():
     assert screen.display == ["yxa", "   ", "   "]
 
 
+def test_draw_wcwidth():
+    # Example from https://github.com/selectel/pyte/issues/9
+    screen = Screen(10, 1)
+    for char in "コンニチハ":
+        screen.draw(char)
+
+    assert screen.cursor.x == screen.columns
+
+
 def test_carriage_return():
     screen = Screen(3, 3)
     screen.cursor.x = 2

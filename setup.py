@@ -50,6 +50,7 @@ class PyTest(TestCommand):
 setup(name="pyte",
       version="0.5.0",
       packages=["pyte"],
+      requires=["wcwidth"],
       cmdclass={"test": PyTest},
       tests_require=["pytest"],
       platforms=["any"],

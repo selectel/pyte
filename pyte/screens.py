@@ -33,6 +33,8 @@ import sys
 from collections import deque, namedtuple
 from itertools import islice, repeat
 
+from wcwidth import wcwidth
+
 from . import (
     charsets as cs,
     control as ctrl,
@@ -404,10 +406,23 @@ class Screen(object):
         the cursor if :data:`~pyte.modes.DECAWM` is set.
 
         :param str char: a character to display.
+
+        .. versionchanged:: 0.5.0
+
+           Character width is taken into account. Specifically, zero-width
+           and unprintable characters do not affect screen state. Full-width
+           characters are rendered into two consecutive character containers.
         """
         # Translating a given character.
-        char = char.translate([self.g0_charset,
-                               self.g1_charset][self.charset])
+        if self.charset:
+            char = char.translate(self.g1_charset)
+        else:
+            char = char.translate(self.g0_charset)
+
+        char_width = wcwidth(char)
+        if char_width <= 0:
+            # Unprintable character or doesn't advance the cursor.
+            return
 
         # If this was the last column in a line and auto wrap mode is
         # enabled, move the cursor to the beginning of the next line,
@@ -418,20 +433,24 @@ class Screen(object):
                 self.carriage_return()
                 self.linefeed()
             else:
-                self.cursor.x -= 1
+                self.cursor.x -= char_width
 
         # If Insert mode is set, new characters move old characters to
         # the right, otherwise terminal is in Replace mode and new
         # characters replace old characters at cursor position.
         if mo.IRM in self.mode:
-            self.insert_characters(1)
+            self.insert_characters(char_width)
 
-        self.buffer[self.cursor.y][self.cursor.x] = self.cursor.attrs \
-            ._replace(data=char)
+        row = self.buffer[self.cursor.y]
+        row[self.cursor.x] = self.cursor.attrs._replace(data=char)
+        if char_width > 1:
+            # Add a stub *after* a two-cell characters. See issue #9
+            # on GitHub.
+            row[self.cursor.x + 1] = self.cursor.attrs._replace(data=" ")
 
         # .. note:: We can't use :meth:`cursor_forward()`, because that
         #           way, we'll never know when to linefeed.
-        self.cursor.x += 1
+        self.cursor.x += char_width
 
     def carriage_return(self):
         """Move the cursor to the beginning of the current line."""
@@ -844,13 +863,22 @@ class Screen(object):
         self.cursor.attrs = self.cursor.attrs._replace(**replace)
 
     def report_device_attributes(self):
-        """Reports terminal identity."""
+        """Reports terminal identity.
+
+        .. versionadded:: 0.5.0
+        """
         # We only implement "primary" DA which is the only DA request
         # VT102 understood, see ``VT102ID`` in ``linux/drivers/tty/vt.c``.
         self.write_process_input(ctrl.CSI + "?6c")
 
     def report_device_status(self, mode):
-        """Reports terminal status or cursor position."""
+        """Reports terminal status or cursor position.
+
+        :param int mode: if 5 -- terminal status, 6 -- cursor position,
+                         otherwise a noop.
+
+        .. versionadded:: 0.5.0
+        """
         if mode == 5:    # Request for terminal status.
             self.write_process_input(ctrl.CSI + "0n")
         elif mode == 6:  # Request for cursor position.
@@ -868,6 +896,8 @@ class Screen(object):
         By default is a noop.
 
         :param str data: data to write to the process ``stdin``.
+
+        .. versionadded:: 0.5.0
         """
 
 

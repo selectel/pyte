@@ -14,6 +14,9 @@ Version 0.5.0
 - Added support for `DA` (device attributes) and `DSR` (device status report).
   The implementation is based on the code by Jonathan Slenders. See issue
   #41 on GitHub.
+- ``Screen.draw`` now properly handles full/ambigous-width characters.
+  Thanks to the excellent `wcwidth <https://github.com/jquast/wcwidth>`_
+  library by Jeff Quast.
 
 Version 0.4.10
 --------------
