@@ -3,15 +3,10 @@
 from __future__ import unicode_literals
 
 import copy
-import sys
-
-if sys.version_info[0] == 2:
-    from future_builtins import map
-    str = unicode
 
 import pytest
 
-from pyte import Screen, Stream, mo
+from pyte import Screen, Stream, modes as mo, control as ctrl
 from pyte.screens import Char
 
 
@@ -54,7 +49,7 @@ def test_remove_non_existant_attribute():
 def test_attributes():
     screen = Screen(2, 2)
     assert screen.buffer == [[screen.default_char, screen.default_char]] * 2
-    screen.select_graphic_rendition(1) # Bold
+    screen.select_graphic_rendition(1)  # Bold
 
     # Still default, since we haven't written anything.
     assert screen.buffer == [[screen.default_char, screen.default_char]] * 2
@@ -71,12 +66,12 @@ def test_colors():
     screen = Screen(2, 2)
     assert screen.buffer == [[screen.default_char, screen.default_char]] * 2
 
-    screen.select_graphic_rendition(30) # black foreground
-    screen.select_graphic_rendition(40) # black background
+    screen.select_graphic_rendition(30)  # black foreground
+    screen.select_graphic_rendition(40)  # black background
     assert screen.cursor.attrs.fg == "black"
     assert screen.cursor.attrs.bg == "black"
 
-    screen.select_graphic_rendition(31) # red foreground
+    screen.select_graphic_rendition(31)  # red foreground
     assert screen.cursor.attrs.fg == "red"
     assert screen.cursor.attrs.bg == "black"
 
@@ -114,15 +109,15 @@ def test_attributes_reset():
     screen.draw("o")
     assert screen.buffer == [
         [Char("f", bold=True), Char("o", bold=True)],
-        [Char("o", bold=True), screen.default_char  ],
+        [Char("o", bold=True), screen.default_char],
     ]
 
     screen.cursor_position()
-    screen.select_graphic_rendition(0) # Reset
+    screen.select_graphic_rendition(0)  # Reset
     screen.draw("f")
     assert screen.buffer == [
         [Char("f"),            Char("o", bold=True)],
-        [Char("o", bold=True), screen.default_char  ],
+        [Char("o", bold=True), screen.default_char],
     ]
 
 
@@ -139,12 +134,11 @@ def test_resize():
     assert screen.size == (3, 3)
     assert len(screen.buffer) == 3
     assert len(screen.buffer[0]) == 3
-    assert screen.buffer == [[screen.default_char,
-                       screen.default_char,
-                       screen.default_char]] * 3
+    assert screen.buffer == [
+        [screen.default_char, screen.default_char, screen.default_char]
+    ] * 3
     assert mo.DECOM not in screen.mode
     assert screen.margins == (0, 2)
-
 
     screen.resize(2, 2)
     assert screen.size == (2, 2)
@@ -152,8 +146,7 @@ def test_resize():
     assert len(screen.buffer[0]) == 2
     assert screen.buffer == [[screen.default_char, screen.default_char]] * 2
 
-
-    # quirks:
+    # Quirks:
     # a) if the current display is thinner than the requested size,
     #    new columns should be added to the right.
     screen = update(Screen(2, 2), ["bo", "sh"], [None, None])
@@ -357,7 +350,7 @@ def test_reverse_index():
         [Char("o"), Char("h")],
     ]
 
-     # ... and again ...
+    # ... and again ...
     screen.reverse_index()
     assert (screen.cursor.y, screen.cursor.x) == (1, 0)
     assert screen.display == ["bo", "  ", "  ", "  ", "oh"]
@@ -699,12 +692,12 @@ def test_delete_lines():
 
     # c) with margins -- trying to delete  more than we have available
     screen = update(Screen(3, 5),
-        ["sam", "is ", "foo", "bar", "baz"],
-        [None,
-         None,
-         [("red", "default")] * 3,
-         [("red", "default")] * 3,
-         None])
+                    ["sam", "is ", "foo", "bar", "baz"],
+                    [None,
+                     None,
+                     [("red", "default")] * 3,
+                     [("red", "default")] * 3,
+                     None])
     screen.set_margins(1, 4)
     screen.cursor.y = 1
     screen.delete_lines(5)
@@ -758,7 +751,9 @@ def test_insert_characters():
 
     # c) inserting more than we have
     screen.insert_characters(10)
-    assert screen.buffer[2] == [Char("f"), screen.default_char, screen.default_char]
+    assert screen.buffer[2] == [
+        Char("f"), screen.default_char, screen.default_char
+    ]
 
     # d) 0 is 1
     screen = update(Screen(3, 3), ["sam", "is ", "foo"], colored=[0])
@@ -903,11 +898,11 @@ def test_erase_character():
 
 def test_erase_in_line():
     screen = update(Screen(5, 5),
-        ["sam i",
-         "s foo",
-         "but a",
-         "re yo",
-         "u?   "], colored=[0])
+                    ["sam i",
+                     "s foo",
+                     "but a",
+                     "re yo",
+                     "u?   "], colored=[0])
     screen.cursor_position(1, 3)
 
     # a) erase from cursor to the end of line
@@ -928,11 +923,11 @@ def test_erase_in_line():
 
     # b) erase from the beginning of the line to the cursor
     screen = update(screen,
-        ["sam i",
-         "s foo",
-         "but a",
-         "re yo",
-         "u?   "], colored=[0])
+                    ["sam i",
+                     "s foo",
+                     "but a",
+                     "re yo",
+                     "u?   "], colored=[0])
     screen.erase_in_line(1)
     assert (screen.cursor.y, screen.cursor.x) == (0, 2)
     assert screen.display == ["    i",
@@ -950,11 +945,11 @@ def test_erase_in_line():
 
     # c) erase the entire line
     screen = update(screen,
-        ["sam i",
-         "s foo",
-         "but a",
-         "re yo",
-         "u?   "], colored=[0])
+                    ["sam i",
+                     "s foo",
+                     "but a",
+                     "re yo",
+                     "u?   "], colored=[0])
     screen.erase_in_line(2)
     assert (screen.cursor.y, screen.cursor.x) == (0, 2)
     assert screen.display == ["     ",
@@ -967,11 +962,11 @@ def test_erase_in_line():
 
 def test_erase_in_display():
     screen = update(Screen(5, 5),
-        ["sam i",
-         "s foo",
-         "but a",
-         "re yo",
-         "u?   "], colored=[2, 3])
+                    ["sam i",
+                     "s foo",
+                     "but a",
+                     "re yo",
+                     "u?   "], colored=[2, 3])
     screen.cursor_position(3, 3)
 
     # a) erase from cursor to the end of the display, including
@@ -996,11 +991,11 @@ def test_erase_in_display():
     # b) erase from the beginning of the display to the cursor,
     #    including it
     screen = update(screen,
-        ["sam i",
-         "s foo",
-         "but a",
-         "re yo",
-         "u?   "], colored=[2, 3])
+                    ["sam i",
+                     "s foo",
+                     "but a",
+                     "re yo",
+                     "u?   "], colored=[2, 3])
     screen.erase_in_display(1)
     assert (screen.cursor.y, screen.cursor.x) == (2, 2)
     assert screen.display == ["     ",
@@ -1210,3 +1205,40 @@ def test_hide_cursor():
     # b) ... and it's back!
     screen.set_mode(mo.DECTCEM)
     assert not screen.cursor.hidden
+
+
+def test_report_device_attributes():
+    screen = Screen(10, 10)
+
+    acc = []
+    screen.write_process_input = acc.append
+    screen.report_device_attributes()
+    assert acc.pop() == ctrl.CSI + "?6c"
+
+
+def test_report_device_status():
+    screen = Screen(10, 10)
+
+    acc = []
+    screen.write_process_input = acc.append
+
+    # a) noop
+    screen.report_device_status(42)
+    assert not acc
+
+    # b) terminal status
+    screen.report_device_status(5)
+    assert acc.pop() == ctrl.CSI + "0n"
+
+    # c) cursor position, DECOM off
+    screen.cursor_to_column(5)
+    screen.report_device_status(6)
+    assert acc.pop() == "{0}{1};{2}R".format(ctrl.CSI, 1, 5)
+
+    # d) cursor position, DECOM on
+    screen.cursor_position()
+    screen.set_margins(5, 9)
+    screen.set_mode(mo.DECOM)
+    screen.cursor_to_line(5)
+    screen.report_device_status(6)
+    assert acc.pop() == "{0}{1};{2}R".format(ctrl.CSI, 5, 1)

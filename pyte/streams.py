@@ -118,6 +118,7 @@ class Stream(object):
         esc.DCH: "delete_characters",
         esc.ECH: "erase_characters",
         esc.HPR: "cursor_forward",
+        esc.DA: "report_device_attributes",
         esc.VPA: "cursor_to_line",
         esc.VPR: "cursor_down",
         esc.HVP: "cursor_position",
@@ -125,6 +126,7 @@ class Stream(object):
         esc.SM: "set_mode",
         esc.RM: "reset_mode",
         esc.SGR: "select_graphic_rendition",
+        esc.DSR: "report_device_status",
         esc.DECSTBM: "set_margins",
         esc.HPA: "cursor_to_column"
     }
@@ -289,7 +291,8 @@ class Stream(object):
                         private = True
                     elif char in ALLOWED_IN_CSI:
                         dispatch(basic[char])
-                    elif char == SP:
+                    elif char == SP or char == ">":
+                        # We don't handle secondary DA atm.
                         pass
                     elif char in CAN_OR_SUB:
                         # If CAN or SUB is received during a sequence, the

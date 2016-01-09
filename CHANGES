@@ -11,6 +11,9 @@ Version 0.5.0
   whole input string.
 - Improved ``Stream`` performance by converting FSM to a coroutine as
   suggested by Jonathan Slenders in issue #41 on GitHub.
+- Added support for `DA` (device attributes) and `DSR` (device status report).
+  The implementation is based on the code by Jonathan Slenders. See issue
+  #41 on GitHub.
 
 Version 0.4.10
 --------------

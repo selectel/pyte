@@ -129,6 +129,9 @@ ECH = "X"
 #: *Horizontal position relative*: Same as :data:`CUF`.
 HPR = "a"
 
+#: *Device Attributes*.
+DA = "c"
+
 #: *Vertical position adjust*: Move cursor to the indicated line,
 #: current column.
 VPA = "d"
@@ -152,6 +155,9 @@ RM = "l"
 #: character attributes that change the character display without
 #: changing the character (see :mod:`pyte.graphics`).
 SGR = "m"
+
+#: *Device status report*.
+DSR = "n"
 
 #: *Select top and bottom margins*: Selects margins, defining the
 #: scrolling region; parameters are top and bottom line. If called

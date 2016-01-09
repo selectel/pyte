@@ -33,7 +33,12 @@ import sys
 from collections import deque, namedtuple
 from itertools import islice, repeat
 
-from . import modes as mo, graphics as g, charsets as cs
+from . import (
+    charsets as cs,
+    control as ctrl,
+    graphics as g,
+    modes as mo
+)
 from .compat import map, range
 
 
@@ -837,6 +842,33 @@ class Screen(object):
                 replace = self.default_char._asdict()
 
         self.cursor.attrs = self.cursor.attrs._replace(**replace)
+
+    def report_device_attributes(self):
+        """Reports terminal identity."""
+        # We only implement "primary" DA which is the only DA request
+        # VT102 understood, see ``VT102ID`` in ``linux/drivers/tty/vt.c``.
+        self.write_process_input(ctrl.CSI + "?6c")
+
+    def report_device_status(self, mode):
+        """Reports terminal status or cursor position."""
+        if mode == 5:    # Request for terminal status.
+            self.write_process_input(ctrl.CSI + "0n")
+        elif mode == 6:  # Request for cursor position.
+            x = self.cursor.x + 1
+            y = self.cursor.y + 1
+
+            # "Origin mode (DECOM) selects line numbering."
+            if mo.DECOM in self.mode:
+                y -= self.margins.top
+            self.write_process_input("{0}{1};{2}R".format(ctrl.CSI, y, x))
+
+    def write_process_input(self, data):
+        """Writes data to the process running inside the terminal.
+
+        By default is a noop.
+
+        :param str data: data to write to the process ``stdin``.
+        """
 
 
 class DiffScreen(Screen):
