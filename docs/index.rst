@@ -30,5 +30,6 @@ into the :ref:`api`; ``pyte`` also has a couple of minimal examples in the
    :hidden:
 
    tutorial
+   examples
    api
    changelog
