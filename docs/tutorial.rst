@@ -54,3 +54,6 @@ that:
 * it doesn't adjust `LINES` and `COLUMNS` on ``"resize"`` event;
 * it doesn't use locale settings (`LC_*` and `LANG`);
 * it doesn't use `TERM` value and expects it to be `"linux"` and only `"linux"`.
+
+And that's it for Hello World! Head over to the `examples
+<https://github.com/selectel/examples>`_ for  more.

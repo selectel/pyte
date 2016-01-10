@@ -52,7 +52,7 @@ class Stream(object):
 
     .. note::
 
-       Stream only accepts  strings as input, but if, for some reason,
+       Stream only accepts text as input, but if, for some reason,
        you need to feed it with bytes, consider using
        :class:`~pyte.streams.ByteStream` instead.
 
@@ -93,7 +93,7 @@ class Stream(object):
     }
 
     #: "percent" escape sequences (Linux sequence to select character
-    #  set) -- ``ESC % <C>``.
+    #: set) -- ``ESC % <C>``.
     percent = {
         esc.DEFAULT: "charset_default",
         esc.UTF8: "charset_utf8",
