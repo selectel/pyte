@@ -14,10 +14,10 @@ Version 0.5.0
 - Added support for `DA` (device attributes) and `DSR` (device status report).
   The implementation is based on the code by Jonathan Slenders. See issue
   #41 on GitHub.
-- ``Screen.draw`` now properly handles full/ambigous-width characters.
+- ``Screen.draw`` now properly handles full/ambiguous-width characters.
   Thanks to the excellent `wcwidth <https://github.com/jquast/wcwidth>`_
   library by Jeff Quast.
-- Removed re-exports of abrreviated modules (e.g. ``mo`` as a synonym for
+- Removed re-exports of abbreviated modules (e.g. ``mo`` as a synonym for
   ``modes``) from ``pyte``.
 - Removed ``Screen.size`` which misleadingly returned constructor arguments
   in reverse order. Please use ``Screen.columns`` and ``Screen.lines``
@@ -41,7 +41,7 @@ Version 0.4.9
 
 Bugfix release, released on December 3rd 2014
 
-- Fixed a bug in ``Char`` initialisation, see issue #24 on GitHub for details.
+- Fixed a bug in ``Char`` initialization, see issue #24 on GitHub for details.
 - Updated error message in ``Stream``, referencing ``str`` is relevant
   for Python 3, but not Python 2.
 
@@ -148,7 +148,7 @@ Released on May 31st 2011
 
 - Added initial support for G0-1 charsets (mappings taken from ``tty``
   kernel driver) and SI, SO escape sequences.
-- Changed ``ByteStream`` to support fallback encodings -- it nows
+- Changed ``ByteStream`` to support fallback encodings -- it now
   takes a list of ``(encoding, errors)`` pairs and traverses it
   left to right on ``feed()``.
 - Switched to ``unicode_literals`` -- one step closer to Python3.
@@ -161,7 +161,7 @@ Released on May 23rd 2011
 - Major rewrite of ``Screen`` internals -- highlights: inherits from
   ``list``; each character is represented by ``namedtuple`` which
   also holds SGR data.
-- Numerous bugfixes, especialy in methods, dealing with manipulating
+- Numerous bugfixes, especially in methods, dealing with manipulating
   character attributes.
 
 Version 0.3.7
@@ -171,6 +171,6 @@ First release after the adoption -- skipped a few version to reflect that.
 Released on May 16th 2011
 
 - Added support for ANSI color codes, as listed in ``man console_codes``.
-  Not implemnted yet: setting alternate font, setting and resetting
+  Not implemented yet: setting alternate font, setting and resetting
   mappings, blinking text.
 - Added a couple of trivial usage examples in the `examples/` dir.

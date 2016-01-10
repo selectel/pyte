@@ -134,7 +134,7 @@ class Screen(object):
 
     .. note::
 
-       According to ``ECMA-48`` standard, **lines and columnns are
+       According to ``ECMA-48`` standard, **lines and columns are
        1-indexed**, so, for instance ``ESC [ 10;10 f`` really means
        -- move cursor to position (9, 9) in the display matrix.
 
@@ -162,7 +162,7 @@ class Screen(object):
     #: colors.
     default_char = Char(data=" ", fg="default", bg="default")
 
-    #: An inifinite sequence of default characters, used for populating
+    #: An infinite sequence of default characters, used for populating
     #: new lines and columns.
     default_line = repeat(default_char)
 
@@ -368,7 +368,7 @@ class Screen(object):
         :param list modes: modes to reset -- hopefully, each mode is a
                            constant from :mod:`pyte.modes`.
         """
-        # Private mode codes are shifted, to be distingiushed from non
+        # Private mode codes are shifted, to be distinguished from non
         # private ones.
         if kwargs.get("private"):
             modes = [mode << 5 for mode in modes]
@@ -694,7 +694,7 @@ class Screen(object):
             self.erase_in_line(how)
 
     def set_tab_stop(self):
-        """Sest a horizontal tab stop at cursor position."""
+        """Sets a horizontal tab stop at cursor position."""
         self.tabstops.add(self.cursor.x)
 
     def clear_tab_stop(self, how=0):

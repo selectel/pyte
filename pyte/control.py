@@ -61,5 +61,5 @@ ESC = "\u001b"
 #: *Delete*: Is ignored.
 DEL = "\u007f"
 
-#: *Control sequence introducer*: An equavalent for ``ESC [``.
+#: *Control sequence introducer*: An equivalent for ``ESC [``.
 CSI = "\u009b"

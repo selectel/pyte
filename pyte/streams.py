@@ -178,7 +178,7 @@ class Stream(object):
         self.listeners.append(ListenerSpec(screen, set(only), before, after))
 
     def detach(self, screen):
-        """Removes a given screen from the listener queue and failes
+        """Removes a given screen from the listener queue and fails
         silently if it's not attached.
 
         :param pyte.screens.Screen screen: a screen to detach.
@@ -344,7 +344,7 @@ class ByteStream(Stream):
     :param list encodings: a list of ``(encoding, errors)`` pairs,
                            where the first element is encoding name,
                            ex: ``"utf-8"`` and second defines how
-                           decoding errors should be handeld; see
+                           decoding errors should be handled; see
                            :meth:`str.decode` for possible values.
     """
 
