@@ -125,13 +125,12 @@ def test_resize():
     screen = Screen(2, 2)
     screen.set_mode(mo.DECOM)
     screen.set_margins(0, 1)
-    assert screen.size == (2, 2)
-    assert screen.columns == 2
+    assert screen.columns == screen.lines == 2
     assert len(screen.buffer[0]) == 2
     assert screen.buffer == [[screen.default_char, screen.default_char]] * 2
 
     screen.resize(3, 3)
-    assert screen.size == (3, 3)
+    assert screen.columns == screen.lines == 3
     assert len(screen.buffer) == 3
     assert len(screen.buffer[0]) == 3
     assert screen.buffer == [
@@ -141,7 +140,7 @@ def test_resize():
     assert screen.margins == (0, 2)
 
     screen.resize(2, 2)
-    assert screen.size == (2, 2)
+    assert screen.columns == screen.lines == 2
     assert len(screen.buffer) == 2
     assert len(screen.buffer[0]) == 2
     assert screen.buffer == [[screen.default_char, screen.default_char]] * 2

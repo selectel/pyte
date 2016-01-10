@@ -19,6 +19,9 @@ Version 0.5.0
   library by Jeff Quast.
 - Removed re-exports of abrreviated modules (e.g. ``mo`` as a synonym for
   ``modes``) from ``pyte``.
+- Removed ``Screen.size`` which misleadingly returned constructor arguments
+  in reverse order. Please use ``Screen.columns`` and ``Screen.lines``
+  instead.
 
 Version 0.4.10
 --------------

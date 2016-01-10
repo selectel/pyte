@@ -15,12 +15,9 @@
     :license: LGPL, see LICENSE for more details.
 """
 
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
-import sys
-
-if sys.version_info[0] == 2:
-    chr = unichr
+from .compat import chr, map
 
 
 #: Latin1.

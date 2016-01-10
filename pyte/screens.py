@@ -29,7 +29,6 @@ from __future__ import absolute_import, unicode_literals, division
 import copy
 import math
 import operator
-import sys
 from collections import deque, namedtuple
 from itertools import islice, repeat
 
@@ -92,12 +91,14 @@ class Char(_Char):
 class Cursor(object):
     """Screen cursor.
 
-    :param int x: horizontal cursor position.
-    :param int y: vertical cursor position.
+    :param int x: 0-based horizontal cursor position.
+    :param int y: 0-based vertical cursor position.
     :param pyte.screens.Char attrs: cursor attributes (see
         :meth:`~pyte.screens.Screen.select_graphic_rendition`
         for details).
     """
+    __slots__ = ("x", "y", "attrs", "hidden")
+
     def __init__(self, x, y, attrs=Char(" ")):
         self.x, self.y, self.attrs, self.hidden = x, y, attrs, False
 
@@ -164,7 +165,8 @@ class Screen(object):
 
     def __init__(self, columns, lines):
         self.savepoints = []
-        self.lines, self.columns = lines, columns
+        self.columns = columns
+        self.lines = lines
         self.buffer = []
         self.reset()
 
@@ -185,11 +187,6 @@ class Screen(object):
 
         :param str command: command name, for example ``"LINEFEED"``.
         """
-
-    @property
-    def size(self):
-        """Returns screen size -- ``(lines, columns)``"""
-        return self.lines, self.columns
 
     @property
     def display(self):
@@ -441,12 +438,12 @@ class Screen(object):
         if mo.IRM in self.mode:
             self.insert_characters(char_width)
 
-        row = self.buffer[self.cursor.y]
-        row[self.cursor.x] = self.cursor.attrs._replace(data=char)
+        line = self.buffer[self.cursor.y]
+        line[self.cursor.x] = self.cursor.attrs._replace(data=char)
         if char_width > 1:
             # Add a stub *after* a two-cell characters. See issue #9
             # on GitHub.
-            row[self.cursor.x + 1] = self.cursor.attrs._replace(data=" ")
+            line[self.cursor.x + 1] = self.cursor.attrs._replace(data=" ")
 
         # .. note:: We can't use :meth:`cursor_forward()`, because that
         #           way, we'll never know when to linefeed.

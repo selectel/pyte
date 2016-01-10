@@ -16,5 +16,6 @@ if sys.version_info[0] == 2:
 
     range = xrange
     str = unicode
+    chr = unichr
 else:
-    from builtins import map, range, str
+    from builtins import map, range, str, chr
