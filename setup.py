@@ -2,10 +2,8 @@
 # -*- coding: utf-8 -*-
 
 import os
-import sys
 
 from setuptools import setup
-from setuptools.command.test import test as TestCommand
 
 
 here = os.path.abspath(os.path.dirname(__file__))
@@ -32,26 +30,11 @@ CLASSIFIERS = [
 ]
 
 
-class PyTest(TestCommand):
-    """Unfortunately :mod:`setuptools` support only :mod:`unittest`
-    based tests, thus, we have to overider build-in ``test`` command
-    to run :mod:`pytest`.
-    """
-    def finalize_options(self):
-        TestCommand.finalize_options(self)
-        self.test_args = []
-        self.test_suite = True
-
-    def run_tests(self):
-        import pytest
-        sys.exit(pytest.main(self.test_args + ["./tests"]))
-
-
 setup(name="pyte",
       version="0.5.1",
       packages=["pyte"],
       install_requires=["wcwidth"],
-      cmdclass={"test": PyTest},
+      setup_requires=["pytest-runner"],
       tests_require=["pytest"],
       platforms=["any"],
 
