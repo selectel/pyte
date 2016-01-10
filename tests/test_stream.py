@@ -141,22 +141,6 @@ def test_mode_csi_sequences():
     assert handler.args == (9, 2)
 
 
-def test_byte_stream():
-    def validator(char):
-        assert "\ufffd" not in char
-
-    stream = TestByteStream(encodings=[("utf_8", "replace")])
-    stream.connect("draw", validator)
-
-    for byte in "Garðabær".encode("utf_8"):
-        if sys.version_info[0] == 3:
-            # HACK(Sergei): in Python 3 a _byte_ is just an `int``, while
-            # in Python 2 it's an instance of `str``.
-            byte = bytes([byte])
-
-        stream.feed(byte)
-
-
 def test_missing_params():
     handler = argcheck()
     stream = TestStream()
@@ -201,6 +185,7 @@ def test_control_characters():
     assert handler.count == 1
     assert handler.args == (10, 10)
 
+
 def test_debug_stream():
     tests = [
         (b"foo", "DRAW f\nDRAW o\nDRAW o"),
@@ -215,3 +200,18 @@ def test_debug_stream():
 
         lines = [l.rstrip() for l in output.getvalue().splitlines()]
         assert lines == expected.splitlines()
+
+
+def test_byte_stream():
+    def validator(char):
+        assert "\ufffd" not in char
+
+    stream = TestByteStream(encodings=[("utf-8", "replace")])
+    stream.connect("draw", validator)
+    stream.feed("Garðabær".encode("utf-8"))
+
+
+def test_byte_stream_failure():
+    stream = TestByteStream(encodings=[("ascii", "strict")])
+    with pytest.raises(ValueError):
+        stream.feed("привет".encode("utf-8"))

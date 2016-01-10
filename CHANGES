@@ -22,6 +22,8 @@ Version 0.5.0
 - Removed ``Screen.size`` which misleadingly returned constructor arguments
   in reverse order. Please use ``Screen.columns`` and ``Screen.lines``
   instead.
+- Fixed a bug in ``ByteStream`` which suppressed the exception if all of
+  the decoders failed to process the input.
 
 Version 0.4.10
 --------------

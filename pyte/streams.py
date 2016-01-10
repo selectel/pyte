@@ -364,20 +364,20 @@ class ByteStream(Stream):
     def feed(self, chars):
         if not isinstance(chars, bytes):
             raise TypeError(
-                "%s requires input in bytes" % self.__class__.__name__)
+                "{0} requires input in bytes".format(self.__class__.__name__))
 
-        for decoder in self.decoders:
+        for idx, decoder in enumerate(self.decoders):
             decoder.setstate(self.buffer)
 
             try:
                 chars = decoder.decode(chars)
             except UnicodeDecodeError:
                 continue
+            else:
+                self.buffer = decoder.getstate()
+                return super(ByteStream, self).feed(chars)
 
-            self.buffer = decoder.getstate()
-            return super(ByteStream, self).feed(chars)
-        else:
-            raise
+        raise ValueError("unknown encoding")
 
 
 class DebugStream(ByteStream):

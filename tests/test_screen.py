@@ -116,7 +116,7 @@ def test_attributes_reset():
     screen.select_graphic_rendition(0)  # Reset
     screen.draw("f")
     assert screen.buffer == [
-        [Char("f"),            Char("o", bold=True)],
+        [Char("f"), Char("o", bold=True)],
         [Char("o", bold=True), screen.default_char],
     ]
 
