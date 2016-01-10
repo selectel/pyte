@@ -84,8 +84,8 @@ class Char(_Char):
     def __new__(cls, data, fg="default", bg="default", bold=False,
                 italics=False, underscore=False, reverse=False,
                 strikethrough=False):
-        return _Char.__new__(cls, data, fg, bg, bold, italics, underscore,
-                             strikethrough, reverse)
+        return super(Char, cls).__new__(cls, data, fg, bg, bold, italics,
+                                        underscore, strikethrough, reverse)
 
 
 class Cursor(object):
@@ -100,7 +100,10 @@ class Cursor(object):
     __slots__ = ("x", "y", "attrs", "hidden")
 
     def __init__(self, x, y, attrs=Char(" ")):
-        self.x, self.y, self.attrs, self.hidden = x, y, attrs, False
+        self.x = x
+        self.y = y
+        self.attrs = attrs
+        self.hidden = False
 
 
 class Screen(object):
@@ -441,8 +444,7 @@ class Screen(object):
         line = self.buffer[self.cursor.y]
         line[self.cursor.x] = self.cursor.attrs._replace(data=char)
         if char_width > 1:
-            # Add a stub *after* a two-cell characters. See issue #9
-            # on GitHub.
+            # Add a stub *after* a two-cell character. See issue #9 on GitHub.
             line[self.cursor.x + 1] = self.cursor.attrs._replace(data=" ")
 
         # .. note:: We can't use :meth:`cursor_forward()`, because that
@@ -629,10 +631,10 @@ class Screen(object):
                             min(self.cursor.x + count, self.columns)):
             self.buffer[self.cursor.y][column] = self.cursor.attrs
 
-    def erase_in_line(self, type_of=0, private=False):
+    def erase_in_line(self, how=0, private=False):
         """Erases a line in a specific way.
 
-        :param int type_of: defines the way the line should be erased in:
+        :param int how: defines the way the line should be erased in:
 
             * ``0`` -- Erases from cursor to end of line, including cursor
               position.
@@ -642,24 +644,25 @@ class Screen(object):
         :param bool private: when ``True`` character attributes are left
                              unchanged **not implemented**.
         """
-        interval = (
+        if how == 0:
             # a) erase from the cursor to the end of line, including
-            # the cursor,
-            range(self.cursor.x, self.columns),
+            #    the cursor,
+            interval = range(self.cursor.x, self.columns)
+        elif how == 1:
             # b) erase from the beginning of the line to the cursor,
-            # including it,
-            range(0, self.cursor.x + 1),
+            #    including it,
+            interval = range(self.cursor.x + 1)
+        elif how == 2:
             # c) erase the entire line.
-            range(0, self.columns)
-        )[type_of]
+            interval = range(self.columns)
 
         for column in interval:
             self.buffer[self.cursor.y][column] = self.cursor.attrs
 
-    def erase_in_display(self, type_of=0, private=False):
+    def erase_in_display(self, how=0, private=False):
         """Erases display in a specific way.
 
-        :param int type_of: defines the way the line should be erased in:
+        :param int how: defines the way the line should be erased in:
 
             * ``0`` -- Erases from cursor to end of screen, including
               cursor position.
@@ -670,42 +673,44 @@ class Screen(object):
         :param bool private: when ``True`` character attributes are left
                              unchanged **not implemented**.
         """
-        interval = (
+        if how == 0:
             # a) erase from cursor to the end of the display, including
-            # the cursor,
-            range(self.cursor.y + 1, self.lines),
+            #    the cursor,
+            interval = range(self.cursor.y + 1, self.lines)
+        elif how == 1:
             # b) erase from the beginning of the display to the cursor,
-            # including it,
-            range(0, self.cursor.y),
+            #    including it,
+            interval = range(self.cursor.y)
+        elif how == 2:
             # c) erase the whole display.
-            range(0, self.lines)
-        )[type_of]
+            interval = range(self.lines)
 
         for line in interval:
             self.buffer[line][:] = \
                 (self.cursor.attrs for _ in range(self.columns))
 
         # In case of 0 or 1 we have to erase the line with the cursor.
-        if type_of in [0, 1]:
-            self.erase_in_line(type_of)
+        if how == 0 or how == 1:
+            self.erase_in_line(how)
 
     def set_tab_stop(self):
         """Sest a horizontal tab stop at cursor position."""
         self.tabstops.add(self.cursor.x)
 
-    def clear_tab_stop(self, type_of=None):
-        """Clears a horizontal tab stop in a specific way, depending
-        on the ``type_of`` value:
+    def clear_tab_stop(self, how=0):
+        """Clears a horizontal tab stop.
 
-        * ``0`` or nothing -- Clears a horizontal tab stop at cursor
-          position.
-        * ``3`` -- Clears all horizontal tab stops.
+        :param int how: defines a way the tab stop should be cleared:
+
+            * ``0`` or nothing -- Clears a horizontal tab stop at cursor
+              position.
+            * ``3`` -- Clears all horizontal tab stops.
         """
-        if not type_of:
+        if how == 0:
             # Clears a horizontal tab stop at cursor position, if it's
             # present, or silently fails if otherwise.
             self.tabstops.discard(self.cursor.x)
-        elif type_of == 3:
+        elif how == 3:
             self.tabstops = set()  # Clears all horizontal tab stops.
 
     def ensure_bounds(self, use_margins=None):
@@ -978,13 +983,15 @@ class DiffScreen(Screen):
         self.dirty.add(self.cursor.y)
         super(DiffScreen, self).erase_in_line(*args)
 
-    def erase_in_display(self, type_of=0):
-        self.dirty.update((
-            range(self.cursor.y + 1, self.lines),
-            range(0, self.cursor.y),
-            range(0, self.lines)
-        )[type_of])
-        super(DiffScreen, self).erase_in_display(type_of)
+    def erase_in_display(self, how=0):
+        if how == 0:
+            self.dirty.update(range(self.cursor.y + 1, self.lines))
+        elif how == 1:
+            self.dirty.update(range(self.cursor.y))
+        elif how == 2:
+            self.dirty.update(range(self.lines))
+
+        super(DiffScreen, self).erase_in_display(how)
 
     def alignment_display(self):
         self.dirty.update(range(self.lines))

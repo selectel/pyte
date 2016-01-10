@@ -336,8 +336,8 @@ class ByteStream(Stream):
     >>> stream.feed(b"foo".decode("utf-8"))
     Traceback (most recent call last):
       File "<stdin>", line 1, in <module>
-      File "pyte/streams.py", line 323, in feed
-        "%s requires input in bytes" % self.__class__.__name__)
+      File "pyte/streams.py", line 367, in feed
+        "{0} requires input in bytes".format(self.__class__.__name__))
     TypeError: ByteStream requires input in bytes
     >>> stream.feed(b"foo")
 
