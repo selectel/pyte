@@ -16,7 +16,6 @@ import os
 import random
 import string
 import sys
-sys.path.append("..")
 
 if sys.version_info[0] == 2:
     input = raw_input
@@ -39,7 +38,7 @@ def random_string(n, alphabet=string.ascii_letters + " "):
 
 
 if __name__ == "__main__":
-    stream = pyte.Stream()  #             v -- means scroll whole page.
+    stream = pyte.Stream()  #          v -- means scroll whole page.
     screen = pyte.HistoryScreen(80, 12, ratio=1)
     screen.set_mode(mo.LNM)
     stream.attach(screen)

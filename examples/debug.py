@@ -14,9 +14,6 @@
 
 from __future__ import print_function, unicode_literals
 
-import sys
-sys.path.append("..")
-
 import pyte
 
 # A blob of `ADOM` output we need to debug. Hey! I know this is ugly ...
