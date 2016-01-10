@@ -3,6 +3,13 @@ pyte Changelog
 
 Here you can see the full list of changes between each pyte release.
 
+Version 0.5.1
+-------------
+
+Bugfix release, released on January 10th 2015
+
+- Fixed dependencies in setup.py.
+
 Version 0.5.0
 -------------
 

@@ -148,7 +148,7 @@ class Stream(object):
            Use :meth:`feed` instead.
         """
         warnings.warn(".consume is deprecated and will be removed in "
-                      "pyte 0.5.1. Please use .feed instead.",
+                      "pyte 0.5.2. Please use .feed instead.",
                       category=DeprecationWarning)
         return self.feed(char)
 
