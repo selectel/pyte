@@ -29,7 +29,7 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.todo',
               'sphinx.ext.intersphinx',
               'sphinx.ext.doctest',
-              'sphinx.ext.viewcode']
+              'sphinx.ext.linkcode']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -90,6 +90,45 @@ pygments_style = 'sphinx'
 # A list of ignored prefixes for module index sorting.
 #modindex_common_prefix = []
 
+linkcode_base_url = "https://github.com/selectel/pyte/tree/"
+
+def resolve_tag():
+    from urllib.request import urlopen
+    from urllib.error import HTTPError
+    try:
+        urlopen(linkcode_base_url + release)
+    except HTTPError:
+        return "master"
+    else:
+        return release
+
+
+tag = resolve_tag()
+
+
+# Resolve function for the linkcode extension.
+def linkcode_resolve(domain, info):
+    def find_source():
+        # try to find the file and line number, based on code from numpy:
+        # https://github.com/numpy/numpy/blob/master/doc/source/conf.py#L286
+        obj = sys.modules[info['module']]
+        for part in info['fullname'].split('.'):
+            obj = getattr(obj, part)
+
+        import inspect
+        import os
+        import pyte
+        fn = inspect.getsourcefile(obj)
+        fn = os.path.relpath(fn, os.path.dirname(pyte.__file__))
+        source, lineno = inspect.getsourcelines(obj)
+        return fn, lineno, lineno + len(source) - 1
+
+    try:
+        filename = 'pyte/%s#L%d-L%d' % find_source()
+    except Exception:
+        return None  # Failed to resolve source or line numbers.
+
+    return linkcode_base_url + "%s/%s" % (tag, filename)
 
 # -- Options for HTML output ---------------------------------------------------
 
