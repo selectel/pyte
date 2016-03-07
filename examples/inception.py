@@ -25,7 +25,7 @@ from pyte import modes as mo
 
 
 def print_screen(screen, text):
-    print(pyte.ctrl.ESC + pyte.esc.RIS)
+    print(pyte.control.ESC + pyte.escape.RIS)
 
     for idx, line in enumerate(screen.display, 1):
         print("{0:2d} {1} ¶".format(idx, line))
