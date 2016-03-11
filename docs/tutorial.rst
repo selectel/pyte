@@ -14,7 +14,7 @@ details.
 In general, if you just want to know what's being displayed on screen you
 can do something like the following:
 
-    >>> fromm __future__ import unicode_literals
+    >>> from __future__ import unicode_literals
     >>> import pyte
     >>> screen = pyte.Screen(80, 24)
     >>> stream = pyte.Stream()
