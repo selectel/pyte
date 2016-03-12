@@ -1220,7 +1220,26 @@ def test_report_device_attributes():
 
     acc = []
     screen.write_process_input = acc.append
+
+    # a) noop
+    screen.report_device_attributes(42)
+    assert not acc
+
+    # b) OK case
     screen.report_device_attributes()
+    assert acc.pop() == ctrl.CSI + "?6c"
+
+
+def test_private_report_device_attributes():
+    # Some console apps (e.g. ADOM) might add ``?`` to the DA request,
+    # even though the VT102/VT220 spec does not allow this.
+    screen = Screen(10, 10)
+    stream = Stream()
+    stream.attach(screen)
+
+    acc = []
+    screen.write_process_input = acc.append
+    stream.feed(ctrl.CSI + "?0c")
     assert acc.pop() == ctrl.CSI + "?6c"
 
 

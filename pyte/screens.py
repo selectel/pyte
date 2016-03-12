@@ -864,14 +864,15 @@ class Screen(object):
 
         self.cursor.attrs = self.cursor.attrs._replace(**replace)
 
-    def report_device_attributes(self):
+    def report_device_attributes(self, mode=0, **kwargs):
         """Reports terminal identity.
 
         .. versionadded:: 0.5.0
         """
         # We only implement "primary" DA which is the only DA request
         # VT102 understood, see ``VT102ID`` in ``linux/drivers/tty/vt.c``.
-        self.write_process_input(ctrl.CSI + "?6c")
+        if mode == 0:
+            self.write_process_input(ctrl.CSI + "?6c")
 
     def report_device_status(self, mode):
         """Reports terminal status or cursor position.
