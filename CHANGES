@@ -6,6 +6,8 @@ Here you can see the full list of changes between each pyte release.
 Version 0.5.2
 -------------
 
+Pi Day bugfix release, released on March 14th, 2016
+
 - Fixed a bug in handling DA request. See issue #46 on GitHub.
 
 Version 0.5.1
