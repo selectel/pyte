@@ -38,10 +38,14 @@ which is an incomplete pure Python implementation of VT100 terminal.
 Installation
 ------------
 
-If you have `pip <https://pip.pypa.io/en/stable>`_ you can do the usual
-``pip install pyte``. Otherwise, download the source from
-`GitHub <https://github.com/selectel/pyte>`_ and run
-``python setup.py install``.
+If you have `pip <https://pip.pypa.io/en/stable>`_ you can do the usual::
+
+    pip install pyte
+
+Otherwise, download the source from `GitHub <https://github.com/selectel/pyte>`_
+and run::
+
+    python setup.py install
 
 Similar projects
 ----------------
