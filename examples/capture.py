@@ -23,7 +23,10 @@ import pyte
 
 
 if __name__ == "__main__":
-    stream = pyte.DebugStream()
+    if len(sys.argv) <= 1:
+        sys.exit("usage: %prog% command [args]")
+
+    stream = pyte.Stream()
     screen = pyte.Screen(80, 24)
     stream.attach(screen)
 
@@ -37,6 +40,6 @@ if __name__ == "__main__":
             p.kill()
             break
         else:
-            stream.feed(os.read(fd, 1024))
+            stream.feed(os.read(fd, 1024).decode())
 
     print(*screen.display, sep="\n")
