@@ -11,6 +11,7 @@ that do:
 * `Ajenti <http://github.com/ajenti/ajenti>`_ -- a webadmin panel for Linux
   and BSD uses ``pyte`` for its terminal plugin.
 * `Pymux <https://github.com/jonathanslenders/pymux>`_ -- a terminal multiplexor.
+* `BastionSSH <https://github.com/wcc526/bastion-ssh>`_ -- Bastion SSH is designed for protecting,monitoring and accessing multiple SSH resources.
 
 .. note:: Using ``pyte``? Add yourself to this list and submit a pull request.
 
