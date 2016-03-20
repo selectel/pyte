@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-    inception
-    ~~~~~~~~~
+    history
+    ~~~~~~~
 
-    A terminal emulator within a terminal emulator within a terminal
-    emulator -- tiny example to show how pagination works.
+    A tiny example to show how pagination works.
 
     :copyright: (c) 2011-2013 by Selectel, see AUTHORS for details.
     :license: LGPL, see LICENSE for more details.
@@ -38,7 +37,8 @@ def random_string(n, alphabet=string.ascii_letters + " "):
 
 
 if __name__ == "__main__":
-    stream = pyte.Stream()  #          v -- means scroll whole page.
+    stream = pyte.Stream()
+    # ``ratio=1`` means scroll the whole screen.
     screen = pyte.HistoryScreen(80, 12, ratio=1)
     screen.set_mode(mo.LNM)
     stream.attach(screen)
