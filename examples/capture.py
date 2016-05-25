@@ -13,6 +13,7 @@
 
 from __future__ import print_function, unicode_literals
 
+import codecs
 import os
 import pty
 import select
@@ -30,6 +31,7 @@ if __name__ == "__main__":
     screen = pyte.Screen(80, 24)
     stream.attach(screen)
 
+    decoder = codecs.getincrementaldecoder(sys.getdefaultencoding())("replace")
     master, slave = pty.openpty()
     p = subprocess.Popen(sys.argv[1:], stdout=slave, stderr=slave)
     while True:
@@ -40,6 +42,6 @@ if __name__ == "__main__":
             p.kill()
             break
         else:
-            stream.feed(os.read(fd, 1024).decode())
+            stream.feed(decoder.decode(os.read(fd, 1024)))
 
     print(*screen.display, sep="\n")
