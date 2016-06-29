@@ -13,8 +13,7 @@ import pytest
 
 from pyte import control as ctrl, escape as esc
 from pyte.screens import Screen
-from pyte.streams import DebugStream
-from . import TestStream, TestByteStream
+from pyte.streams import Stream, ByteStream, DebugStream
 
 
 class counter(object):
@@ -41,11 +40,12 @@ class argstore(object):
 
 
 def test_basic_sequences():
-    stream = TestStream(Screen(80, 24))
+    screen = Screen(80, 24)
+    stream = Stream(screen)
 
     for cmd, event in stream.escape.items():
         handler = counter()
-        stream.connect(event, handler)
+        setattr(screen, event, handler)
 
         stream.feed(ctrl.ESC)
         assert not handler.count
@@ -57,7 +57,7 @@ def test_basic_sequences():
     # trigger it.
     handler = counter()
 
-    stream.connect("linefeed", handler)
+    screen.linefeed = handler
     stream.feed(ctrl.LF + ctrl.VT + ctrl.FF)
 
     assert handler.count == 3
@@ -65,26 +65,24 @@ def test_basic_sequences():
 
 def test_unknown_sequences():
     handler = argcheck()
-    stream = TestStream(Screen(80, 24))
-    stream.connect("debug", handler)
+    screen = Screen(80, 24)
+    screen.debug = handler
 
-    try:
-        stream.feed(ctrl.CSI + "6;Z")
-    except Exception as e:
-        pytest.fail("No exception should've raised, got: %s" % e)
-    else:
-        assert handler.count == 1
-        assert handler.args == (6, 0)
-        assert handler.kwargs == {}
+    stream = Stream(screen)
+    stream.feed(ctrl.CSI + "6;Z")
+    assert handler.count == 1
+    assert handler.args == (6, 0)
+    assert handler.kwargs == {}
 
 
 def test_non_csi_sequences():
-    stream = TestStream(Screen(80, 24))
+    screen = Screen(80, 24)
+    stream = Stream(screen)
 
     for cmd, event in stream.csi.items():
         # a) single param
         handler = argcheck()
-        stream.connect(event, handler)
+        setattr(screen, event, handler)
         stream.feed(ctrl.ESC)
 
         stream.feed("[")
@@ -96,7 +94,7 @@ def test_non_csi_sequences():
 
         # b) multiple params, and starts with CSI, not ESC [
         handler = argcheck()
-        stream.connect(event, handler)
+        setattr(screen, event, handler)
         stream.feed(ctrl.CSI)
         stream.feed("5")
         stream.feed(";")
@@ -109,12 +107,14 @@ def test_non_csi_sequences():
 
 def test_mode_csi_sequences():
     bugger = counter()
-    stream = TestStream(Screen(80, 24))
-    stream.connect("debug", bugger)
+    screen = Screen(80, 24)
+    screen.debug = bugger
+
+    stream = Stream(screen)
 
     # a) set_mode
     handler = argcheck()
-    stream.connect("set_mode", handler)
+    screen.set_mode = handler
     stream.feed(ctrl.CSI + "?9;2h")
 
     assert not bugger.count
@@ -124,7 +124,7 @@ def test_mode_csi_sequences():
 
     # a) reset_mode
     handler = argcheck()
-    stream.connect("reset_mode", handler)
+    screen.reset_mode = handler
     stream.feed(ctrl.CSI + "?9;2l")
 
     assert not bugger.count
@@ -134,9 +134,10 @@ def test_mode_csi_sequences():
 
 def test_missing_params():
     handler = argcheck()
-    stream = TestStream(Screen(80, 24))
-    stream.connect("cursor_position", handler)
+    screen = Screen(80, 24)
+    screen.cursor_position = handler
 
+    stream = Stream(screen)
     stream.feed(ctrl.CSI + ";" + esc.HVP)
     assert handler.count == 1
     assert handler.args == (0, 0)
@@ -144,20 +145,24 @@ def test_missing_params():
 
 def test_overflow():
     handler = argcheck()
-    stream = TestStream(Screen(80, 24))
-    stream.connect("cursor_position", handler)
+    screen = Screen(80, 24)
+    screen.cursor_position = handler
 
+    stream = Stream(screen)
     stream.feed(ctrl.CSI + "999999999999999;99999999999999" + esc.HVP)
     assert handler.count == 1
     assert handler.args == (9999, 9999)
 
 
 def test_interrupt():
-    bugger, handler = argstore(), argcheck()
-    stream = TestStream(Screen(80, 24))
-    stream.connect("draw", bugger)
-    stream.connect("cursor_position", handler)
+    bugger = argstore()
+    handler = argcheck()
 
+    screen = Screen(80, 24)
+    screen.draw = bugger
+    screen.cursor_position = handler
+
+    stream = Stream(screen)
     stream.feed(ctrl.CSI + "10;" + ctrl.SUB + "10" + esc.HVP)
 
     assert not handler.count
@@ -168,9 +173,10 @@ def test_interrupt():
 
 def test_control_characters():
     handler = argcheck()
-    stream = TestStream(Screen(80, 24))
-    stream.connect("cursor_position", handler)
+    screen = Screen(80, 24)
+    screen.cursor_position = handler
 
+    stream = Stream(screen)
     stream.feed(ctrl.CSI + "10;\t\t\n\r\n10" + esc.HVP)
 
     assert handler.count == 1
@@ -197,12 +203,14 @@ def test_byte_stream():
     def validator(char):
         assert "\ufffd" not in char
 
-    stream = TestByteStream(Screen(80, 24), encodings=[("utf-8", "replace")])
-    stream.connect("draw", validator)
+    screen = Screen(80, 24)
+    screen.draw = validator
+
+    stream = ByteStream(screen, encodings=[("utf-8", "replace")])
     stream.feed("Garðabær".encode("utf-8"))
 
 
 def test_byte_stream_failure():
-    stream = TestByteStream(Screen(80, 24), encodings=[("ascii", "strict")])
+    stream = ByteStream(Screen(80, 24), encodings=[("ascii", "strict")])
     with pytest.raises(ValueError):
         stream.feed("привет".encode("utf-8"))
