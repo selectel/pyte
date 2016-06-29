@@ -17,7 +17,7 @@
     ...         self.y += count or 1
     ...
     >>> dummy = Dummy()
-    >>> stream = pyte.Stream()
+    >>> stream = pyte.Stream(strict=False)
     >>> stream.attach(dummy)
     >>> stream.feed(u"\u001B[5A")  # Move the cursor up 5 rows.
     >>> dummy.y
@@ -44,11 +44,22 @@ class Stream(object):
     """A stream is a state machine that parses a stream of characters
     and dispatches events based on what it sees.
 
+    :param pyte.screens.Screen screen: a screen to dispatch events to.
+    :param bool strict: check if a given screen implements all required
+                        events.
+
     .. note::
 
        Stream only accepts text as input, but if, for some reason,
        you need to feed it with bytes, consider using
        :class:`~pyte.streams.ByteStream` instead.
+
+    .. versionchanged 0.6.0::
+
+       For performance reasons the binding between stream events and
+       screen methods was made static. As a result, the stream **will
+       not** dispatch events to methods added to screen **after** the
+       stream was created.
 
     .. seealso::
 
@@ -139,19 +150,20 @@ class Stream(object):
         r"[^{0}]+".format("".join(map(re.escape, _special))))
     del _special
 
-    def __init__(self, screen):
+    def __init__(self, screen, strict=True):
         self.listener = screen
 
-        if __debug__:
+        if strict:
             for event in self.events:
-                error_message = "{0} is missing {1}".format(screen, event)
-                assert hasattr(screen, event), error_message
+                if not hasattr(screen, event):
+                    error_message = "{0} is missing {1}".format(screen, event)
+                    raise TypeError(error_message)
 
         self._parser = self._parser_fsm()
-        self._taking_plain_text = self._parser.send(None)
+        self._taking_plain_text = next(self._parser)
 
     def feed(self, chars):
-        """Consumes a string and advance the state as necessary.
+        """Consumes a string and advances the state as necessary.
 
         :param str chars: a string to feed from.
         """
@@ -160,7 +172,7 @@ class Stream(object):
                             .format(self.__class__.__name__))
 
         send = self._parser.send
-        dispatch = self.dispatch
+        draw = self.listener.draw
         match_text = self._text_pattern.match
         taking_plain_text = self._taking_plain_text
 
@@ -170,7 +182,7 @@ class Stream(object):
                 match = match_text(chars, offset)
                 if match:
                     start, offset = match.span()
-                    dispatch("draw", chars[start:offset])
+                    draw(chars[start:offset])
                 else:
                     taking_plain_text = False
             else:
@@ -179,44 +191,41 @@ class Stream(object):
 
         self._taking_plain_text = taking_plain_text
 
-    def dispatch(self, event, *args, **kwargs):
-        """Dispatches an event.
-
-        Event handlers are looked up implicitly in the screen's
-        ``__dict__``, so, if a screen only wants to handle ``DRAW``
-        events it should define a ``draw()`` method or pass
-        ``only=["draw"]`` argument to :meth:`attach`.
-
-        .. warning::
-
-           If any of the attached listeners throws an exception, the
-           subsequent callbacks are be aborted.
-
-        :param str event: event to dispatch.
-        """
-        try:
-            handler = getattr(self.listener, event)
-        except AttributeError:
-            pass
-        else:
-            handler(*args, **kwargs)
-
     def _parser_fsm(self):
-        # In order to avoid getting KeyError exceptions below, we make sure
-        # that these dictionaries resolve to ``"debug"``.
-        basic = defaultdict(lambda: "debug", self.basic)
-        escape = defaultdict(lambda: "debug", self.escape)
-        sharp = defaultdict(lambda: "debug", self.sharp)
-        percent = defaultdict(lambda: "debug", self.percent)
-        csi = defaultdict(lambda: "debug", self.csi)
+        """An FSM implemented as a coroutine.
 
-        dispatch = self.dispatch
+        This generator is not the most beautiful, but it is as performant
+        as possible. When a process generates a lot of output, then this
+        will be the bottleneck, because it processes just one character
+        at a time.
 
-        ESC, CSI, SP = ctrl.ESC, ctrl.CSI, ctrl.SP
-        NUL_OR_DEL = [ctrl.NUL, ctrl.DEL]
-        CAN_OR_SUB = [ctrl.CAN, ctrl.SUB]
-        ALLOWED_IN_CSI = [ctrl.BEL, ctrl.BS, ctrl.HT, ctrl.LF, ctrl.VT,
-                          ctrl.FF, ctrl.CR]
+        We did many manual optimizations to this function in order to make
+        it as efficient as possible. Don't change anything without profiling
+        first.
+        """
+        basic = self.basic
+        listener = self.listener
+        draw = listener.draw
+        debug = listener.debug
+
+        ESC, CSI = ctrl.ESC, ctrl.CSI
+        SP_OR_GT = ctrl.SP + ">"
+        NUL_OR_DEL = ctrl.NUL + ctrl.DEL
+        CAN_OR_SUB = ctrl.CAN + ctrl.SUB
+        ALLOWED_IN_CSI = "".join([ctrl.BEL, ctrl.BS, ctrl.HT, ctrl.LF,
+                                  ctrl.VT, ctrl.FF, ctrl.CR])
+
+        def create_dispatcher(mapping):
+            # In order to avoid getting KeyError exceptions below, we
+            # make sure that these dictionaries resolve to ``"debug"``.
+            return defaultdict(lambda: debug, dict(
+                (event, getattr(listener, attr))
+                for event, attr in mapping.items()))
+
+        basic_dispatch = create_dispatcher(basic)
+        sharp_dispatch = create_dispatcher(self.sharp)
+        escape_dispatch = create_dispatcher(self.escape)
+        csi_dispatch = create_dispatcher(self.csi)
 
         while True:
             # ``True`` tells ``Screen.feed`` that it is allowed to send
@@ -241,17 +250,17 @@ class Stream(object):
                     char = CSI  # Go to CSI.
                 else:
                     if char == "#":
-                        dispatch(sharp[(yield)])
+                        sharp_dispatch[(yield)]()
                     if char == "%":
-                        dispatch(percent[(yield)])
+                        yield   # Charset support is not there yet.
                     elif char in "()":
-                        dispatch("set_charset", (yield), mode=char)
+                        listener.set_charset((yield), mode=char)
                     else:
-                        dispatch(escape[char])
-                    continue  # Don't go to CSI.
+                        escape_dispatch[char]()
+                    continue    # Don't go to CSI.
 
             if char in basic:
-                dispatch(basic[char])
+                basic_dispatch[char]()
             elif char == CSI:
                 # All parameters are unsigned, positive decimal integers, with
                 # the most significant digit sent first. Any parameter greater
@@ -274,16 +283,16 @@ class Stream(object):
                     if char == "?":
                         private = True
                     elif char in ALLOWED_IN_CSI:
-                        dispatch(basic[char])
-                    elif char == SP or char == ">":
+                        basic_dispatch[char]()
+                    elif char in SP_OR_GT:
                         # We don't handle secondary DA atm.
                         pass
                     elif char in CAN_OR_SUB:
                         # If CAN or SUB is received during a sequence, the
-                        # current sequence is aborted; terminal displays the
-                        # substitute character, followed by characters in the
-                        # sequence received after CAN or SUB.
-                        dispatch("draw", char)
+                        # current sequence is aborted; terminal displays
+                        # the substitute character, followed by characters
+                        # in the sequence received after CAN or SUB.
+                        draw(char)
                         break
                     elif char.isdigit():
                         current += char
@@ -294,12 +303,12 @@ class Stream(object):
                             current = ""
                         else:
                             if private:
-                                dispatch(csi[char], *params, private=True)
+                                csi_dispatch[char](*params, private=True)
                             else:
-                                dispatch(csi[char], *params)
+                                csi_dispatch[char](*params)
                             break  # CSI is finished.
             elif char not in NUL_OR_DEL:
-                dispatch("draw", char)
+                draw(char)
 
 
 class ByteStream(Stream):

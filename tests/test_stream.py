@@ -40,26 +40,28 @@ class argstore(object):
 
 
 def test_basic_sequences():
-    screen = Screen(80, 24)
-    stream = Stream(screen)
-
-    for cmd, event in stream.escape.items():
+    for cmd, event in Stream.escape.items():
+        screen = Screen(80, 24)
         handler = counter()
         setattr(screen, event, handler)
 
+        stream = Stream(screen)
         stream.feed(ctrl.ESC)
         assert not handler.count
 
         stream.feed(cmd)
-        assert handler.count == 1
+        assert handler.count == 1, event
 
-    # ``linefeed``s is somewhat an exception, there's three ways to
+
+def test_linefeed():
+    # ``linefeed`` is somewhat an exception, there's three ways to
     # trigger it.
     handler = counter()
-
+    screen = Screen(80, 24)
     screen.linefeed = handler
-    stream.feed(ctrl.LF + ctrl.VT + ctrl.FF)
 
+    stream = Stream(screen)
+    stream.feed(ctrl.LF + ctrl.VT + ctrl.FF)
     assert handler.count == 3
 
 
@@ -76,57 +78,52 @@ def test_unknown_sequences():
 
 
 def test_non_csi_sequences():
-    screen = Screen(80, 24)
-    stream = Stream(screen)
-
-    for cmd, event in stream.csi.items():
+    for cmd, event in Stream.csi.items():
         # a) single param
         handler = argcheck()
+        screen = Screen(80, 24)
         setattr(screen, event, handler)
-        stream.feed(ctrl.ESC)
 
-        stream.feed("[")
-        stream.feed("5")
-        stream.feed(cmd)
-
+        stream = Stream(screen)
+        stream.feed(ctrl.ESC + "[5" + cmd)
         assert handler.count == 1
         assert handler.args == (5, )
 
         # b) multiple params, and starts with CSI, not ESC [
         handler = argcheck()
+        screen = Screen(80, 24)
         setattr(screen, event, handler)
-        stream.feed(ctrl.CSI)
-        stream.feed("5")
-        stream.feed(";")
-        stream.feed("12")
-        stream.feed(cmd)
 
+        stream = Stream(screen)
+        stream.feed(ctrl.CSI + "5;12" + cmd)
         assert handler.count == 1
         assert handler.args == (5, 12)
 
 
-def test_mode_csi_sequences():
+def test_set_mode():
     bugger = counter()
     screen = Screen(80, 24)
+    handler = argcheck()
     screen.debug = bugger
+    screen.set_mode = handler
 
     stream = Stream(screen)
-
-    # a) set_mode
-    handler = argcheck()
-    screen.set_mode = handler
     stream.feed(ctrl.CSI + "?9;2h")
-
     assert not bugger.count
     assert handler.count == 1
     assert handler.args == (9, 2)
     assert handler.kwargs == {"private": True}
 
-    # a) reset_mode
-    handler = argcheck()
-    screen.reset_mode = handler
-    stream.feed(ctrl.CSI + "?9;2l")
 
+def test_reset_mode():
+    bugger = counter()
+    screen = Screen(80, 24)
+    handler = argcheck()
+    screen.debug = bugger
+    screen.reset_mode = handler
+
+    stream = Stream(screen)
+    stream.feed(ctrl.CSI + "?9;2l")
     assert not bugger.count
     assert handler.count == 1
     assert handler.args == (9, 2)

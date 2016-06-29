@@ -8,6 +8,9 @@ Version 0.6.0
 
 - Optimized ``Stream.feed`` for plain-text input. The code was backported
   from ``pymux`` project by Jonathan Slenders.
+- Further optimized ``Stream._parser_fsm`` by forcing static binding between
+  ``Stream`` events and ``Screen`` methods. The code was backported from
+  ``pmux`` project by Jonathan Slenders.
 - Removed overly generic ``Screen.__before__`` and ``Screen.__after__``.
 
 Version 0.5.2
