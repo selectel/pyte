@@ -372,8 +372,9 @@ def test_ensure_width(monkeypatch):
     screen = HistoryScreen(5, 5, history=50)
     screen.set_mode(mo.LNM)
 
-    monkeypatch.setattr(Stream, "escape",
-                        dict(N="next_page", P="prev_page", **Stream.escape))
+    escape = dict(Stream.escape, N="next_page", P="prev_page")
+    monkeypatch.setattr(Stream, "escape", escape)
+
     stream = Stream(screen)
 
     for idx in range(len(screen.buffer) * 5):
@@ -464,13 +465,13 @@ def test_not_enough_lines():
     ]
 
 
-def test_draw():
+def test_draw(monkeypatch):
     screen = HistoryScreen(5, 5, history=50)
     screen.set_mode(mo.LNM)
-    stream = Stream(screen)
-    stream.escape["N"] = "next_page"
-    stream.escape["P"] = "prev_page"
+    escape = dict(Stream.escape, N="next_page", P="prev_page")
+    monkeypatch.setattr(Stream, "escape", escape)
 
+    stream = Stream(screen)
     for idx in range(len(screen.buffer) * 5):
         for ch in str(idx) + os.linesep:
             stream.feed(ch)
@@ -499,12 +500,12 @@ def test_draw():
     ]
 
 
-def test_cursor_is_hidden():
+def test_cursor_is_hidden(monkeypatch):
     screen = HistoryScreen(5, 5, history=50)
-    stream = Stream(screen)
-    stream.escape["N"] = "next_page"
-    stream.escape["P"] = "prev_page"
+    escape = dict(Stream.escape, N="next_page", P="prev_page")
+    monkeypatch.setattr(Stream, "escape", escape)
 
+    stream = Stream(screen)
     for idx in range(len(screen.buffer) * 5):
         for ch in str(idx) + os.linesep:
             stream.feed(ch)
