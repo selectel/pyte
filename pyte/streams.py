@@ -137,21 +137,6 @@ class Stream(object):
         self.parser = self._parser_fsm()
         self.parser.send(None)
 
-    def consume(self, char):
-        """Consumes a single string character and advance the state as
-        necessary.
-
-        :param str char: a character to consume.
-
-        .. deprecated:: 0.5.0
-
-           Use :meth:`feed` instead.
-        """
-        warnings.warn(".consume is deprecated and will be removed in "
-                      "pyte 0.5.2. Please use .feed instead.",
-                      category=DeprecationWarning)
-        return self.feed(char)
-
     def feed(self, chars):
         """Consumes a string and advance the state as necessary.
 
