@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from collections import defaultdict
 from pyte import Stream, ByteStream
 
 
@@ -19,32 +18,12 @@ class TestMixin(object):
         :param callable callback: callable to invoke when a given event
                                   occurs.
         """
-        self.listeners[event].append(callback)
-
-    def dispatch(self, event, *args, **flags):
-        """Dispatch an event.
-
-        .. note::
-
-           If any callback throws an exception, the subsequent callbacks
-           are be aborted.
-
-        :param unicode event: event to dispatch.
-        :param bool reset: reset stream state after all callback are
-                           executed.
-        :param list args: arguments to pass to event handlers.
-        """
-        for callback in self.listeners.get(event, []):
-            callback(*args, **flags)
+        setattr(self.listener, event, callback)
 
 
 class TestStream(TestMixin, Stream):
-    def __init__(self, *args, **kwargs):
-        Stream.__init__(self, *args, **kwargs)
-        self.listeners = defaultdict(lambda: [])
+    pass
 
 
 class TestByteStream(TestMixin, ByteStream):
-    def __init__(self, *args, **kwargs):
-        ByteStream.__init__(self, *args, **kwargs)
-        self.listeners = defaultdict(lambda: [])
+    pass

@@ -11,7 +11,8 @@ else:
 
 import pytest
 
-from pyte import (control as ctrl, escape as esc)
+from pyte import control as ctrl, escape as esc
+from pyte.screens import Screen
 from pyte.streams import DebugStream
 from . import TestStream, TestByteStream
 
@@ -40,7 +41,7 @@ class argstore(object):
 
 
 def test_basic_sequences():
-    stream = TestStream()
+    stream = TestStream(Screen(80, 24))
 
     for cmd, event in stream.escape.items():
         handler = counter()
@@ -64,7 +65,7 @@ def test_basic_sequences():
 
 def test_unknown_sequences():
     handler = argcheck()
-    stream = TestStream()
+    stream = TestStream(Screen(80, 24))
     stream.connect("debug", handler)
 
     try:
@@ -78,7 +79,7 @@ def test_unknown_sequences():
 
 
 def test_non_csi_sequences():
-    stream = TestStream()
+    stream = TestStream(Screen(80, 24))
 
     for cmd, event in stream.csi.items():
         # a) single param
@@ -108,7 +109,7 @@ def test_non_csi_sequences():
 
 def test_mode_csi_sequences():
     bugger = counter()
-    stream = TestStream()
+    stream = TestStream(Screen(80, 24))
     stream.connect("debug", bugger)
 
     # a) set_mode
@@ -133,7 +134,7 @@ def test_mode_csi_sequences():
 
 def test_missing_params():
     handler = argcheck()
-    stream = TestStream()
+    stream = TestStream(Screen(80, 24))
     stream.connect("cursor_position", handler)
 
     stream.feed(ctrl.CSI + ";" + esc.HVP)
@@ -143,7 +144,7 @@ def test_missing_params():
 
 def test_overflow():
     handler = argcheck()
-    stream = TestStream()
+    stream = TestStream(Screen(80, 24))
     stream.connect("cursor_position", handler)
 
     stream.feed(ctrl.CSI + "999999999999999;99999999999999" + esc.HVP)
@@ -153,7 +154,7 @@ def test_overflow():
 
 def test_interrupt():
     bugger, handler = argstore(), argcheck()
-    stream = TestStream()
+    stream = TestStream(Screen(80, 24))
     stream.connect("draw", bugger)
     stream.connect("cursor_position", handler)
 
@@ -167,7 +168,7 @@ def test_interrupt():
 
 def test_control_characters():
     handler = argcheck()
-    stream = TestStream()
+    stream = TestStream(Screen(80, 24))
     stream.connect("cursor_position", handler)
 
     stream.feed(ctrl.CSI + "10;\t\t\n\r\n10" + esc.HVP)
@@ -196,12 +197,12 @@ def test_byte_stream():
     def validator(char):
         assert "\ufffd" not in char
 
-    stream = TestByteStream(encodings=[("utf-8", "replace")])
+    stream = TestByteStream(Screen(80, 24), encodings=[("utf-8", "replace")])
     stream.connect("draw", validator)
     stream.feed("Garðabær".encode("utf-8"))
 
 
 def test_byte_stream_failure():
-    stream = TestByteStream(encodings=[("ascii", "strict")])
+    stream = TestByteStream(Screen(80, 24), encodings=[("ascii", "strict")])
     with pytest.raises(ValueError):
         stream.feed("привет".encode("utf-8"))

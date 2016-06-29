@@ -8,6 +8,7 @@ Version 0.6.0
 
 - Optimized ``Stream.feed`` for plain-text input. The code was backported
   from ``pymux`` project by Jonathan Slenders.
+- Removed overly generic ``Screen.__before__`` and ``Screen.__after__``.
 
 Version 0.5.2
 -------------

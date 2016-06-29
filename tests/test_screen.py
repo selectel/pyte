@@ -1152,8 +1152,7 @@ def test_cursor_position():
 
 def test_unicode():
     screen = Screen(4, 2)
-    stream = Stream()
-    stream.attach(screen)
+    stream = Stream(screen)
 
     try:
         stream.feed("тест")
@@ -1241,8 +1240,7 @@ def test_private_report_device_attributes():
     # Some console apps (e.g. ADOM) might add ``?`` to the DA request,
     # even though the VT102/VT220 spec does not allow this.
     screen = Screen(10, 10)
-    stream = Stream()
-    stream.attach(screen)
+    stream = Stream(screen)
 
     acc = []
     screen.write_process_input = acc.append

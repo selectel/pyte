@@ -41,6 +41,7 @@ from . import (
     modes as mo
 )
 from .compat import map, range
+from .streams import Stream
 
 
 def take(n, iterable):
@@ -176,20 +177,6 @@ class Screen(object):
     def __repr__(self):
         return ("{0}({1}, {2})".format(self.__class__.__name__,
                                        self.columns, self.lines))
-
-    def __before__(self, command):
-        """Hook, called **before** a command is dispatched to the
-        :class:`Screen` instance.
-
-        :param str command: command name, for example ``"LINEFEED"``.
-        """
-
-    def __after__(self, command):
-        """Hook, called **after** a command is dispatched to the
-        :class:`Screen` instance.
-
-        :param str command: command name, for example ``"LINEFEED"``.
-        """
 
     @property
     def display(self):
@@ -909,6 +896,12 @@ class Screen(object):
         .. versionadded:: 0.5.0
         """
 
+    def debug(self, *args, **kwargs):
+        """Endpoint for unrecognized escape sequences.
+
+        By default is a noop.
+        """
+
 
 class DiffScreen(Screen):
     """A screen subclass, which maintains a set of dirty lines in its
@@ -1010,8 +1003,8 @@ History = namedtuple("History", "top bottom ratio size position")
 
 class HistoryScreen(DiffScreen):
     """A screen subclass, which keeps track of screen history and allows
-    pagination. This is not linux-specific, but still useful; see  page
-    462 of VT520 User's Manual.
+    pagination. This is not linux-specific, but still useful; see
+    page 462 of VT520 User's Manual.
 
     :param int history: total number of history lines to keep; is split
                         between top and bottom queues.
@@ -1047,6 +1040,8 @@ class HistoryScreen(DiffScreen):
            Stream.escape["N"] = "next_page"
            Stream.escape["P"] = "prev_page"
     """
+    _wrapped = set(Stream.events)
+    _wrapped.update(["next_page", "prev_page"])
 
     def __init__(self, columns, lines, history=100, ratio=.5):
         self.history = History(deque(maxlen=history // 2),
@@ -1057,21 +1052,39 @@ class HistoryScreen(DiffScreen):
 
         super(HistoryScreen, self).__init__(columns, lines)
 
-    def __before__(self, command):
-        """Ensures a screen is at the bottom of the history buffer."""
-        if command not in ["prev_page", "next_page"]:
+    def _make_wrapper(self, event, handler):
+        def inner(*args, **kwargs):
+            self.before_event(event)
+            result = handler(*args, **kwargs)
+            self.after_event(event)
+            return result
+        return inner
+
+    def __getattribute__(self, attr):
+        value = super(HistoryScreen, self).__getattribute__(attr)
+        if attr in HistoryScreen._wrapped:
+            return HistoryScreen._make_wrapper(self, attr, value)
+        else:
+            return value
+
+    def before_event(self, event):
+        """Ensures a screen is at the bottom of the history buffer.
+
+        :param str event: event name, for example ``"linefeed"``.
+        """
+        if event not in ["prev_page", "next_page"]:
             while self.history.position < self.history.size:
                 self.next_page()
 
-        super(HistoryScreen, self).__before__(command)
-
-    def __after__(self, command):
+    def after_event(self, event):
         """Ensures all lines on a screen have proper width (:attr:`columns`).
 
         Extra characters are truncated, missing characters are filled
         with whitespace.
+
+        :param str event: event name, for example ``"linefeed"``.
         """
-        if command in ["prev_page", "next_page"]:
+        if event in ["prev_page", "next_page"]:
             for idx, line in enumerate(self.buffer):
                 if len(line) > self.columns:
                     self.buffer[idx] = line[:self.columns]
@@ -1085,8 +1098,6 @@ class HistoryScreen(DiffScreen):
             abs(self.history.position - self.history.size) < self.lines and
             mo.DECTCEM in self.mode
         )
-
-        super(HistoryScreen, self).__after__(command)
 
     def reset(self):
         """Overloaded to reset screen history state: history position

@@ -30,21 +30,14 @@
 from __future__ import absolute_import, unicode_literals
 
 import codecs
+import itertools
 import os
 import re
 import sys
-import warnings
-from collections import defaultdict, namedtuple
+from collections import defaultdict
 
 from . import control as ctrl, escape as esc
 from .compat import str
-
-#: An entry in the :class:`~pyte.streams.Screen` listeners queue.
-ListenerSpec = namedtuple("ListenerSpec", "screen only before after")
-
-
-def noop(event):
-    """A noop before-after hook for :class:`~pyte.streams.ListenerSpec`."""
 
 
 class Stream(object):
@@ -132,15 +125,27 @@ class Stream(object):
         esc.HPA: "cursor_to_column"
     }
 
+    #: A set of all events dispatched by the stream.
+    # XXX ``percent`` is omited intentionally, it should be handled by
+    # the stream part, i.e. ``ByteStream``.
+    events = frozenset(itertools.chain(
+        basic.values(), escape.values(), sharp.values(), csi.values(),
+        ["draw", "debug"]))
+
     #: A regular expression pattern matching everything what can be
     #: considered plain text.
     _special = set([ctrl.ESC, ctrl.CSI, ctrl.NUL, ctrl.DEL]) | set(basic)
     _text_pattern = re.compile(
-        r"[^{}]+".format("".join(map(re.escape, _special))))
+        r"[^{0}]+".format("".join(map(re.escape, _special))))
     del _special
 
-    def __init__(self):
-        self.listeners = []
+    def __init__(self, screen):
+        self.listener = screen
+
+        if __debug__:
+            for event in self.events:
+                error_message = "{0} is missing {1}".format(screen, event)
+                assert hasattr(screen, event), error_message
 
         self._parser = self._parser_fsm()
         self._taking_plain_text = self._parser.send(None)
@@ -174,28 +179,6 @@ class Stream(object):
 
         self._taking_plain_text = taking_plain_text
 
-    def attach(self, screen, only=()):
-        """Adds a given screen to the listener queue.
-
-        :param pyte.screens.Screen screen: a screen to attach to.
-        :param list only: a list of events you want to dispatch to a
-                          given screen (empty by default, which means
-                          -- dispatch all events).
-        """
-        before = getattr(screen, "__before__", noop)
-        after = getattr(screen, "__after__", noop)
-        self.listeners.append(ListenerSpec(screen, set(only), before, after))
-
-    def detach(self, screen):
-        """Removes a given screen from the listener queue and fails
-        silently if it's not attached.
-
-        :param pyte.screens.Screen screen: a screen to detach.
-        """
-        for idx, spec in enumerate(self.listeners):
-            if screen is spec.screen:
-                self.listeners.pop(idx)
-
     def dispatch(self, event, *args, **kwargs):
         """Dispatches an event.
 
@@ -211,18 +194,12 @@ class Stream(object):
 
         :param str event: event to dispatch.
         """
-        for screen, only, before, after in self.listeners:
-            if only and event not in only:
-                continue
-
-            try:
-                handler = getattr(screen, event)
-            except AttributeError:
-                continue
-
-            before(event)
+        try:
+            handler = getattr(self.listener, event)
+        except AttributeError:
+            pass
+        else:
             handler(*args, **kwargs)
-            after(event)
 
     def _parser_fsm(self):
         # In order to avoid getting KeyError exceptions below, we make sure
@@ -339,7 +316,7 @@ class ByteStream(Stream):
     * Use ``"utf-8"`` with invalid bytes replaced -- this one will
       always succeed.
 
-    >>> stream = ByteStream()
+    >>> stream = ByteStream(Screen(80, 24))
     >>> stream.feed(b"foo".decode("utf-8"))
     Traceback (most recent call last):
       File "<stdin>", line 1, in <module>
@@ -348,6 +325,7 @@ class ByteStream(Stream):
     TypeError: ByteStream requires input in bytes
     >>> stream.feed(b"foo")
 
+    :param pyte.screens.Screen screen: a screen to dispatch events to.
     :param list encodings: a list of ``(encoding, errors)`` pairs,
                            where the first element is encoding name,
                            ex: ``"utf-8"`` and second defines how
@@ -355,7 +333,7 @@ class ByteStream(Stream):
                            :meth:`str.decode` for possible values.
     """
 
-    def __init__(self, encodings=None):
+    def __init__(self, screen, encodings=None):
         encodings = encodings or [
             ("utf-8", "strict"),
             ("cp437", "strict"),
@@ -366,7 +344,7 @@ class ByteStream(Stream):
         self.decoders = [codecs.getincrementaldecoder(encoding)(errors)
                          for encoding, errors in encodings]
 
-        super(ByteStream, self).__init__()
+        super(ByteStream, self).__init__(screen)
 
     def feed(self, chars):
         if not isinstance(chars, bytes):
@@ -404,8 +382,6 @@ class DebugStream(ByteStream):
     """
 
     def __init__(self, to=sys.stdout, only=(), *args, **kwargs):
-        super(DebugStream, self).__init__(*args, **kwargs)
-
         def safe_str(chunk):
             if isinstance(chunk, bytes):
                 chunk = chunk.decode("utf-8")
@@ -414,10 +390,14 @@ class DebugStream(ByteStream):
 
             return chunk
 
-        class Bugger(object):
-            __before__ = __after__ = lambda *args: None
+        def noop(*args, **kwargs):
+            pass
 
+        class Bugger(object):
             def __getattr__(self, event):
+                if only and event not in only:
+                    return noop
+
                 def inner(*args, **kwargs):
                     to.write(event.upper() + " ")
                     to.write("; ".join(map(safe_str, args)))
@@ -427,4 +407,4 @@ class DebugStream(ByteStream):
                     to.write(os.linesep)
                 return inner
 
-        self.attach(Bugger(), only=only)
+        super(DebugStream, self).__init__(Bugger(), *args, **kwargs)
