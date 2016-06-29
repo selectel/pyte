@@ -29,8 +29,9 @@
 
 from __future__ import absolute_import, unicode_literals
 
-import os
 import codecs
+import os
+import re
 import sys
 import warnings
 from collections import defaultdict, namedtuple
@@ -131,11 +132,18 @@ class Stream(object):
         esc.HPA: "cursor_to_column"
     }
 
+    #: A regular expression pattern matching everything what can be
+    #: considered plain text.
+    _special = set([ctrl.ESC, ctrl.CSI, ctrl.NUL, ctrl.DEL]) | set(basic)
+    _text_pattern = re.compile(
+        r"[^{}]+".format("".join(map(re.escape, _special))))
+    del _special
+
     def __init__(self):
         self.listeners = []
-        self.state = "stream"  # Only used for testing.
-        self.parser = self._parser_fsm()
-        self.parser.send(None)
+
+        self._parser = self._parser_fsm()
+        self._taking_plain_text = self._parser.send(None)
 
     def feed(self, chars):
         """Consumes a string and advance the state as necessary.
@@ -146,9 +154,25 @@ class Stream(object):
             raise TypeError("{0} requires text input"
                             .format(self.__class__.__name__))
 
-        send = self.parser.send
-        for char in chars:
-            send(char)
+        send = self._parser.send
+        dispatch = self.dispatch
+        match_text = self._text_pattern.match
+        taking_plain_text = self._taking_plain_text
+
+        offset = 0
+        while offset < len(chars):
+            if taking_plain_text:
+                match = match_text(chars, offset)
+                if match:
+                    start, offset = match.span()
+                    dispatch("draw", chars[start:offset])
+                else:
+                    taking_plain_text = False
+            else:
+                taking_plain_text = send(chars[offset])
+                offset += 1
+
+        self._taking_plain_text = taking_plain_text
 
     def attach(self, screen, only=()):
         """Adds a given screen to the listener queue.
@@ -216,9 +240,13 @@ class Stream(object):
         CAN_OR_SUB = [ctrl.CAN, ctrl.SUB]
         ALLOWED_IN_CSI = [ctrl.BEL, ctrl.BS, ctrl.HT, ctrl.LF, ctrl.VT,
                           ctrl.FF, ctrl.CR]
+
         while True:
-            self.state = "stream"
-            char = yield
+            # ``True`` tells ``Screen.feed`` that it is allowed to send
+            # chunks of plain text directly to the listener, instead
+            # of this generator.)
+            char = yield True
+
             if char == ESC:
                 # Most non-VT52 commands start with a left-bracket after the
                 # escape and then a stream of parameters and a command; with
@@ -231,19 +259,15 @@ class Stream(object):
                 #    recognizes ``ESC % C`` sequences for selecting control
                 #    character set. However, in the current version these
                 #    are noop.
-                self.state = "escape"
                 char = yield
                 if char == "[":
                     char = CSI  # Go to CSI.
                 else:
                     if char == "#":
-                        self.state = "sharp"
                         dispatch(sharp[(yield)])
                     if char == "%":
-                        self.state = "percent"
                         dispatch(percent[(yield)])
                     elif char in "()":
-                        self.state = "charset"
                         dispatch("set_charset", (yield), mode=char)
                     else:
                         dispatch(escape[char])
@@ -265,8 +289,6 @@ class Stream(object):
                 #    `VT220 Programmer Ref. <http://vt100.net/docs/vt220-rm/>`_
                 #        For details on the characters valid for use as
                 #        arguments.
-                self.state = "arguments"
-
                 params = []
                 current = ""
                 private = False

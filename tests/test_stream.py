@@ -47,11 +47,9 @@ def test_basic_sequences():
         stream.connect(event, handler)
 
         stream.feed(ctrl.ESC)
-        assert stream.state == "escape"
         assert not handler.count
 
         stream.feed(cmd)
-        assert stream.state == "stream"
         assert handler.count == 1
 
     # ``linefeed``s is somewhat an exception, there's three ways to
@@ -62,7 +60,6 @@ def test_basic_sequences():
     stream.feed(ctrl.LF + ctrl.VT + ctrl.FF)
 
     assert handler.count == 3
-    assert stream.state == "stream"
 
 
 def test_unknown_sequences():
@@ -88,24 +85,18 @@ def test_non_csi_sequences():
         handler = argcheck()
         stream.connect(event, handler)
         stream.feed(ctrl.ESC)
-        assert stream.state == "escape"
 
         stream.feed("[")
-        assert stream.state == "arguments"
-
         stream.feed("5")
         stream.feed(cmd)
 
         assert handler.count == 1
         assert handler.args == (5, )
-        assert stream.state == "stream"
 
         # b) multiple params, and starts with CSI, not ESC [
         handler = argcheck()
         stream.connect(event, handler)
         stream.feed(ctrl.CSI)
-        assert stream.state == "arguments"
-
         stream.feed("5")
         stream.feed(";")
         stream.feed("12")
@@ -113,7 +104,6 @@ def test_non_csi_sequences():
 
         assert handler.count == 1
         assert handler.args == (5, 12)
-        assert stream.state == "stream"
 
 
 def test_mode_csi_sequences():
@@ -171,7 +161,7 @@ def test_interrupt():
 
     assert not handler.count
     assert bugger.seen == [
-        ctrl.SUB, "1", "0", esc.HVP
+        ctrl.SUB, "10" + esc.HVP
     ]
 
 
@@ -188,7 +178,7 @@ def test_control_characters():
 
 def test_debug_stream():
     tests = [
-        (b"foo", "DRAW f\nDRAW o\nDRAW o"),
+        (b"foo", "DRAW foo"),
         (b"\x1b[1;24r\x1b[4l\x1b[24;1H",
          "SET_MARGINS 1; 24\nRESET_MODE 4\nCURSOR_POSITION 24; 1"),
     ]

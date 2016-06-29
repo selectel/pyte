@@ -401,55 +401,61 @@ class Screen(object):
         """Activates ``G1`` character set."""
         self.charset = 1
 
-    def draw(self, char):
+    def draw(self, chars):
         """Display a character at the current cursor position and advance
         the cursor if :data:`~pyte.modes.DECAWM` is set.
 
-        :param str char: a character to display.
+        :param str chasr: characters to display.
 
         .. versionchanged:: 0.5.0
 
            Character width is taken into account. Specifically, zero-width
            and unprintable characters do not affect screen state. Full-width
            characters are rendered into two consecutive character containers.
+
+        .. versionchanged:: 0.6.0
+
+           The method can be called with multiple characters.
         """
         # Translating a given character.
         if self.charset:
-            char = char.translate(self.g1_charset)
+            chars = chars.translate(self.g1_charset)
         else:
-            char = char.translate(self.g0_charset)
+            chars = chars.translate(self.g0_charset)
 
-        char_width = wcwidth(char)
-        if char_width <= 0:
-            # Unprintable character or doesn't advance the cursor.
-            return
+        for char in chars:
+            char_width = wcwidth(char)
+            if char_width <= 0:
+                # Unprintable character or doesn't advance the cursor.
+                return
 
-        # If this was the last column in a line and auto wrap mode is
-        # enabled, move the cursor to the beginning of the next line,
-        # otherwise replace characters already displayed with newly
-        # entered.
-        if self.cursor.x == self.columns:
-            if mo.DECAWM in self.mode:
-                self.carriage_return()
-                self.linefeed()
-            else:
-                self.cursor.x -= char_width
+            # If this was the last column in a line and auto wrap mode is
+            # enabled, move the cursor to the beginning of the next line,
+            # otherwise replace characters already displayed with newly
+            # entered.
+            if self.cursor.x == self.columns:
+                if mo.DECAWM in self.mode:
+                    self.carriage_return()
+                    self.linefeed()
+                else:
+                    self.cursor.x -= char_width
 
-        # If Insert mode is set, new characters move old characters to
-        # the right, otherwise terminal is in Replace mode and new
-        # characters replace old characters at cursor position.
-        if mo.IRM in self.mode:
-            self.insert_characters(char_width)
+            # If Insert mode is set, new characters move old characters to
+            # the right, otherwise terminal is in Replace mode and new
+            # characters replace old characters at cursor position.
+            if mo.IRM in self.mode:
+                self.insert_characters(char_width)
 
-        line = self.buffer[self.cursor.y]
-        line[self.cursor.x] = self.cursor.attrs._replace(data=char)
-        if char_width > 1:
-            # Add a stub *after* a two-cell character. See issue #9 on GitHub.
-            line[self.cursor.x + 1] = self.cursor.attrs._replace(data=" ")
+            line = self.buffer[self.cursor.y]
+            line[self.cursor.x] = self.cursor.attrs._replace(data=char)
+            if char_width > 1:
+                # Add a stub *after* a two-cell character. See issue #9
+                # on GitHub.
+                line[self.cursor.x + 1] = self.cursor.attrs._replace(data=" ")
 
-        # .. note:: We can't use :meth:`cursor_forward()`, because that
-        #           way, we'll never know when to linefeed.
-        self.cursor.x += char_width
+            # .. note:: We can't use :meth:`cursor_forward()`, because that
+            #           way, we'll never know when to linefeed.
+            self.cursor.x += char_width
 
     def carriage_return(self):
         """Move the cursor to the beginning of the current line."""

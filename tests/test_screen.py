@@ -215,6 +215,13 @@ def test_draw():
     assert screen.display == ["yxa", "   ", "   "]
 
 
+def test_draw_multiple_chars():
+    screen = Screen(10, 1)
+    screen.draw("foobar")
+    assert screen.cursor.x == 6
+    assert screen.display == ["foobar    "]
+
+
 def test_draw_wcwidth():
     # Example from https://github.com/selectel/pyte/issues/9
     screen = Screen(10, 1)
