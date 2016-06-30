@@ -37,11 +37,10 @@ def random_string(n, alphabet=string.ascii_letters + " "):
 
 
 if __name__ == "__main__":
-    stream = pyte.Stream()
     # ``ratio=1`` means scroll the whole screen.
     screen = pyte.HistoryScreen(80, 12, ratio=1)
     screen.set_mode(mo.LNM)
-    stream.attach(screen)
+    stream = pyte.Stream(screen)
 
     pages = 3
     stream.feed(os.linesep.join(random_string(screen.columns)

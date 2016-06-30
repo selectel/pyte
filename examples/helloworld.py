@@ -15,9 +15,8 @@ import pyte
 
 
 if __name__ == "__main__":
-    stream = pyte.Stream()
     screen = pyte.Screen(80, 24)
-    stream.attach(screen)
+    stream = pyte.Stream(screen)
     stream.feed("Hello World!")
 
     for idx, line in enumerate(screen.display, 1):

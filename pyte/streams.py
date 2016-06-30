@@ -17,8 +17,7 @@
     ...         self.y += count or 1
     ...
     >>> dummy = Dummy()
-    >>> stream = pyte.Stream(strict=False)
-    >>> stream.attach(dummy)
+    >>> stream = pyte.Stream(dummy, strict=False)
     >>> stream.feed(u"\u001B[5A")  # Move the cursor up 5 rows.
     >>> dummy.y
     5
@@ -218,8 +217,6 @@ class Stream(object):
                                   ctrl.VT, ctrl.FF, ctrl.CR])
 
         def create_dispatcher(mapping):
-            # In order to avoid getting KeyError exceptions below, we
-            # make sure that these dictionaries resolve to ``"debug"``.
             return defaultdict(lambda: debug, dict(
                 (event, getattr(listener, attr))
                 for event, attr in mapping.items()))
