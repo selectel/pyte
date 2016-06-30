@@ -26,7 +26,7 @@ if __name__ == "__main__":
     if len(sys.argv) <= 2:
         sys.exit("usage: %prog% output command [args]")
 
-    stream = pyte.Stream()
+    stream = pyte.Stream(pyte.Screen(80, 24))
 
     decoder = codecs.getincrementaldecoder(sys.getdefaultencoding())("replace")
     master, slave = pty.openpty()
