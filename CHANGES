@@ -11,6 +11,9 @@ Version 0.6.0
 - Further optimized ``Stream._parser_fsm`` by forcing static binding between
   ``Stream`` events and ``Screen`` methods. The code was backported from
   ``pmux`` project by Jonathan Slenders.
+- Restricted ``Stream`` to a single listener and removed ``attach`` and
+  ``detach``. The old logic can be emulated by a fanout proxy, forwarding
+  events to a list of its listeners.
 - Removed overly generic ``Screen.__before__`` and ``Screen.__after__``.
 
 Version 0.5.2
