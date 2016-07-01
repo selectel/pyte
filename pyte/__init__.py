@@ -26,6 +26,8 @@ from __future__ import absolute_import
 __all__ = ("Screen", "DiffScreen", "HistoryScreen",
            "Stream", "ByteStream", "DebugStream")
 
+import io
+
 from .screens import Screen, DiffScreen, HistoryScreen
 from .streams import Stream, ByteStream, DebugStream
 
@@ -36,12 +38,14 @@ if __debug__:
     def dis(chars):
         """A :func:`dis.dis` for terminals.
 
-        >>> dis(u"\u0007")
+        >>> dis(b"\x07")       # doctest: +NORMALIZE_WHITESPACE
         BELL
-        >>> dis(u"\x9b20m")
-        SELECT-GRAPHIC-RENDITION 20
+        >>> dis(b"\x1b[20m")   # doctest: +NORMALIZE_WHITESPACE
+        SELECT_GRAPHIC_RENDITION 20
         """
         if isinstance(chars, str):
             chars = chars.encode("utf-8")
 
-        return DebugStream().feed(chars)
+        with io.StringIO() as buf:
+            DebugStream(to=buf).feed(chars)
+            print(buf.getvalue())

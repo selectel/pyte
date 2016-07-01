@@ -8,18 +8,10 @@
     typically used:
 
     >>> import pyte
-    >>>
-    >>> class Dummy(object):
-    ...     def __init__(self):
-    ...         self.y = 0
-    ...
-    ...     def cursor_up(self, count=None):
-    ...         self.y += count or 1
-    ...
-    >>> dummy = Dummy()
-    >>> stream = pyte.Stream(dummy, strict=False)
-    >>> stream.feed(u"\u001B[5A")  # Move the cursor up 5 rows.
-    >>> dummy.y
+    >>> screen = pyte.Screen(80, 24)
+    >>> stream = pyte.Stream(screen)
+    >>> stream.feed(u"\u001B[5B")  # Move the cursor down 5 rows.
+    >>> screen.cursor.y
     5
 
     :copyright: (c) 2011-2013 by Selectel, see AUTHORS for details.
@@ -324,7 +316,8 @@ class ByteStream(Stream):
     * Use ``"utf-8"`` with invalid bytes replaced -- this one will
       always succeed.
 
-    >>> stream = ByteStream(Screen(80, 24))
+    >>> import pyte
+    >>> stream = pyte.ByteStream(pyte.Screen(80, 24))
     >>> stream.feed(b"foo".decode("utf-8"))
     Traceback (most recent call last):
       File "<stdin>", line 1, in <module>
@@ -377,8 +370,13 @@ class DebugStream(ByteStream):
     r"""Stream, which dumps a subset of the dispatched events to a given
     file-like object (:data:`sys.stdout` by default).
 
-    >>> stream = DebugStream()
-    >>> stream.feed("\x1b[1;24r\x1b[4l\x1b[24;1H\x1b[0;10m")
+    >>> import io
+    >>> with io.StringIO() as buf:
+    ...     stream = DebugStream(to=buf)
+    ...     stream.feed(b"\x1b[1;24r\x1b[4l\x1b[24;1H\x1b[0;10m")
+    ...     print(buf.getvalue())
+    ...
+    ... # doctest: +NORMALIZE_WHITESPACE
     SET_MARGINS 1; 24
     RESET_MODE 4
     CURSOR_POSITION 24; 1

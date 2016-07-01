@@ -915,8 +915,8 @@ class DiffScreen(Screen):
        >>> screen = DiffScreen(80, 24)
        >>> screen.dirty.clear()
        >>> screen.draw(u"!")
-       >>> screen.dirty
-       set([0])
+       >>> list(screen.dirty)
+       [0]
     """
     def __init__(self, *args):
         self.dirty = set()
