@@ -172,6 +172,23 @@ def test_resize():
     assert screen.display == ["sh"]
 
 
+def test_select_other_charset():
+    screen = Screen(3, 3)
+    assert screen.use_utf8  # on by default.
+
+    # a) disable utf-8
+    screen.select_other_charset("@")
+    assert not screen.use_utf8
+
+    # b) unknown code -- noop
+    screen.select_other_charset("X")
+    assert not screen.use_utf8
+
+    # c) enable utf-8
+    screen.select_other_charset("G")
+    assert screen.use_utf8
+
+
 def test_draw():
     # ``DECAWM`` on (default).
     screen = Screen(3, 3)

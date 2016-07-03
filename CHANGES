@@ -15,6 +15,10 @@ Version 0.6.0
   ``detach``. The old logic can be emulated by a fanout proxy, forwarding
   events to a list of its listeners.
 - Removed overly generic ``Screen.__before__`` and ``Screen.__after__``.
+- Renamed ``Screen.set_charset`` to a more appropriate
+  ``Screen.define_charset``.
+- Added support for ECMA-035 `DOCS` command, which the Linux terminal uses
+  to enable UTF-8.
 
 Version 0.5.2
 -------------

@@ -58,6 +58,7 @@ Savepoint = namedtuple("Savepoint", [
     "g0_charset",
     "g1_charset",
     "charset",
+    "use_utf8",
     "origin",
     "wrap"
 ])
@@ -211,6 +212,7 @@ class Screen(object):
         self.charset = 0
         self.g0_charset = cs.IBMPC_MAP
         self.g1_charset = cs.VT100_MAP
+        self.use_utf8 = True
 
         # From ``man terminfo`` -- "... hardware tabs are initially
         # set every `n` spaces when the terminal is powered up. Since
@@ -300,20 +302,6 @@ class Screen(object):
             # bottom margins of the scrolling region (DECSTBM) changes.
             self.cursor_position()
 
-    def set_charset(self, code, mode):
-        """Set active ``G0`` or ``G1`` charset.
-
-        :param str code: character set code, should be a character
-                         from ``"B0UK"`` -- otherwise ignored.
-        :param str mode: if ``"("`` ``G0`` charset is set, if
-                         ``")"`` -- we operate on ``G1``.
-
-        .. warning:: User-defined charsets are currently not supported.
-        """
-        if code in cs.MAPS:
-            setattr(self, {"(": "g0_charset", ")": "g1_charset"}[mode],
-                    cs.MAPS[code])
-
     def set_mode(self, *modes, **kwargs):
         """Sets (enables) a given list of modes.
 
@@ -380,13 +368,49 @@ class Screen(object):
         if mo.DECTCEM in modes:
             self.cursor.hidden = True
 
+    def define_charset(self, code, mode):
+        """Defines ``G0`` or ``G1`` charset.
+
+        :param str code: character set code, should be a character
+                         from ``"B0UK"``, otherwise ignored.
+        :param str mode: if ``"("`` ``G0`` charset is defined, if
+                         ``")"`` -- we operate on ``G1``.
+
+        .. warning:: User-defined charsets are currently not supported.
+        """
+        if code in cs.MAPS:
+            if mode == "(":
+                self.g0_charset = cs.MAPS[code]
+            elif mode == ")":
+                self.g1_charset = cs.MAPS[code]
+
     def shift_in(self):
-        """Activates ``G0`` character set."""
+        """Selects ``G0`` character set."""
         self.charset = 0
 
     def shift_out(self):
-        """Activates ``G1`` character set."""
+        """Selects ``G1`` character set."""
         self.charset = 1
+
+    def select_other_charset(self, code):
+        """Selects other (non G0 or G1) charset.
+
+        :param str code: character set code, should be a character from
+                         ``"@G8"``, otherwise ignored.
+
+        .. note:: We currently follow ``"linux"`` and only use this
+                  command to switch from ISO-8859-1 to UTF-8 and back.
+
+        .. seealso::
+
+        `Standard ECMA-35, Section 15.4 \
+        <http://www.ecma-international.org/publications/standards/Ecma-035.htm>`_
+        for a description of VTXXX character set machinery.
+        """
+        if code == "@":
+            self.use_utf8 = False
+        elif code in "G8":
+            self.use_utf8 = True
 
     def draw(self, chars):
         """Display a character at the current cursor position and advance
@@ -508,6 +532,7 @@ class Screen(object):
                                          self.g0_charset,
                                          self.g1_charset,
                                          self.charset,
+                                         self.use_utf8,
                                          mo.DECOM in self.mode,
                                          mo.DECAWM in self.mode))
 
@@ -521,6 +546,7 @@ class Screen(object):
             self.g0_charset = savepoint.g0_charset
             self.g1_charset = savepoint.g1_charset
             self.charset = savepoint.charset
+            self.use_utf8 = savepoint.use_utf8
 
             if savepoint.origin:
                 self.set_mode(mo.DECOM)

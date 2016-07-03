@@ -40,20 +40,6 @@ DECSC = "7"
 #: selection. If none were saved, move cursor to home position.
 DECRC = "8"
 
-
-# "Percent" escape sequences.
-# ---------------------------
-
-#: *Select default (ISO 646 / ISO 8859-1)*.
-DEFAULT = "@"
-
-#: *Select UTF-8*.
-UTF8 = "G"
-
-#: *Select UTF-8 (obsolete)*.
-UTF8_OBSOLETE = "8"
-
-
 # "Sharp" escape sequences.
 # -------------------------
 

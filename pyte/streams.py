@@ -90,14 +90,6 @@ class Stream(object):
         esc.DECALN: "alignment_display",
     }
 
-    #: "percent" escape sequences (Linux sequence to select character
-    #: set) -- ``ESC % <C>``.
-    percent = {
-        esc.DEFAULT: "charset_default",
-        esc.UTF8: "charset_utf8",
-        esc.UTF8_OBSOLETE: "charset_utf8",
-    }
-
     #: CSI escape sequences -- ``CSI P1;P2;...;Pn <fn>``.
     csi = {
         esc.ICH: "insert_characters",
@@ -130,10 +122,9 @@ class Stream(object):
     }
 
     #: A set of all events dispatched by the stream.
-    # XXX ``percent`` is omited intentionally, it should be handled by
-    # the stream part, i.e. ``ByteStream``.
     events = frozenset(itertools.chain(
         basic.values(), escape.values(), sharp.values(), csi.values(),
+        ["define_charset", "select_other_charset"],
         ["draw", "debug"]))
 
     #: A regular expression pattern matching everything what can be
@@ -243,9 +234,9 @@ class Stream(object):
                     if char == "#":
                         sharp_dispatch[(yield)]()
                     if char == "%":
-                        yield   # Charset support is not there yet.
+                        listener.select_other_charset((yield))
                     elif char in "()":
-                        listener.set_charset((yield), mode=char)
+                        listener.define_charset((yield), mode=char)
                     else:
                         escape_dispatch[char]()
                     continue    # Don't go to CSI.
