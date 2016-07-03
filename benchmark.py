@@ -1,6 +1,5 @@
 import os
 import os.path
-import sys
 from functools import partial
 
 from perf.text_runner import TextRunner

@@ -9,11 +9,9 @@ if sys.version_info[0] == 2:
 else:
     from io import StringIO
 
-import pytest
-
 from pyte import control as ctrl, escape as esc
 from pyte.screens import Screen
-from pyte.streams import Stream, ByteStream, DebugStream
+from pyte.streams import Stream, DebugStream
 
 
 class counter(object):

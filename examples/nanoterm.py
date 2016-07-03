@@ -13,7 +13,6 @@
 
 from __future__ import print_function, unicode_literals
 
-import codecs
 import os
 import pty
 import select
