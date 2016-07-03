@@ -206,11 +206,8 @@ class Screen(object):
         self.mode = set([mo.DECAWM, mo.DECTCEM])
         self.margins = Margins(0, self.lines - 1)
 
-        # According to VT220 manual and ``linux/drivers/tty/vt.c``
-        # the default G0 charset is latin-1, but for reasons unknown
-        # latin-1 breaks ascii-graphics; so G0 defaults to cp437.
         self.charset = 0
-        self.g0_charset = cs.IBMPC_MAP
+        self.g0_charset = cs.LAT1_MAP
         self.g1_charset = cs.VT100_MAP
         self.use_utf8 = True
 
