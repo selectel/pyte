@@ -206,6 +206,9 @@ class Screen(object):
         self.mode = set([mo.DECAWM, mo.DECTCEM])
         self.margins = Margins(0, self.lines - 1)
 
+        self.title = ""
+        self.icon_name = ""
+
         self.charset = 0
         self.g0_charset = cs.LAT1_MAP
         self.g1_charset = cs.VT100_MAP
@@ -409,6 +412,18 @@ class Screen(object):
         elif code in b"G8":
             self.use_utf8 = True
 
+    def _decode(self, data):
+        """Decodes bytes to text according to the selected charset.
+
+        :param bytes data: bytes to decode.
+        """
+        if self.charset:
+            return "".join(self.g1_charset[b] for b in iter_bytes(data))
+        elif self.use_utf8:
+            return data.decode("utf-8")
+        else:
+            return "".join(self.g0_charset[b] for b in iter_bytes(data))
+
     def draw(self, data):
         """Displays decoded characters at the current cursor position and
         advances the cursor if :data:`~pyte.modes.DECAWM` is set.
@@ -426,14 +441,7 @@ class Screen(object):
            The input is now supposed to be in :func:`bytes`, which may encode
            multiple characters.
         """
-        if self.charset:
-            chars = "".join(self.g1_charset[b] for b in iter_bytes(data))
-        elif self.use_utf8:
-            chars = data.decode("utf-8")
-        else:
-            chars = "".join(self.g0_charset[b] for b in iter_bytes(data))
-
-        for char in chars:
+        for char in self._decode(data):
             char_width = wcwidth(char)
             if char_width <= 0:
                 # Unprintable character or doesn't advance the cursor.
@@ -466,6 +474,20 @@ class Screen(object):
             # .. note:: We can't use :meth:`cursor_forward()`, because that
             #           way, we'll never know when to linefeed.
             self.cursor.x += char_width
+
+    def set_title(self, param):
+        """Sets terminal title.
+
+        .. note:: This is an XTerm extension supported by the Linux terminal.
+        """
+        self.title = self._decode(param)
+
+    def set_icon_name(self, param):
+        """Sets icon name.
+
+        .. note:: This is an XTerm extension supported by the Linux terminal.
+        """
+        self.icon_name = self._decode(param)
 
     def carriage_return(self):
         """Move the cursor to the beginning of the current line."""

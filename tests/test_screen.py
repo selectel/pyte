@@ -1302,3 +1302,15 @@ def test_report_device_status():
     screen.cursor_to_line(5)
     screen.report_device_status(6)
     assert acc.pop() == ctrl.CSI + "{0};{1}R".format(5, 1).encode("utf-8")
+
+
+def test_screen_set_icon_name_title():
+    screen = Screen(10, 1)
+    screen.select_other_charset(b"@")
+
+    text = "±"
+    screen.set_icon_name(text.encode("latin-1"))
+    assert screen.icon_name == text
+
+    screen.set_title(text.encode("latin-1"))
+    assert screen.title == text

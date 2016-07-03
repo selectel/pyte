@@ -60,3 +60,9 @@ DEL = b"\x7f"
 
 #: *Control sequence introducer*: An equivalent for ``ESC [``.
 CSI = b"\x9b"
+
+#: *String terminator*.
+ST = b"\x9c"
+
+#: *Operating system command*.
+OSC = b"\x9d"

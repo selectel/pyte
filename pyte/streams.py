@@ -124,11 +124,13 @@ class Stream(object):
     events = frozenset(itertools.chain(
         basic.values(), escape.values(), sharp.values(), csi.values(),
         ["define_charset", "select_other_charset"],
+        ["set_icon", "set_title"],  # OSC.
         ["draw", "debug"]))
 
     #: A regular expression pattern matching everything what can be
     #: considered plain text.
-    _special = set([ctrl.ESC, ctrl.CSI, ctrl.NUL, ctrl.DEL]) | set(basic)
+    _special = set([ctrl.ESC, ctrl.CSI, ctrl.NUL, ctrl.DEL, ctrl.OSC, ctrl.ST])
+    _special.update(basic)
     _text_pattern = re.compile(
         b"[^" + b"".join(map(re.escape, _special)) + b"]+")
     del _special
@@ -226,6 +228,7 @@ class Stream(object):
         debug = listener.debug
 
         ESC, CSI = ctrl.ESC, ctrl.CSI
+        OSC, ST = ctrl.OSC, ctrl.ST
         SP_OR_GT = ctrl.SP + b">"
         NUL_OR_DEL = ctrl.NUL + ctrl.DEL
         CAN_OR_SUB = ctrl.CAN + ctrl.SUB
@@ -263,6 +266,8 @@ class Stream(object):
                 char = yield
                 if char == b"[":
                     char = CSI  # Go to CSI.
+                elif char == b"]":
+                    char = OSC  # Go to OSC.
                 else:
                     if char == b"#":
                         sharp_dispatch[(yield)]()
@@ -272,7 +277,7 @@ class Stream(object):
                         listener.define_charset((yield), mode=char)
                     else:
                         escape_dispatch[char]()
-                    continue    # Don't go to CSI.
+                    continue     # Don't go to CSI.
 
             if char in basic:
                 basic_dispatch[char]()
@@ -322,6 +327,21 @@ class Stream(object):
                             else:
                                 csi_dispatch[char](*params)
                             break  # CSI is finished.
+            elif char == OSC:
+                code = yield
+                param = bytearray()
+                while True:
+                    char = yield
+                    if char == ST:
+                        break
+                    else:
+                        param.extend(char)
+
+                param = bytes(param[1:])  # Drop the ;.
+                if code in b"01":
+                    listener.set_icon_name(param)
+                if code in b"02":
+                    listener.set_title(param)
             elif char not in NUL_OR_DEL:
                 draw(char)
 

@@ -22,6 +22,8 @@ Version 0.6.0
   ``Screen.define_charset``.
 - Added support for ECMA-035 `DOCS` command, which the Linux terminal uses
   to enable UTF-8.
+- Added support for OSC sequences allowing to set terminal title and
+  icon name.
 
 Version 0.5.2
 -------------

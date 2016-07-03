@@ -178,6 +178,23 @@ def test_control_characters():
     assert handler.args == (10, 10)
 
 
+def test_set_title_icon_name():
+    screen = Screen(80, 24)
+    stream = Stream(screen)
+
+    # a) set only icon name
+    stream.feed(ctrl.OSC + b"1;foo" + ctrl.ST)
+    assert screen.icon_name == "foo"
+
+    # b) set only title
+    stream.feed(ctrl.OSC + b"2;foo" + ctrl.ST)
+    assert screen.title == "foo"
+
+    # c) set both icon name and title
+    stream.feed(ctrl.OSC + b"0;bar" + ctrl.ST)
+    assert screen.title == screen.icon_name == "bar"
+
+
 def test_compatibility_api():
     screen = Screen(80, 24)
     stream = Stream()
