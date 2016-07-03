@@ -181,7 +181,7 @@ class Stream(object):
             warnings.warn("As of version 0.6.0 ``pyte.streams.Stream.feed``"
                           "requires input in bytes. This warnings will become "
                           "and error in 0.6.1.")
-            data = data.encode()
+            data = data.encode("utf-8")
         elif not isinstance(data, bytes):
             raise TypeError("{0} requires bytes input"
                             .format(self.__class__.__name__))
