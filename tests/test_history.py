@@ -20,7 +20,7 @@ def test_index():
     # Filling the screen with line numbers, so it's easier to
     # track history contents.
     for idx in range(len(screen.buffer)):
-        screen.draw(str(idx))
+        screen.draw(str(idx).encode())
         if idx != len(screen.buffer) - 1:
             screen.linefeed()
 
@@ -52,7 +52,7 @@ def test_reverse_index():
     # Filling the screen with line numbers, so it's easier to
     # track history contents.
     for idx in range(len(screen.buffer)):
-        screen.draw(str(idx))
+        screen.draw(str(idx).encode())
         if idx != len(screen.buffer) - 1:
             screen.linefeed()
 
@@ -89,8 +89,7 @@ def test_prev_page():
     # Once again filling the screen with line numbers, but this time,
     # we need them to span on multiple lines.
     for idx in range(len(screen.buffer) * 10):
-        for ch in str(idx):
-            screen.draw(ch)
+        screen.draw(str(idx).encode())
 
         screen.linefeed()
 
@@ -160,8 +159,7 @@ def test_prev_page():
     screen.set_mode(mo.LNM)
 
     for idx in range(len(screen.buffer) * 10):
-        for ch in str(idx):
-            screen.draw(ch)
+        screen.draw(str(idx).encode())
 
         screen.linefeed()
 
@@ -199,8 +197,7 @@ def test_prev_page():
     screen.set_mode(mo.LNM)
 
     for idx in range(len(screen.buffer) * 10):
-        for ch in str(idx):
-            screen.draw(ch)
+        screen.draw(str(idx).encode())
 
         screen.linefeed()
 
@@ -248,8 +245,7 @@ def test_prev_page():
     screen.set_mode(mo.LNM)
 
     for idx in range(len(screen.buffer) * 10):
-        for ch in str(idx):
-            screen.draw(ch)
+        screen.draw(str(idx).encode())
 
         screen.linefeed()
 
@@ -300,8 +296,7 @@ def test_next_page():
     # Once again filling the screen with line numbers, but this time,
     # we need them to span on multiple lines.
     for idx in range(len(screen.buffer) * 5):
-        for ch in str(idx):
-            screen.draw(ch)
+        screen.draw(str(idx).encode())
 
         screen.linefeed()
 
@@ -371,15 +366,14 @@ def test_next_page():
 def test_ensure_width(monkeypatch):
     screen = HistoryScreen(5, 5, history=50)
     screen.set_mode(mo.LNM)
-
-    escape = dict(Stream.escape, N="next_page", P="prev_page")
+    escape = dict(Stream.escape)
+    escape.update({b"N": "next_page", b"P": "prev_page"})
     monkeypatch.setattr(Stream, "escape", escape)
 
     stream = Stream(screen)
 
     for idx in range(len(screen.buffer) * 5):
-        for ch in str(idx) + os.linesep:
-            stream.feed(ch)
+        stream.feed((str(idx) + os.linesep).encode())
 
     assert screen.display == [
         "21   ",
@@ -392,7 +386,7 @@ def test_ensure_width(monkeypatch):
     # a) shrinking the screen, expecting the lines displayed to
     #    be truncated.
     screen.resize(5, 2)
-    stream.feed(ctrl.ESC + "P")
+    stream.feed(ctrl.ESC + b"P")
 
     assert all(len(l) != 2 for l in screen.history.top)
     assert all(len(l) == 2 for l in screen.history.bottom)
@@ -407,7 +401,7 @@ def test_ensure_width(monkeypatch):
     # b) expading the screen, expecting the lines displayed to
     #    be filled with whitespace characters.
     screen.resize(5, 10)
-    stream.feed(ctrl.ESC + "N")
+    stream.feed(ctrl.ESC + b"N")
 
     assert all(len(l) == 10 for l in list(screen.history.top)[-3:])
     assert all(len(l) != 10 for l in screen.history.bottom)
@@ -425,8 +419,7 @@ def test_not_enough_lines():
     screen.set_mode(mo.LNM)
 
     for idx in range(len(screen.buffer)):
-        for ch in str(idx):
-            screen.draw(ch)
+        screen.draw(str(idx).encode())
 
         screen.linefeed()
 
@@ -468,13 +461,13 @@ def test_not_enough_lines():
 def test_draw(monkeypatch):
     screen = HistoryScreen(5, 5, history=50)
     screen.set_mode(mo.LNM)
-    escape = dict(Stream.escape, N="next_page", P="prev_page")
+    escape = dict(Stream.escape)
+    escape.update({b"N": "next_page", b"P": "prev_page"})
     monkeypatch.setattr(Stream, "escape", escape)
 
     stream = Stream(screen)
     for idx in range(len(screen.buffer) * 5):
-        for ch in str(idx) + os.linesep:
-            stream.feed(ch)
+        stream.feed((str(idx) + os.linesep).encode())
 
     assert screen.display == [
         "21   ",
@@ -486,10 +479,10 @@ def test_draw(monkeypatch):
 
     # a) doing a pageup and then a draw -- expecting the screen
     #    to scroll to the bottom before drawing anything.
-    stream.feed(ctrl.ESC + "P")
-    stream.feed(ctrl.ESC + "P")
-    stream.feed(ctrl.ESC + "N")
-    stream.feed("x")
+    stream.feed(ctrl.ESC + b"P")
+    stream.feed(ctrl.ESC + b"P")
+    stream.feed(ctrl.ESC + b"N")
+    stream.feed(b"x")
 
     assert screen.display == [
         "21   ",
@@ -502,21 +495,21 @@ def test_draw(monkeypatch):
 
 def test_cursor_is_hidden(monkeypatch):
     screen = HistoryScreen(5, 5, history=50)
-    escape = dict(Stream.escape, N="next_page", P="prev_page")
+    escape = dict(Stream.escape)
+    escape.update({b"N": "next_page", b"P": "prev_page"})
     monkeypatch.setattr(Stream, "escape", escape)
 
     stream = Stream(screen)
     for idx in range(len(screen.buffer) * 5):
-        for ch in str(idx) + os.linesep:
-            stream.feed(ch)
+        stream.feed((str(idx) + os.linesep).encode())
 
     assert not screen.cursor.hidden
 
-    stream.feed(ctrl.ESC + "P")
+    stream.feed(ctrl.ESC + b"P")
     assert screen.cursor.hidden
-    stream.feed(ctrl.ESC + "P")
+    stream.feed(ctrl.ESC + b"P")
     assert screen.cursor.hidden
-    stream.feed(ctrl.ESC + "N")
+    stream.feed(ctrl.ESC + b"N")
     assert screen.cursor.hidden
-    stream.feed(ctrl.ESC + "N")
+    stream.feed(ctrl.ESC + b"N")
     assert not screen.cursor.hidden

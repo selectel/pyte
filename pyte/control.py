@@ -11,55 +11,52 @@
     :license: LGPL, see LICENSE for more details.
 """
 
-from __future__ import unicode_literals
-
-
 #: *Space*: Not suprisingly -- ``" "``.
-SP = " "
+SP = b" "
 
 #: *Null*: Does nothing.
-NUL = "\u0000"
+NUL = b"\x00"
 
 #: *Bell*: Beeps.
-BEL = "\u0007"
+BEL = b"\x07"
 
 #: *Backspace*: Backspace one column, but not past the begining of the
 #: line.
-BS = "\u0008"
+BS = b"\x08"
 
 #: *Horizontal tab*: Move cursor to the next tab stop, or to the end
 #: of the line if there is no earlier tab stop.
-HT = "\u0009"
+HT = b"\x09"
 
 #: *Linefeed*: Give a line feed, and, if :data:`pyte.modes.LNM` (new
 #: line mode) is set also a carriage return.
-LF = "\n"
+LF = b"\n"
 #: *Vertical tab*: Same as :data:`LF`.
-VT = "\u000b"
+VT = b"\x0b"
 #: *Form feed*: Same as :data:`LF`.
-FF = "\u000c"
+FF = b"\x0c"
 
 #: *Carriage return*: Move cursor to left margin on current line.
-CR = "\r"
+CR = b"\r"
 
 #: *Shift out*: Activate G1 character set.
-SO = "\u000e"
+SO = b"\x0e"
 
 #: *Shift in*: Activate G0 character set.
-SI = "\u000f"
+SI = b"\x0f"
 
 #: *Cancel*: Interrupt escape sequence. If received during an escape or
 #: control sequence, cancels the sequence and displays substitution
 #: character.
-CAN = "\u0018"
+CAN = b"\x18"
 #: *Substitute*: Same as :data:`CAN`.
-SUB = "\u001a"
+SUB = b"\x1a"
 
 #: *Escape*: Starts an escape sequence.
-ESC = "\u001b"
+ESC = b"\x1b"
 
 #: *Delete*: Is ignored.
-DEL = "\u007f"
+DEL = b"\x7f"
 
 #: *Control sequence introducer*: An equivalent for ``ESC [``.
-CSI = "\u009b"
+CSI = b"\x9b"

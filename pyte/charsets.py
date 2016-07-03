@@ -21,7 +21,7 @@ from .compat import chr, map
 
 
 #: Latin1.
-LAT1_MAP = list(map(chr, range(256)))
+LAT1_MAP = "".join(map(chr, range(256)))
 
 #: VT100 graphic character set.
 VT100_MAP = "".join(chr(c) for c in [
@@ -134,8 +134,8 @@ VAX42_MAP = "".join(chr(c) for c in [
 
 
 MAPS = {
-    "B": LAT1_MAP,
-    "0": VT100_MAP,
-    "U": IBMPC_MAP,
-    "V": VAX42_MAP
+    b"B": LAT1_MAP,
+    b"0": VT100_MAP,
+    b"U": IBMPC_MAP,
+    b"V": VAX42_MAP
 }

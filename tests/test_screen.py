@@ -55,7 +55,7 @@ def test_attributes():
     assert screen.buffer == [[screen.default_char, screen.default_char]] * 2
     assert screen.cursor.attrs.bold
 
-    screen.draw("f")
+    screen.draw(b"f")
     assert screen.buffer == [
         [Char("f", "default", "default", bold=True), screen.default_char],
         [screen.default_char, screen.default_char]
@@ -104,9 +104,9 @@ def test_attributes_reset():
     screen.set_mode(mo.LNM)
     assert screen.buffer == [[screen.default_char, screen.default_char]] * 2
     screen.select_graphic_rendition(1)
-    screen.draw("f")
-    screen.draw("o")
-    screen.draw("o")
+    screen.draw(b"f")
+    screen.draw(b"o")
+    screen.draw(b"o")
     assert screen.buffer == [
         [Char("f", bold=True), Char("o", bold=True)],
         [Char("o", bold=True), screen.default_char],
@@ -114,7 +114,7 @@ def test_attributes_reset():
 
     screen.cursor_position()
     screen.select_graphic_rendition(0)  # Reset
-    screen.draw("f")
+    screen.draw(b"f")
     assert screen.buffer == [
         [Char("f"), Char("o", bold=True)],
         [Char("o", bold=True), screen.default_char],
@@ -177,15 +177,15 @@ def test_select_other_charset():
     assert screen.use_utf8  # on by default.
 
     # a) disable utf-8
-    screen.select_other_charset("@")
+    screen.select_other_charset(b"@")
     assert not screen.use_utf8
 
     # b) unknown code -- noop
-    screen.select_other_charset("X")
+    screen.select_other_charset(b"X")
     assert not screen.use_utf8
 
     # c) enable utf-8
-    screen.select_other_charset("G")
+    screen.select_other_charset(b"G")
     assert screen.use_utf8
 
 
@@ -196,13 +196,13 @@ def test_draw():
     assert mo.DECAWM in screen.mode
 
     for ch in "abc":
-        screen.draw(ch)
+        screen.draw(ch.encode())
 
     assert screen.display == ["abc", "   ", "   "]
     assert (screen.cursor.y, screen.cursor.x) == (0, 3)
 
     # ... one` more character -- now we got a linefeed!
-    screen.draw("a")
+    screen.draw(b"a")
     assert (screen.cursor.y, screen.cursor.x) == (1, 1)
 
     # ``DECAWM`` is off.
@@ -210,13 +210,13 @@ def test_draw():
     screen.reset_mode(mo.DECAWM)
 
     for ch in "abc":
-        screen.draw(ch)
+        screen.draw(ch.encode())
 
     assert screen.display == ["abc", "   ", "   "]
     assert (screen.cursor.y, screen.cursor.x) == (0, 3)
 
     # No linefeed is issued on the end of the line ...
-    screen.draw("a")
+    screen.draw(b"a")
     assert screen.display == ["aba", "   ", "   "]
     assert (screen.cursor.y, screen.cursor.x) == (0, 3)
 
@@ -224,17 +224,17 @@ def test_draw():
     # instead of replacing them.
     screen.set_mode(mo.IRM)
     screen.cursor_position()
-    screen.draw("x")
+    screen.draw(b"x")
     assert screen.display == ["xab", "   ", "   "]
 
     screen.cursor_position()
-    screen.draw("y")
+    screen.draw(b"y")
     assert screen.display == ["yxa", "   ", "   "]
 
 
 def test_draw_multiple_chars():
     screen = Screen(10, 1)
-    screen.draw("foobar")
+    screen.draw(b"foobar")
     assert screen.cursor.x == 6
     assert screen.display == ["foobar    "]
 
@@ -243,9 +243,20 @@ def test_draw_wcwidth():
     # Example from https://github.com/selectel/pyte/issues/9
     screen = Screen(10, 1)
     for char in "コンニチハ":
-        screen.draw(char)
+        screen.draw(char.encode())
 
     assert screen.cursor.x == screen.columns
+
+
+def test_draw_cp437():
+    screen = Screen(5, 1)
+    assert screen.charset == 0
+
+    screen.define_charset(b"U", b"(")
+    screen.select_other_charset(b"@")
+    screen.draw("α ± ε".encode("cp437"))
+
+    assert screen.display == ["α ± ε"]
 
 
 def test_carriage_return():
@@ -1172,7 +1183,7 @@ def test_unicode():
     stream = Stream(screen)
 
     try:
-        stream.feed("тест")
+        stream.feed("тест".encode())
     except UnicodeDecodeError:
         pytest.fail("Check your code -- we do accept unicode.")
 
@@ -1182,10 +1193,10 @@ def test_unicode():
 def test_alignment_display():
     screen = Screen(5, 5)
     screen.set_mode(mo.LNM)
-    screen.draw("a")
+    screen.draw(b"a")
     screen.linefeed()
     screen.linefeed()
-    screen.draw("b")
+    screen.draw(b"b")
 
     assert screen.display == ["a    ",
                               "     ",
@@ -1250,7 +1261,7 @@ def test_report_device_attributes():
 
     # b) OK case
     screen.report_device_attributes()
-    assert acc.pop() == ctrl.CSI + "?6c"
+    assert acc.pop() == ctrl.CSI + b"?6c"
 
 
 def test_private_report_device_attributes():
@@ -1261,8 +1272,8 @@ def test_private_report_device_attributes():
 
     acc = []
     screen.write_process_input = acc.append
-    stream.feed(ctrl.CSI + "?0c")
-    assert acc.pop() == ctrl.CSI + "?6c"
+    stream.feed(ctrl.CSI + b"?0c")
+    assert acc.pop() == ctrl.CSI + b"?6c"
 
 
 def test_report_device_status():
@@ -1277,12 +1288,12 @@ def test_report_device_status():
 
     # b) terminal status
     screen.report_device_status(5)
-    assert acc.pop() == ctrl.CSI + "0n"
+    assert acc.pop() == ctrl.CSI + b"0n"
 
     # c) cursor position, DECOM off
     screen.cursor_to_column(5)
     screen.report_device_status(6)
-    assert acc.pop() == "{0}{1};{2}R".format(ctrl.CSI, 1, 5)
+    assert acc.pop() == ctrl.CSI + "{0};{1}R".format(1, 5).encode()
 
     # d) cursor position, DECOM on
     screen.cursor_position()
@@ -1290,4 +1301,4 @@ def test_report_device_status():
     screen.set_mode(mo.DECOM)
     screen.cursor_to_line(5)
     screen.report_device_status(6)
-    assert acc.pop() == "{0}{1};{2}R".format(ctrl.CSI, 5, 1)
+    assert acc.pop() == ctrl.CSI + "{0};{1}R".format(5, 1).encode()

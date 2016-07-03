@@ -10,7 +10,7 @@
     >>> import pyte
     >>> screen = pyte.Screen(80, 24)
     >>> stream = pyte.Stream(screen)
-    >>> stream.feed(u"\u001B[5B")  # Move the cursor down 5 rows.
+    >>> stream.feed(b"\x1B[5B")  # Move the cursor down 5 rows.
     >>> screen.cursor.y
     5
 
@@ -27,6 +27,7 @@ import itertools
 import os
 import re
 import sys
+import warnings
 from collections import defaultdict
 
 from . import control as ctrl, escape as esc
@@ -34,8 +35,8 @@ from .compat import str
 
 
 class Stream(object):
-    """A stream is a state machine that parses a stream of characters
-    and dispatches events based on what it sees.
+    """A stream is a state machine that parses a stream of bytes and
+    dispatches events based on what it sees.
 
     :param pyte.screens.Screen screen: a screen to dispatch events to.
     :param bool strict: check if a given screen implements all required
@@ -43,9 +44,8 @@ class Stream(object):
 
     .. note::
 
-       Stream only accepts text as input, but if, for some reason,
-       you need to feed it with bytes, consider using
-       :class:`~pyte.streams.ByteStream` instead.
+       Stream only accepts :func:`bytes` as input. Decoding it into text
+       is the responsibility of the :class:`~pyte.screens.Screen`.
 
     .. versionchanged 0.6.0::
 
@@ -131,7 +131,7 @@ class Stream(object):
     #: considered plain text.
     _special = set([ctrl.ESC, ctrl.CSI, ctrl.NUL, ctrl.DEL]) | set(basic)
     _text_pattern = re.compile(
-        r"[^{0}]+".format("".join(map(re.escape, _special))))
+        b"[^" + b"".join(map(re.escape, _special)) + b"]+")
     del _special
 
     def __init__(self, screen, strict=True):
@@ -146,13 +146,13 @@ class Stream(object):
         self._parser = self._parser_fsm()
         self._taking_plain_text = next(self._parser)
 
-    def feed(self, chars):
+    def feed(self, data):
         """Consumes a string and advances the state as necessary.
 
-        :param str chars: a string to feed from.
+        :param byets data: a blob of data to feed from.
         """
-        if not isinstance(chars, str):
-            raise TypeError("{0} requires text input"
+        if not isinstance(data, bytes):
+            raise TypeError("{0} requires bytes input"
                             .format(self.__class__.__name__))
 
         send = self._parser.send
@@ -160,17 +160,19 @@ class Stream(object):
         match_text = self._text_pattern.match
         taking_plain_text = self._taking_plain_text
 
+        # TODO: use memoryview?
+        length = len(data)
         offset = 0
-        while offset < len(chars):
+        while offset < length:
             if taking_plain_text:
-                match = match_text(chars, offset)
+                match = match_text(data, offset)
                 if match:
                     start, offset = match.span()
-                    draw(chars[start:offset])
+                    draw(data[start:offset])
                 else:
                     taking_plain_text = False
             else:
-                taking_plain_text = send(chars[offset])
+                taking_plain_text = send(data[offset:offset + 1])
                 offset += 1
 
         self._taking_plain_text = taking_plain_text
@@ -193,11 +195,11 @@ class Stream(object):
         debug = listener.debug
 
         ESC, CSI = ctrl.ESC, ctrl.CSI
-        SP_OR_GT = ctrl.SP + ">"
+        SP_OR_GT = ctrl.SP + b">"
         NUL_OR_DEL = ctrl.NUL + ctrl.DEL
         CAN_OR_SUB = ctrl.CAN + ctrl.SUB
-        ALLOWED_IN_CSI = "".join([ctrl.BEL, ctrl.BS, ctrl.HT, ctrl.LF,
-                                  ctrl.VT, ctrl.FF, ctrl.CR])
+        ALLOWED_IN_CSI = b"".join([ctrl.BEL, ctrl.BS, ctrl.HT, ctrl.LF,
+                                   ctrl.VT, ctrl.FF, ctrl.CR])
 
         def create_dispatcher(mapping):
             return defaultdict(lambda: debug, dict(
@@ -228,14 +230,14 @@ class Stream(object):
                 #    character set. However, in the current version these
                 #    are noop.
                 char = yield
-                if char == "[":
+                if char == b"[":
                     char = CSI  # Go to CSI.
                 else:
-                    if char == "#":
+                    if char == b"#":
                         sharp_dispatch[(yield)]()
-                    if char == "%":
+                    if char == b"%":
                         listener.select_other_charset((yield))
-                    elif char in "()":
+                    elif char in b"()":
                         listener.define_charset((yield), mode=char)
                     else:
                         escape_dispatch[char]()
@@ -258,11 +260,11 @@ class Stream(object):
                 #        For details on the characters valid for use as
                 #        arguments.
                 params = []
-                current = ""
+                current = bytearray()
                 private = False
                 while True:
                     char = yield
-                    if char == "?":
+                    if char == b"?":
                         private = True
                     elif char in ALLOWED_IN_CSI:
                         basic_dispatch[char]()
@@ -277,12 +279,12 @@ class Stream(object):
                         draw(char)
                         break
                     elif char.isdigit():
-                        current += char
+                        current.extend(char)
                     else:
-                        params.append(min(int(current or 0), 9999))
+                        params.append(min(int(bytes(current) or 0), 9999))
 
-                        if char == ";":
-                            current = ""
+                        if char == b";":
+                            current = bytearray()
                         else:
                             if private:
                                 csi_dispatch[char](*params, private=True)
@@ -294,70 +296,20 @@ class Stream(object):
 
 
 class ByteStream(Stream):
-    """A stream, which takes bytes (instead of strings) as input
-    and tries to decode them using a given list of possible encodings.
-    It uses :class:`codecs.IncrementalDecoder` internally, so broken
-    bytes are not an issue.
+    def __init__(self, *args, **kwargs):
+        warnings.warn("As of version 0.6.0 ``pyte.streams.ByteStream`` is an "
+                      "alias for ``pyte.streams.Stream``. The former will be "
+                      "removed in pyte 0.6.1.", DeprecationWarning)
 
-    By default, the following decoding strategy is used:
+        if kwargs.pop("encodings", None):
+            warnings.warn(
+                "As of version 0.6.0 ``pyte.streams.ByteStream`` no longer "
+                "decodes input.", DeprecationWarning)
 
-    * First, try strict ``"utf-8"``, proceed if received and
-      :exc:`UnicodeDecodeError` ...
-    * Try strict ``"cp437"``, failed? move on ...
-    * Use ``"utf-8"`` with invalid bytes replaced -- this one will
-      always succeed.
-
-    >>> import pyte
-    >>> stream = pyte.ByteStream(pyte.Screen(80, 24))
-    >>> stream.feed(b"foo".decode("utf-8"))
-    Traceback (most recent call last):
-      File "<stdin>", line 1, in <module>
-      File "pyte/streams.py", line 367, in feed
-        "{0} requires input in bytes".format(self.__class__.__name__))
-    TypeError: ByteStream requires input in bytes
-    >>> stream.feed(b"foo")
-
-    :param pyte.screens.Screen screen: a screen to dispatch events to.
-    :param list encodings: a list of ``(encoding, errors)`` pairs,
-                           where the first element is encoding name,
-                           ex: ``"utf-8"`` and second defines how
-                           decoding errors should be handled; see
-                           :meth:`str.decode` for possible values.
-    """
-
-    def __init__(self, screen, encodings=None):
-        encodings = encodings or [
-            ("utf-8", "strict"),
-            ("cp437", "strict"),
-            ("utf-8", "replace")
-        ]
-
-        self.buffer = b"", 0
-        self.decoders = [codecs.getincrementaldecoder(encoding)(errors)
-                         for encoding, errors in encodings]
-
-        super(ByteStream, self).__init__(screen)
-
-    def feed(self, chars):
-        if not isinstance(chars, bytes):
-            raise TypeError(
-                "{0} requires input in bytes".format(self.__class__.__name__))
-
-        for idx, decoder in enumerate(self.decoders):
-            decoder.setstate(self.buffer)
-
-            try:
-                chars = decoder.decode(chars)
-            except UnicodeDecodeError:
-                continue
-            else:
-                self.buffer = decoder.getstate()
-                return super(ByteStream, self).feed(chars)
-
-        raise ValueError("unknown encoding")
+        super(ByteStream, self).__init__(*args, **kwargs)
 
 
-class DebugStream(ByteStream):
+class DebugStream(Stream):
     r"""Stream, which dumps a subset of the dispatched events to a given
     file-like object (:data:`sys.stdout` by default).
 
@@ -381,7 +333,7 @@ class DebugStream(ByteStream):
     def __init__(self, to=sys.stdout, only=(), *args, **kwargs):
         def safe_str(chunk):
             if isinstance(chunk, bytes):
-                chunk = chunk.decode("utf-8")
+                chunk = chunk.decode()
             elif not isinstance(chunk, str):
                 chunk = str(chunk)
 

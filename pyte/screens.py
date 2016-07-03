@@ -369,16 +369,16 @@ class Screen(object):
         """Defines ``G0`` or ``G1`` charset.
 
         :param str code: character set code, should be a character
-                         from ``"B0UK"``, otherwise ignored.
+                         from ``b"B0UK"``, otherwise ignored.
         :param str mode: if ``"("`` ``G0`` charset is defined, if
                          ``")"`` -- we operate on ``G1``.
 
         .. warning:: User-defined charsets are currently not supported.
         """
         if code in cs.MAPS:
-            if mode == "(":
+            if mode == b"(":
                 self.g0_charset = cs.MAPS[code]
-            elif mode == ")":
+            elif mode == b")":
                 self.g1_charset = cs.MAPS[code]
 
     def shift_in(self):
@@ -393,7 +393,7 @@ class Screen(object):
         """Selects other (non G0 or G1) charset.
 
         :param str code: character set code, should be a character from
-                         ``"@G8"``, otherwise ignored.
+                         ``b"@G8"``, otherwise ignored.
 
         .. note:: We currently follow ``"linux"`` and only use this
                   command to switch from ISO-8859-1 to UTF-8 and back.
@@ -404,16 +404,16 @@ class Screen(object):
         <http://www.ecma-international.org/publications/standards/Ecma-035.htm>`_
         for a description of VTXXX character set machinery.
         """
-        if code == "@":
+        if code == b"@":
             self.use_utf8 = False
-        elif code in "G8":
+        elif code in b"G8":
             self.use_utf8 = True
 
-    def draw(self, chars):
-        """Display a character at the current cursor position and advance
-        the cursor if :data:`~pyte.modes.DECAWM` is set.
+    def draw(self, data):
+        """Displays decoded characters at the current cursor position and
+        advances the cursor if :data:`~pyte.modes.DECAWM` is set.
 
-        :param str chasr: characters to display.
+        :param bytes data: bytes to display.
 
         .. versionchanged:: 0.5.0
 
@@ -423,13 +423,15 @@ class Screen(object):
 
         .. versionchanged:: 0.6.0
 
-           The method can be called with multiple characters.
+           The input is now supposed to be in :func:`bytes`, which may encode
+           multiple characters.
         """
-        # Translating a given character.
         if self.charset:
-            chars = chars.translate(self.g1_charset)
+            chars = "".join(self.g1_charset[ch] for ch in data)
+        elif self.use_utf8:
+            chars = data.decode()
         else:
-            chars = chars.translate(self.g0_charset)
+            chars = "".join(self.g0_charset[ch] for ch in data)
 
         for char in chars:
             char_width = wcwidth(char)
@@ -888,7 +890,7 @@ class Screen(object):
         # We only implement "primary" DA which is the only DA request
         # VT102 understood, see ``VT102ID`` in ``linux/drivers/tty/vt.c``.
         if mode == 0:
-            self.write_process_input(ctrl.CSI + "?6c")
+            self.write_process_input(ctrl.CSI + b"?6c")
 
     def report_device_status(self, mode):
         """Reports terminal status or cursor position.
@@ -899,7 +901,7 @@ class Screen(object):
         .. versionadded:: 0.5.0
         """
         if mode == 5:    # Request for terminal status.
-            self.write_process_input(ctrl.CSI + "0n")
+            self.write_process_input(ctrl.CSI + b"0n")
         elif mode == 6:  # Request for cursor position.
             x = self.cursor.x + 1
             y = self.cursor.y + 1
@@ -907,14 +909,15 @@ class Screen(object):
             # "Origin mode (DECOM) selects line numbering."
             if mo.DECOM in self.mode:
                 y -= self.margins.top
-            self.write_process_input("{0}{1};{2}R".format(ctrl.CSI, y, x))
+            self.write_process_input(
+                ctrl.CSI + "{0};{1}R".format(y, x).encode())
 
     def write_process_input(self, data):
         """Writes data to the process running inside the terminal.
 
         By default is a noop.
 
-        :param str data: data to write to the process ``stdin``.
+        :param bytes data: data to write to the process ``stdin``.
 
         .. versionadded:: 0.5.0
         """
@@ -937,7 +940,7 @@ class DiffScreen(Screen):
 
        >>> screen = DiffScreen(80, 24)
        >>> screen.dirty.clear()
-       >>> screen.draw(u"!")
+       >>> screen.draw(b"!")
        >>> list(screen.dirty)
        [0]
     """
@@ -1060,8 +1063,8 @@ class HistoryScreen(DiffScreen):
        appropriate escape sequences -- you can use any, since pagination
        protocol is not standardized, for example::
 
-           Stream.escape["N"] = "next_page"
-           Stream.escape["P"] = "prev_page"
+           Stream.escape[b"N"] = "next_page"
+           Stream.escape[b"P"] = "prev_page"
     """
     _wrapped = set(Stream.events)
     _wrapped.update(["next_page", "prev_page"])

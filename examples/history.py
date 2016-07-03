@@ -44,7 +44,7 @@ if __name__ == "__main__":
 
     pages = 3
     stream.feed(os.linesep.join(random_string(screen.columns)
-                                for _ in range(screen.lines * pages)))
+                                for _ in range(screen.lines * pages)).encode())
     screen.prev_page()
 
     print_screen(screen, "Hit ENTER to move up!")

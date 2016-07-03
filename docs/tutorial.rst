@@ -18,7 +18,7 @@ can do something like the following:
     >>> import pyte
     >>> screen = pyte.Screen(80, 24)
     >>> stream = pyte.Stream(screen)
-    >>> stream.feed("Hello World!")
+    >>> stream.feed(b"Hello World!")
     >>> screen.display
         ['Hello World!                                                                    ',
          '                                                                                ',
@@ -46,7 +46,7 @@ can do something like the following:
          '                                                                                ']
 
 
-**Note**: ``Screen`` has no idea what is the source of text, fed into ``Stream``,
+**Note**: ``Screen`` has no idea what is the source of bytes fed into ``Stream``,
 so, obviously, it **can't read** or **change** environment variables, which implies
 that:
 
@@ -55,4 +55,4 @@ that:
 * it doesn't use `TERM` value and expects it to be `"linux"` and only `"linux"`.
 
 And that's it for Hello World! Head over to the `examples
-<https://github.com/selectel/examples>`_ for  more.
+<https://github.com/selectel/pyte/examples>`_ for  more.

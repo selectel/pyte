@@ -30,9 +30,8 @@ if __name__ == "__main__":
     screen = pyte.Screen(80, 24)
     stream = pyte.Stream(screen)
 
-    decoder = codecs.getincrementaldecoder(sys.getdefaultencoding())("replace")
     master, slave = pty.openpty()
-    p = subprocess.Popen(sys.argv[2:], stdout=slave, stderr=slave)
+    p = subprocess.Popen(sys.argv[1:], stdout=slave, stderr=slave)
     while True:
         try:
             [fd], _wlist, _xlist = select.select([master], [], [], 1)
@@ -41,7 +40,6 @@ if __name__ == "__main__":
             p.kill()
             break
         else:
-            chunk = os.read(fd, 1024)
-            stream.feed(decoder.decode(chunk))
+            stream.feed(os.read(fd, 1024))
 
     print(*screen.display, sep="\n")

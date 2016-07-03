@@ -34,11 +34,12 @@ if __name__ == "__main__":
         p = subprocess.Popen(sys.argv[2:], stdout=slave, stderr=slave)
         while True:
             try:
-                [fd], _wlist, _xlist = select.select([master], [], [], 1)
+                rlist, _wlist, _xlist = select.select([master], [], [], 1)
             except (KeyboardInterrupt,  # Stop right now!
                     ValueError):        # Nothing to read.
                 p.kill()
                 break
             else:
-                chunk = os.read(fd, 1024)
-                handle.write(chunk)
+                for fd in rlist:
+                    if fd is master:
+                        handle.write(os.read(master, 1024))
