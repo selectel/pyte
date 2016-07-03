@@ -180,6 +180,22 @@ def test_control_characters():
     assert handler.args == (10, 10)
 
 
+def test_compatibility_api():
+    screen = Screen(80, 24)
+    stream = Stream()
+    stream.attach(screen)
+
+    # All of the following shouldn't raise errors.
+    # a) adding more than one listener
+    stream.attach(Screen(80, 24))
+
+    # b) feeding text
+    stream.feed("привет")
+
+    # c) detaching an attached screen.
+    stream.detach(screen)
+
+
 def test_debug_stream():
     tests = [
         (b"foo", "DRAW foo"),

@@ -11,12 +11,12 @@ Version 0.6.0
 - Further optimized ``Stream._parser_fsm`` by forcing static binding between
   ``Stream`` events and ``Screen`` methods. The code was backported from
   ``pmux`` project by Jonathan Slenders.
-- Restricted ``Stream`` to a single listener and removed ``attach`` and
+- Restricted ``Stream`` to a single listener and deprecated ``attach`` and
   ``detach``. The old logic can be emulated by a fanout proxy, forwarding
   events to a list of its listeners.
-- Merged ``Stream`` and ``ByteStream`` and required ``bytes`` as input.
-  This allows to decode the bytes on the ``Screen`` side.
-  See issue #49 on GitHub.
+- Merged ``Stream`` and ``ByteStream`` and required bytes as input.
+  This allows to decode the bytes on the ``Screen`` side. The next version
+  will force the use of ``bytes``. See issue #49 on GitHub.
 - Removed overly generic ``Screen.__before__`` and ``Screen.__after__``.
 - Renamed ``Screen.set_charset`` to a more appropriate
   ``Screen.define_charset``.

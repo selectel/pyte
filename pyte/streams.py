@@ -22,7 +22,6 @@
 
 from __future__ import absolute_import, unicode_literals
 
-import codecs
 import itertools
 import os
 import re
@@ -134,24 +133,56 @@ class Stream(object):
         b"[^" + b"".join(map(re.escape, _special)) + b"]+")
     del _special
 
-    def __init__(self, screen, strict=True):
-        self.listener = screen
+    def __init__(self, screen=None, strict=True):
+        self.listener = None
+        self.strict = False
 
-        if strict:
+        if screen is not None:
+            self.attach(screen)
+
+    def attach(self, screen, only=()):
+        """Adds a given screen to the listener queue.
+
+        :param pyte.screens.Screen screen: a screen to attach to.
+        :param list only: a list of events you want to dispatch to a
+                          given screen (empty by default, which means
+                          -- dispatch all events).
+        """
+        if self.strict:
             for event in self.events:
                 if not hasattr(screen, event):
                     error_message = "{0} is missing {1}".format(screen, event)
                     raise TypeError(error_message)
+        if self.listener is not None:
+            warnings.warn("As of version 0.6.0 the listener queue is "
+                          "restricted to a single element. Existing "
+                          "listener {0} will be replaced."
+                          .format(self.listener), DeprecationWarning)
 
+        self.listener = screen
         self._parser = self._parser_fsm()
         self._taking_plain_text = next(self._parser)
+
+    def detach(self, screen):
+        """Removes a given screen from the listener queue and fails
+        silently if it's not attached.
+
+        :param pyte.screens.Screen screen: a screen to detach.
+        """
+        if screen is self.listener:
+            self.listener = None
 
     def feed(self, data):
         """Consumes a string and advances the state as necessary.
 
-        :param byets data: a blob of data to feed from.
+        :param bytes data: a blob of data to feed from.
         """
-        if not isinstance(data, bytes):
+        if isinstance(data, str):
+            warnings.warn("As of version 0.6.0 ``pyte.streams.Stream.feed``"
+                          "requires input in bytes. This warnings will become "
+                          "and error in 0.6.1.")
+            data = data.encode()
+        elif not isinstance(data, bytes):
             raise TypeError("{0} requires bytes input"
                             .format(self.__class__.__name__))
 
