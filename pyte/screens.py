@@ -40,7 +40,7 @@ from . import (
     graphics as g,
     modes as mo
 )
-from .compat import map, range
+from .compat import iter_bytes, map, range
 from .streams import Stream
 
 
@@ -427,11 +427,11 @@ class Screen(object):
            multiple characters.
         """
         if self.charset:
-            chars = "".join(self.g1_charset[ch] for ch in data)
+            chars = "".join(self.g1_charset[b] for b in iter_bytes(data))
         elif self.use_utf8:
             chars = data.decode("utf-8")
         else:
-            chars = "".join(self.g0_charset[ch] for ch in data)
+            chars = "".join(self.g0_charset[b] for b in iter_bytes(data))
 
         for char in chars:
             char_width = wcwidth(char)
