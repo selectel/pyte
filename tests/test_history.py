@@ -20,7 +20,7 @@ def test_index():
     # Filling the screen with line numbers, so it's easier to
     # track history contents.
     for idx in range(len(screen.buffer)):
-        screen.draw(str(idx).encode())
+        screen.draw(str(idx).encode("utf-8"))
         if idx != len(screen.buffer) - 1:
             screen.linefeed()
 
@@ -52,7 +52,7 @@ def test_reverse_index():
     # Filling the screen with line numbers, so it's easier to
     # track history contents.
     for idx in range(len(screen.buffer)):
-        screen.draw(str(idx).encode())
+        screen.draw(str(idx).encode("utf-8"))
         if idx != len(screen.buffer) - 1:
             screen.linefeed()
 
@@ -89,7 +89,7 @@ def test_prev_page():
     # Once again filling the screen with line numbers, but this time,
     # we need them to span on multiple lines.
     for idx in range(len(screen.buffer) * 10):
-        screen.draw(str(idx).encode())
+        screen.draw(str(idx).encode("utf-8"))
 
         screen.linefeed()
 
@@ -159,7 +159,7 @@ def test_prev_page():
     screen.set_mode(mo.LNM)
 
     for idx in range(len(screen.buffer) * 10):
-        screen.draw(str(idx).encode())
+        screen.draw(str(idx).encode("utf-8"))
 
         screen.linefeed()
 
@@ -197,7 +197,7 @@ def test_prev_page():
     screen.set_mode(mo.LNM)
 
     for idx in range(len(screen.buffer) * 10):
-        screen.draw(str(idx).encode())
+        screen.draw(str(idx).encode("utf-8"))
 
         screen.linefeed()
 
@@ -245,7 +245,7 @@ def test_prev_page():
     screen.set_mode(mo.LNM)
 
     for idx in range(len(screen.buffer) * 10):
-        screen.draw(str(idx).encode())
+        screen.draw(str(idx).encode("utf-8"))
 
         screen.linefeed()
 
@@ -296,7 +296,7 @@ def test_next_page():
     # Once again filling the screen with line numbers, but this time,
     # we need them to span on multiple lines.
     for idx in range(len(screen.buffer) * 5):
-        screen.draw(str(idx).encode())
+        screen.draw(str(idx).encode("utf-8"))
 
         screen.linefeed()
 
@@ -373,7 +373,7 @@ def test_ensure_width(monkeypatch):
     stream = Stream(screen)
 
     for idx in range(len(screen.buffer) * 5):
-        stream.feed((str(idx) + os.linesep).encode())
+        stream.feed((str(idx) + os.linesep).encode("utf-8"))
 
     assert screen.display == [
         "21   ",
@@ -419,7 +419,7 @@ def test_not_enough_lines():
     screen.set_mode(mo.LNM)
 
     for idx in range(len(screen.buffer)):
-        screen.draw(str(idx).encode())
+        screen.draw(str(idx).encode("utf-8"))
 
         screen.linefeed()
 
@@ -467,7 +467,7 @@ def test_draw(monkeypatch):
 
     stream = Stream(screen)
     for idx in range(len(screen.buffer) * 5):
-        stream.feed((str(idx) + os.linesep).encode())
+        stream.feed((str(idx) + os.linesep).encode("utf-8"))
 
     assert screen.display == [
         "21   ",
@@ -501,7 +501,7 @@ def test_cursor_is_hidden(monkeypatch):
 
     stream = Stream(screen)
     for idx in range(len(screen.buffer) * 5):
-        stream.feed((str(idx) + os.linesep).encode())
+        stream.feed((str(idx) + os.linesep).encode("utf-8"))
 
     assert not screen.cursor.hidden
 

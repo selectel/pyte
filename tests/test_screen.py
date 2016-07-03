@@ -196,7 +196,7 @@ def test_draw():
     assert mo.DECAWM in screen.mode
 
     for ch in "abc":
-        screen.draw(ch.encode())
+        screen.draw(ch.encode("utf-8"))
 
     assert screen.display == ["abc", "   ", "   "]
     assert (screen.cursor.y, screen.cursor.x) == (0, 3)
@@ -210,7 +210,7 @@ def test_draw():
     screen.reset_mode(mo.DECAWM)
 
     for ch in "abc":
-        screen.draw(ch.encode())
+        screen.draw(ch.encode("utf-8"))
 
     assert screen.display == ["abc", "   ", "   "]
     assert (screen.cursor.y, screen.cursor.x) == (0, 3)
@@ -243,7 +243,7 @@ def test_draw_wcwidth():
     # Example from https://github.com/selectel/pyte/issues/9
     screen = Screen(10, 1)
     for char in "コンニチハ":
-        screen.draw(char.encode())
+        screen.draw(char.encode("utf-8"))
 
     assert screen.cursor.x == screen.columns
 
@@ -1183,7 +1183,7 @@ def test_unicode():
     stream = Stream(screen)
 
     try:
-        stream.feed("тест".encode())
+        stream.feed("тест".encode("utf-8"))
     except UnicodeDecodeError:
         pytest.fail("Check your code -- we do accept unicode.")
 
@@ -1293,7 +1293,7 @@ def test_report_device_status():
     # c) cursor position, DECOM off
     screen.cursor_to_column(5)
     screen.report_device_status(6)
-    assert acc.pop() == ctrl.CSI + "{0};{1}R".format(1, 5).encode()
+    assert acc.pop() == ctrl.CSI + "{0};{1}R".format(1, 5).encode("utf-8")
 
     # d) cursor position, DECOM on
     screen.cursor_position()
@@ -1301,4 +1301,4 @@ def test_report_device_status():
     screen.set_mode(mo.DECOM)
     screen.cursor_to_line(5)
     screen.report_device_status(6)
-    assert acc.pop() == ctrl.CSI + "{0};{1}R".format(5, 1).encode()
+    assert acc.pop() == ctrl.CSI + "{0};{1}R".format(5, 1).encode("utf-8")
