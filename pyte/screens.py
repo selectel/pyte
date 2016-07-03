@@ -429,7 +429,7 @@ class Screen(object):
         if self.charset:
             chars = "".join(self.g1_charset[ch] for ch in data)
         elif self.use_utf8:
-            chars = data.decode()
+            chars = data.decode("utf-8")
         else:
             chars = "".join(self.g0_charset[ch] for ch in data)
 

@@ -12,7 +12,6 @@
 
 from __future__ import print_function, unicode_literals
 
-import codecs
 import os
 import pty
 import select
@@ -28,7 +27,6 @@ if __name__ == "__main__":
 
     stream = pyte.Stream(pyte.Screen(80, 24))
 
-    decoder = codecs.getincrementaldecoder(sys.getdefaultencoding())("replace")
     master, slave = pty.openpty()
     with open(sys.argv[1], "wb") as handle:
         p = subprocess.Popen(sys.argv[2:], stdout=slave, stderr=slave)

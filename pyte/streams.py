@@ -364,7 +364,7 @@ class DebugStream(Stream):
     def __init__(self, to=sys.stdout, only=(), *args, **kwargs):
         def safe_str(chunk):
             if isinstance(chunk, bytes):
-                chunk = chunk.decode()
+                chunk = chunk.decode("utf-8")
             elif not isinstance(chunk, str):
                 chunk = str(chunk)
 
