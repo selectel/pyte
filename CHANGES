@@ -24,6 +24,7 @@ Version 0.6.0
   to enable UTF-8.
 - Added support for OSC sequences allowing to set terminal title and
   icon name.
+- Allowed 256 and 24bit colours in ``Screen.select_graphic_rendition``.
 
 Version 0.5.2
 -------------

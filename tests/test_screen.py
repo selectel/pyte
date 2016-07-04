@@ -49,7 +49,7 @@ def test_remove_non_existant_attribute():
 def test_attributes():
     screen = Screen(2, 2)
     assert screen.buffer == [[screen.default_char, screen.default_char]] * 2
-    screen.select_graphic_rendition(1)  # Bold
+    screen.select_graphic_rendition(1)  # bold.
 
     # Still default, since we haven't written anything.
     assert screen.buffer == [[screen.default_char, screen.default_char]] * 2
@@ -64,16 +64,55 @@ def test_attributes():
 
 def test_colors():
     screen = Screen(2, 2)
-    assert screen.buffer == [[screen.default_char, screen.default_char]] * 2
 
-    screen.select_graphic_rendition(30)  # black foreground
-    screen.select_graphic_rendition(40)  # black background
+    screen.select_graphic_rendition(30)
+    screen.select_graphic_rendition(40)
     assert screen.cursor.attrs.fg == "black"
     assert screen.cursor.attrs.bg == "black"
 
-    screen.select_graphic_rendition(31)  # red foreground
+    screen.select_graphic_rendition(31)
     assert screen.cursor.attrs.fg == "red"
     assert screen.cursor.attrs.bg == "black"
+
+
+def test_colors256():
+    screen = Screen(2, 2)
+
+    # a) OK-case.
+    screen.select_graphic_rendition(38, 5, 0)
+    screen.select_graphic_rendition(48, 5, 15)
+    assert screen.cursor.attrs.fg == "000000"
+    assert screen.cursor.attrs.bg == "ffffff"
+
+    # b) invalid color.
+    screen.select_graphic_rendition(48, 5, 100500)
+
+
+def test_colors24bit():
+    screen = Screen(2, 2)
+
+    # a) OK-case
+    screen.select_graphic_rendition(38, 2, 0, 0, 0)
+    screen.select_graphic_rendition(48, 2, 255, 255, 255)
+    assert screen.cursor.attrs.fg == "000000"
+    assert screen.cursor.attrs.bg == "ffffff"
+
+    # b) invalid color.
+    screen.select_graphic_rendition(48, 2, 255)
+
+
+def test_colors_ignore_invalid():
+    screen = Screen(2, 2)
+    default_attrs = screen.cursor.attrs
+
+    screen.select_graphic_rendition(100500)
+    assert screen.cursor.attrs == default_attrs
+
+    screen.select_graphic_rendition(38, 100500)
+    assert screen.cursor.attrs == default_attrs
+
+    screen.select_graphic_rendition(48, 100500)
+    assert screen.cursor.attrs == default_attrs
 
 
 def test_reset_resets_colors():

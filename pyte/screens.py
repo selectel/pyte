@@ -891,16 +891,37 @@ class Screen(object):
         """
         replace = {}
 
-        for attr in attrs or [0]:
-            if attr in g.FG:
-                replace["fg"] = g.FG[attr]
+        if not attrs:
+            attrs = [0]
+        else:
+            attrs = list(reversed(attrs))
+
+        while attrs:
+            attr = attrs.pop()
+            if attr in g.FG_ANSI:
+                replace["fg"] = g.FG_ANSI[attr]
             elif attr in g.BG:
-                replace["bg"] = g.BG[attr]
+                replace["bg"] = g.BG_ANSI[attr]
             elif attr in g.TEXT:
                 attr = g.TEXT[attr]
                 replace[attr[1:]] = attr.startswith("+")
             elif not attr:
                 replace = self.default_char._asdict()
+            elif attr in (g.FG_256, g.BG_256):
+                key = "fg" if attr == g.FG_256 else "bg"
+                n = attrs.pop()
+                try:
+                    if n == 5:    # 256.
+                        m = attrs.pop()
+                        replace[key] = g.FG_BG_256[m]
+                    elif n == 2:  # 24bit.
+                        # This is somewhat non-standard but is nonetheless
+                        # supported in quite a few terminals. See discussion
+                        # here https://gist.github.com/XVilka/8346728.
+                        replace[key] = "{0:02x}{1:02x}{2:02x}".format(
+                            attrs.pop(), attrs.pop(), attrs.pop())
+                except IndexError:
+                    pass
 
         self.cursor.attrs = self.cursor.attrs._replace(**replace)
 
