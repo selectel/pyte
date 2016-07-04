@@ -121,8 +121,3 @@ for i in range(1, 22):
     FG_BG_256.append((v, v, v))
 
 FG_BG_256 = ["{0:02x}{1:02x}{2:02x}".format(r, g, b) for r, g, b in FG_BG_256]
-
-# Reverse mapping of all available attributes -- keep this private!
-_SGR = dict((v, k) for k, v in itertools.chain(BG_ANSI.items(),
-                                               FG_ANSI.items(),
-                                               TEXT.items()))

@@ -331,7 +331,7 @@ class Screen(object):
         if mo.DECSCNM in modes:
             self.buffer[:] = ([char._replace(reverse=True) for char in line]
                               for line in self.buffer)
-            self.select_graphic_rendition(g._SGR["+reverse"])
+            self.select_graphic_rendition(7)  # +reverse.
 
         # Make the cursor visible.
         if mo.DECTCEM in modes:
@@ -362,7 +362,7 @@ class Screen(object):
         if mo.DECSCNM in modes:
             self.buffer[:] = ([char._replace(reverse=False) for char in line]
                               for line in self.buffer)
-            self.select_graphic_rendition(g._SGR["-reverse"])
+            self.select_graphic_rendition(27)  # -reverse.
 
         # Hide the cursor.
         if mo.DECTCEM in modes:
