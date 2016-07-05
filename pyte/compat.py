@@ -5,7 +5,7 @@
 
     Python version specific compatibility fixes.
 
-    :copyright: (c) 2015 pyte authors and contributors,
+    :copyright: (c) 2015-2016 by pyte authors and contributors,
                 see AUTHORS for details.
     :license: LGPL, see LICENSE for more details.
 """

@@ -17,7 +17,9 @@
         DRAW o
         DRAW o
 
-    :copyright: (c) 2011 by Selectel, see AUTHORS for more details.
+    :copyright: (c) 2011-2012 by Selectel.
+    :copyright: (c) 2012-2016 by pyte authors and contributors,
+                    see AUTHORS for details.
     :license: LGPL, see LICENSE for more details.
 """
 

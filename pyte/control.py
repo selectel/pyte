@@ -7,7 +7,9 @@
     :class:`~pyte.streams.Stream`, the set of codes here is for
     ``TERM=linux`` which is a superset of VT102.
 
-    :copyright: (c) 2011-2013 by Selectel, see AUTHORS for details.
+    :copyright: (c) 2011-2012 by Selectel.
+    :copyright: (c) 2012-2016 by pyte authors and contributors,
+                    see AUTHORS for details.
     :license: LGPL, see LICENSE for more details.
 """
 

@@ -7,7 +7,9 @@
     :manpage:`console_codes(4)` and
     http://pueblo.sourceforge.net/doc/manual/ansi_color_codes.html.
 
-    :copyright: (c) 2011-2013 by Selectel, see AUTHORS for details.
+    :copyright: (c) 2011-2012 by Selectel.
+    :copyright: (c) 2012-2016 by pyte authors and contributors,
+                    see AUTHORS for details.
     :license: LGPL, see LICENSE for more details.
 """
 
@@ -35,7 +37,6 @@ TEXT = {
     27: "-reverse",
     29: "-strikethrough",
 }
-
 
 #: A mapping of ANSI foreground color codes to color names.
 #:
