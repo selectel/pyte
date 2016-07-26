@@ -194,6 +194,14 @@ def test_set_title_icon_name():
     stream.feed(ctrl.OSC + b"0;bar" + ctrl.ST)
     assert screen.title == screen.icon_name == "bar"
 
+    # d) set both icon name and title then terminate with BEL
+    stream.feed(ctrl.OSC + b"0;bar" + ctrl.BEL)
+    assert screen.title == screen.icon_name == "bar"
+
+    # e) test ➜ ('\xe2\x9e\x9c') symbol, that contains string terminator \x9c
+    stream.feed(u"➜".encode("utf-8"))
+    assert screen.buffer[0][0].data == u"➜"
+
 
 def test_compatibility_api():
     screen = Screen(80, 24)

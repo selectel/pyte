@@ -129,7 +129,7 @@ class Stream(object):
 
     #: A regular expression pattern matching everything what can be
     #: considered plain text.
-    _special = set([ctrl.ESC, ctrl.CSI, ctrl.NUL, ctrl.DEL, ctrl.OSC, ctrl.ST])
+    _special = set([ctrl.ESC, ctrl.CSI, ctrl.NUL, ctrl.DEL, ctrl.OSC])
     _special.update(basic)
     _text_pattern = re.compile(
         b"[^" + b"".join(map(re.escape, _special)) + b"]+")
@@ -332,7 +332,7 @@ class Stream(object):
                 param = bytearray()
                 while True:
                     char = yield
-                    if char == ST:
+                    if char == ST or char == ctrl.BEL:
                         break
                     else:
                         param.extend(char)
