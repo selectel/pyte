@@ -468,14 +468,14 @@ class Screen(object):
 
             line = self.buffer[self.cursor.y]
             line[self.cursor.x] = self.cursor.attrs._replace(data=char)
-            if char_width > 1:
+            if char_width > 1 and self.cursor.x + 1 < self.columns:
                 # Add a stub *after* a two-cell character. See issue #9
                 # on GitHub.
                 line[self.cursor.x + 1] = self.cursor.attrs._replace(data=" ")
 
             # .. note:: We can't use :meth:`cursor_forward()`, because that
             #           way, we'll never know when to linefeed.
-            self.cursor.x += char_width
+            self.cursor.x = min(self.cursor.x + char_width, self.columns)
 
     def set_title(self, param):
         """Sets terminal title.
