@@ -293,7 +293,7 @@ def test_draw_wcwidth_zero():
     screen.draw(" コンニチハ".encode("utf-8"))
     assert screen.cursor.x == screen.columns
     screen.draw("\N{ZERO WIDTH SPACE}".encode("utf-8"))
-    screen.draw("\N{DELETE}".encode("utf-8"))
+    screen.draw("\u0007".encode("utf-8"))  # DELETE.
     assert screen.cursor.x == screen.columns
     screen.set_mode(mo.DECAWM)
 
@@ -302,7 +302,7 @@ def test_draw_wcwidth_zero():
     # b) ``IRM`` mode is on.
     screen.set_mode(mo.IRM)
     screen.draw("\N{ZERO WIDTH SPACE}".encode("utf-8"))
-    screen.draw("\N{DELETE}".encode("utf-8"))
+    screen.draw("\u0007".encode("utf-8"))  # DELETE.
     assert screen.display == [" " * screen.columns]
 
 
