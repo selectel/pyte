@@ -281,18 +281,36 @@ def test_draw_multiple_chars():
 def test_draw_wcwidth():
     # Example from https://github.com/selectel/pyte/issues/9
     screen = Screen(10, 1)
-    for char in "コンニチハ":
-        screen.draw(char.encode("utf-8"))
-
+    screen.draw("コンニチハ".encode("utf-8"))
     assert screen.cursor.x == screen.columns
+
+
+def test_draw_wcwidth_zero():
+    screen = Screen(10, 1)
+
+    # a) the cursor is at line end with ``DECAWM`` mode off.
+    screen.reset_mode(mo.DECAWM)
+    screen.draw(" コンニチハ".encode("utf-8"))
+    assert screen.cursor.x == screen.columns
+    screen.draw("\N{ZERO WIDTH SPACE}".encode("utf-8"))
+    screen.draw("\N{DELETE}".encode("utf-8"))
+    assert screen.cursor.x == screen.columns
+    screen.set_mode(mo.DECAWM)
+
+    screen.linefeed()
+
+    # b) ``IRM`` mode is on.
+    screen.set_mode(mo.IRM)
+    screen.draw("\N{ZERO WIDTH SPACE}".encode("utf-8"))
+    screen.draw("\N{DELETE}".encode("utf-8"))
+    assert screen.display == [" " * screen.columns]
 
 
 def test_draw_wcwidth_at_the_end():
      screen = Screen(10, 1)
-     for char in " コンニチハ":
-         screen.draw(char.encode("utf-8"))
-
+     screen.draw(" コンニチハ".encode("utf-8"))
      assert screen.cursor.x == screen.columns
+
 
 def test_draw_cp437():
     screen = Screen(5, 1)

@@ -454,14 +454,14 @@ class Screen(object):
                 if mo.DECAWM in self.mode:
                     self.carriage_return()
                     self.linefeed()
-                else:
-                    self.cursor.x -= max(0, char_width)
+                elif char_width > 0:
+                    self.cursor.x -= char_width
 
             # If Insert mode is set, new characters move old characters to
             # the right, otherwise terminal is in Replace mode and new
             # characters replace old characters at cursor position.
-            if mo.IRM in self.mode:
-                self.insert_characters(max(0, char_width))
+            if mo.IRM in self.mode and char_width > 0:
+                self.insert_characters(char_width)
 
             line = self.buffer[self.cursor.y]
             if char_width == 1:
