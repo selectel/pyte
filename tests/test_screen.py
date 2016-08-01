@@ -323,6 +323,12 @@ def test_draw_cp437():
     assert screen.display == ["α ± ε"]
 
 
+def test_display_wcwidth():
+    screen = Screen(10, 1)
+    screen.draw("コンニチハ".encode("utf-8"))
+    assert screen.display == ["コンニチハ"]
+
+
 def test_carriage_return():
     screen = Screen(3, 3)
     screen.cursor.x = 2

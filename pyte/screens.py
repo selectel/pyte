@@ -184,8 +184,18 @@ class Screen(object):
     @property
     def display(self):
         """Returns a :func:`list` of screen lines as unicode strings."""
-        return ["".join(map(operator.attrgetter("data"), line))
-                for line in self.buffer]
+        def render(line):
+            it = iter(line)
+            while True:
+                char = next(it)
+                char_width = wcwidth(char.data)
+                if char_width == 1:
+                    yield char.data
+                elif char_width == 2:
+                    yield char.data
+                    next(it)  # Skip stub.
+
+        return ["".join(render(line)) for line in self.buffer]
 
     def reset(self):
         """Resets the terminal to its initial state.
