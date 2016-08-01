@@ -445,9 +445,6 @@ class Screen(object):
         """
         for char in self._decode(data):
             char_width = wcwidth(char)
-            if char_width <= 0:
-                # Unprintable character or doesn't advance the cursor.
-                return
 
             # If this was the last column in a line and auto wrap mode is
             # enabled, move the cursor to the beginning of the next line,
@@ -458,24 +455,32 @@ class Screen(object):
                     self.carriage_return()
                     self.linefeed()
                 else:
-                    self.cursor.x -= char_width
+                    self.cursor.x -= max(0, char_width)
 
             # If Insert mode is set, new characters move old characters to
             # the right, otherwise terminal is in Replace mode and new
             # characters replace old characters at cursor position.
             if mo.IRM in self.mode:
-                self.insert_characters(char_width)
+                self.insert_characters(max(0, char_width))
 
             line = self.buffer[self.cursor.y]
-            line[self.cursor.x] = self.cursor.attrs._replace(data=char)
-            if char_width > 1:
+            if char_width == 1:
+                line[self.cursor.x] = self.cursor.attrs._replace(data=char)
+            elif char_width == 2:
                 # Add a stub *after* a two-cell character. See issue #9
                 # on GitHub.
-                line[self.cursor.x + 1] = self.cursor.attrs._replace(data=" ")
+                line[self.cursor.x] = self.cursor.attrs._replace(data=char)
+                if self.cursor.x + 1 < self.columns:
+                    line[self.cursor.x + 1] = self.cursor.attrs._replace(data=" ")
+            elif char_width == 0:
+                pass  # Not supported currently.
+            else:
+                pass  # Unprintable character or doesn't advance the cursor.
 
             # .. note:: We can't use :meth:`cursor_forward()`, because that
             #           way, we'll never know when to linefeed.
-            self.cursor.x += char_width
+            if char_width > 0:
+                self.cursor.x = min(self.cursor.x + char_width, self.columns)
 
     def set_title(self, param):
         """Sets terminal title.

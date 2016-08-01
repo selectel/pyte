@@ -287,6 +287,13 @@ def test_draw_wcwidth():
     assert screen.cursor.x == screen.columns
 
 
+def test_draw_wcwidth_at_the_end():
+     screen = Screen(10, 1)
+     for char in " コンニチハ":
+         screen.draw(char.encode("utf-8"))
+
+     assert screen.cursor.x == screen.columns
+
 def test_draw_cp437():
     screen = Screen(5, 1)
     assert screen.charset == 0
