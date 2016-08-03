@@ -136,6 +136,11 @@ class Screen(object):
        Current charset number; can be either ``0`` or ``1`` for `G0`
        and `G1` respectively, note that `G0` is activated by default.
 
+    .. attribute:: use_utf8
+
+       Assume the input to :meth:`~pyte.screens.Screen.draw` is encoded
+       using UTF-8. Defaults to ``True``.
+
     .. note::
 
        According to ``ECMA-48`` standard, **lines and columns are
