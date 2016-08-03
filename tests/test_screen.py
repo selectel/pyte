@@ -278,38 +278,59 @@ def test_draw_multiple_chars():
     assert screen.display == ["foobar    "]
 
 
-def test_draw_wcwidth():
+def test_draw_width2():
     # Example from https://github.com/selectel/pyte/issues/9
     screen = Screen(10, 1)
     screen.draw("コンニチハ".encode("utf-8"))
     assert screen.cursor.x == screen.columns
 
 
-def test_draw_wcwidth_zero():
+def test_draw_width2_line_end():
+    # Test from https://github.com/selectel/pyte/issues/55
     screen = Screen(10, 1)
-
-    # a) the cursor is at line end with ``DECAWM`` mode off.
-    screen.reset_mode(mo.DECAWM)
     screen.draw(" コンニチハ".encode("utf-8"))
     assert screen.cursor.x == screen.columns
-    screen.draw("\N{ZERO WIDTH SPACE}".encode("utf-8"))
-    screen.draw("\u0007".encode("utf-8"))  # DELETE.
-    assert screen.cursor.x == screen.columns
-    screen.set_mode(mo.DECAWM)
 
-    screen.linefeed()
 
-    # b) ``IRM`` mode is on.
+def test_draw_width0_combining():
+    screen = Screen(4, 2)
+
+    # a) no prev. character
+    screen.draw("\N{COMBINING DIAERESIS}".encode("utf-8"))
+    assert screen.display == ["    ", "    "]
+
+    screen.draw("bad".encode("utf-8"))
+
+    # b) prev. character is on the same line
+    screen.draw("\N{COMBINING DIAERESIS}".encode("utf-8"))
+    assert screen.display == ["bad̈ ", "    "]
+
+    # c) prev. character is on the prev. line
+    screen.draw("!".encode("utf-8"))
+    screen.draw("\N{COMBINING DIAERESIS}".encode("utf-8"))
+    assert screen.display == ["bad̈!̈", "    "]
+
+
+def test_draw_width0_irm():
+    screen = Screen(10, 1)
     screen.set_mode(mo.IRM)
+
+    # The following should not insert any blanks.
     screen.draw("\N{ZERO WIDTH SPACE}".encode("utf-8"))
     screen.draw("\u0007".encode("utf-8"))  # DELETE.
     assert screen.display == [" " * screen.columns]
 
 
-def test_draw_wcwidth_at_the_end():
-     screen = Screen(10, 1)
-     screen.draw(" コンニチハ".encode("utf-8"))
-     assert screen.cursor.x == screen.columns
+def test_draw_width0_decawm_off():
+    screen = Screen(10, 1)
+    screen.reset_mode(mo.DECAWM)
+    screen.draw(" コンニチハ".encode("utf-8"))
+    assert screen.cursor.x == screen.columns
+
+    # The following should not advance the cursor.
+    screen.draw("\N{ZERO WIDTH SPACE}".encode("utf-8"))
+    screen.draw("\u0007".encode("utf-8"))  # DELETE.
+    assert screen.cursor.x == screen.columns
 
 
 def test_draw_cp437():

@@ -15,9 +15,6 @@
 
 from __future__ import unicode_literals
 
-import itertools
-
-
 #: A mapping of ANSI text style codes to style names, "+" means the:
 #: attribute is set, "-" -- reset; example:
 #:

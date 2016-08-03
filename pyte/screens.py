@@ -30,7 +30,7 @@ from __future__ import absolute_import, unicode_literals, division
 
 import copy
 import math
-import operator
+import unicodedata
 from collections import deque, namedtuple
 from itertools import islice, repeat
 
@@ -187,12 +187,13 @@ class Screen(object):
         def render(line):
             it = iter(line)
             while True:
-                char = next(it)
-                char_width = wcwidth(char.data)
+                char = next(it).data
+                assert sum(map(wcwidth, char[1:])) == 0
+                char_width = wcwidth(char[0])
                 if char_width == 1:
-                    yield char.data
+                    yield char
                 elif char_width == 2:
-                    yield char.data
+                    yield char
                     next(it)  # Skip stub.
 
         return ["".join(render(line)) for line in self.buffer]
@@ -477,13 +478,22 @@ class Screen(object):
             if char_width == 1:
                 line[self.cursor.x] = self.cursor.attrs._replace(data=char)
             elif char_width == 2:
-                # Add a stub *after* a two-cell character. See issue #9
-                # on GitHub.
+                # A two-cell character has a stub slot after it.
                 line[self.cursor.x] = self.cursor.attrs._replace(data=char)
                 if self.cursor.x + 1 < self.columns:
                     line[self.cursor.x + 1] = self.cursor.attrs._replace(data=" ")
-            elif char_width == 0:
-                pass  # Not supported currently.
+            elif char_width == 0 and unicodedata.combining(char):
+                # A zero-cell character is combined with the previous
+                # character either on this or preceeding line.
+                if self.cursor.x:
+                    last = line[self.cursor.x - 1]
+                    normalized = unicodedata.normalize("NFC", last.data + char)
+                    line[self.cursor.x - 1] = last._replace(data=normalized)
+                elif self.cursor.y:
+                    last = self.buffer[self.cursor.y - 1][self.columns - 1]
+                    normalized = unicodedata.normalize("NFC", last.data + char)
+                    self.buffer[self.cursor.y - 1][self.columns - 1] = \
+                        last._replace(data=normalized)
             else:
                 pass  # Unprintable character or doesn't advance the cursor.
 
@@ -1000,7 +1010,7 @@ class DiffScreen(Screen):
 
        >>> screen = DiffScreen(80, 24)
        >>> screen.dirty.clear()
-       >>> screen.draw(b"!")
+       >>> screen.draw("!")
        >>> list(screen.dirty)
        [0]
     """
