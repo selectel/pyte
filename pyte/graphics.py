@@ -56,6 +56,20 @@ FG_ANSI = {
 #: An alias to :data:`~pyte.graphics.FG_ANSI` for compatibility.
 FG = FG_ANSI
 
+#: A mapping of non-standard ``aixterm`` foreground color codes to
+#: color names. These are high intensity colors and thus should be
+#: complemented by ``+bold``.
+FG_AIXTERM = {
+    90: "black",
+    91: "red",
+    92: "green",
+    93: "brown",
+    94: "blue",
+    95: "magenta",
+    96: "cyan",
+    97: "white"
+}
+
 #: A mapping of ANSI background color codes to color names.
 #:
 #: >>> BG_ANSI[40]
@@ -76,6 +90,20 @@ BG_ANSI = {
 
 #: An alias to :data:`~pyte.graphics.BG_ANSI` for compatibility.
 BG = BG_ANSI
+
+#: A mapping of non-standard ``aixterm`` background color codes to
+#: color names. These are high intensity colors and thus should be
+#: complemented by ``+bold``.
+BG_AIXTERM = {
+    100: "black",
+    101: "red",
+    102: "green",
+    103: "brown",
+    104: "blue",
+    105: "magenta",
+    106: "cyan",
+    107: "white"
+}
 
 #: SGR code for foreground in 256 or True color mode.
 FG_256 = 38

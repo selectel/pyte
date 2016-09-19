@@ -25,6 +25,8 @@ Version 0.6.0
 - Added support for OSC sequences allowing to set terminal title and
   icon name.
 - Allowed 256 and 24bit colours in ``Screen.select_graphic_rendition``.
+- Added support for ``aixterm`` colours in ``Screen.select_graphic_rendition``,
+  see issue #57 on GitHub.
 - Fixed rendering of multicolumn characters at ``Screen` boundaries.
   Thanks to @shaform! See PR #55 on GitHub.
 - Fixed ``Screen.display`` in the case of multicolumn characters. See

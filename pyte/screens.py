@@ -939,6 +939,10 @@ class Screen(object):
                 replace[attr[1:]] = attr.startswith("+")
             elif not attr:
                 replace = self.default_char._asdict()
+            elif attr in g.FG_AIXTERM:
+                replace.update(fg=g.FG_AIXTERM[attr], bold=True)
+            elif attr in g.BG_AIXTERM:
+                replace.update(bg=g.BG_AIXTERM[attr], bold=True)
             elif attr in (g.FG_256, g.BG_256):
                 key = "fg" if attr == g.FG_256 else "bg"
                 n = attrs.pop()

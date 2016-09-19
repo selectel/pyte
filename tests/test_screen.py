@@ -101,6 +101,21 @@ def test_colors24bit():
     screen.select_graphic_rendition(48, 2, 255)
 
 
+def test_colors_aixterm():
+    # See issue #57 on GitHub.
+    screen = Screen(2, 2)
+
+    # a) foreground color.
+    screen.select_graphic_rendition(94)
+    assert screen.cursor.attrs.fg == "blue"
+    assert screen.cursor.attrs.bold
+
+    # b) background color.
+    screen.select_graphic_rendition(104)
+    assert screen.cursor.attrs.bg == "blue"
+    assert screen.cursor.attrs.bold
+
+
 def test_colors_ignore_invalid():
     screen = Screen(2, 2)
     default_attrs = screen.cursor.attrs
