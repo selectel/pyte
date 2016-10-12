@@ -28,6 +28,7 @@
 
 from __future__ import absolute_import, unicode_literals, division
 
+import codecs
 import copy
 import math
 import unicodedata
@@ -231,6 +232,7 @@ class Screen(object):
         self.g0_charset = cs.LAT1_MAP
         self.g1_charset = cs.VT100_MAP
         self.use_utf8 = True
+        self.utf8_decoder = codecs.getincrementaldecoder("utf-8")("replace")
 
         # From ``man terminfo`` -- "... hardware tabs are initially
         # set every `n` spaces when the terminal is powered up. Since
@@ -427,6 +429,7 @@ class Screen(object):
         """
         if code == b"@":
             self.use_utf8 = False
+            self.utf8_decoder.reset()
         elif code in b"G8":
             self.use_utf8 = True
 
@@ -438,7 +441,7 @@ class Screen(object):
         if self.charset:
             return "".join(self.g1_charset[b] for b in iter_bytes(data))
         elif self.use_utf8:
-            return data.decode("utf-8")
+            return self.utf8_decoder.decode(data)
         else:
             return "".join(self.g0_charset[b] for b in iter_bytes(data))
 
