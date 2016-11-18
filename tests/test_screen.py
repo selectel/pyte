@@ -1335,8 +1335,7 @@ def test_set_margins():
 
     # c) no margins provided
     screen.set_margins()
-    assert screen.margins != (None, None)
-    assert screen.margins == (0, 4)
+    assert screen.margins == (0, screen.lines - 1)
 
 
 def test_hide_cursor():

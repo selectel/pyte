@@ -290,7 +290,7 @@ class Screen(object):
                 del line[columns:]
 
         self.lines, self.columns = lines, columns
-        self.margins = Margins(0, self.lines - 1)
+        self.set_margins()
         self.reset_mode(mo.DECOM)
 
     def set_margins(self, top=None, bottom=None):
@@ -304,23 +304,23 @@ class Screen(object):
         :param int bottom: the biggest line number that is scrolled.
         """
         if top is None or bottom is None:
-            return
+            self.margins = Margins(0, self.lines - 1)
+        else:
+            # Arguments are 1-based, while :attr:`margins` are zero
+            # based -- so we have to decrement them by one. We also
+            # make sure that both of them is bounded by [0, lines - 1].
+            top = max(0, min(top - 1, self.lines - 1))
+            bottom = max(0, min(bottom - 1, self.lines - 1))
 
-        # Arguments are 1-based, while :attr:`margins` are zero based --
-        # so we have to decrement them by one. We also make sure that
-        # both of them is bounded by [0, lines - 1].
-        top = max(0, min(top - 1, self.lines - 1))
-        bottom = max(0, min(bottom - 1, self.lines - 1))
+            # Even though VT102 and VT220 require DECSTBM to ignore
+            # regions of width less than 2, some programs (like aptitude
+            # for example) rely on it. Practicality beats purity.
+            if bottom - top >= 1:
+                self.margins = Margins(top, bottom)
 
-        # Even though VT102 and VT220 require DECSTBM to ignore regions
-        # of width less than 2, some programs (like aptitude for example)
-        # rely on it. Practicality beats purity.
-        if bottom - top >= 1:
-            self.margins = Margins(top, bottom)
-
-            # The cursor moves to the home position when the top and
-            # bottom margins of the scrolling region (DECSTBM) changes.
-            self.cursor_position()
+                # The cursor moves to the home position when the top and
+                # bottom margins of the scrolling region (DECSTBM) changes.
+                self.cursor_position()
 
     def set_mode(self, *modes, **kwargs):
         """Sets (enables) a given list of modes.
