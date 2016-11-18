@@ -6,6 +6,8 @@ Here you can see the full list of changes between each pyte release.
 Version 0.6.0
 -------------
 
+This release is NOT backward compatible with 0.5.X branch!
+
 - Optimized ``Stream.feed`` for plain-text input. The code was backported
   from ``pymux`` project by Jonathan Slenders.
 - Further optimized ``Stream._parser_fsm`` by forcing static binding between
@@ -31,7 +33,7 @@ Version 0.6.0
   Thanks to @shaform! See PR #55 on GitHub.
 - Fixed ``Screen.display`` in the case of multicolumn characters. See
   issue #52 on GitHub.
-- Fixed DECSTBM handling in case of missing arguments. See issue #61 on
+- Fixed `DECSTBM` handling in case of missing arguments. See issue #61 on
   GitHub.
 
 Version 0.5.2
