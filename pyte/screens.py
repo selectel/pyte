@@ -1110,9 +1110,9 @@ History = namedtuple("History", "top bottom ratio size position")
 
 
 class HistoryScreen(DiffScreen):
-    """A screen subclass, which keeps track of screen history and allows
-    pagination. This is not linux-specific, but still useful; see
-    page 462 of VT520 User's Manual.
+    """A :class:~`pyte.screens.DiffScreen` subclass, which keeps track 
+    of screen history and allows pagination. This is not linux-specific, 
+    but still useful; see page 462 of VT520 User's Manual.
 
     :param int history: total number of history lines to keep; is split
                         between top and bottom queues.
