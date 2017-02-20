@@ -293,6 +293,15 @@ def test_draw_multiple_chars():
     assert screen.display == ["foobar    "]
 
 
+@pytest.mark.xfail
+def test_draw_utf8():
+    # See issue #62 on GitHub.
+    screen = Screen(1, 1)
+    stream = Stream(screen)
+    stream.feed(b"\xE2\x80\x9D")
+    assert screen.display == ["”"]
+
+
 def test_draw_width2():
     # Example from https://github.com/selectel/pyte/issues/9
     screen = Screen(10, 1)
