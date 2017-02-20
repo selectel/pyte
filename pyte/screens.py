@@ -164,7 +164,7 @@ class Screen(object):
     .. seealso::
 
        `Standard ECMA-48, Section 6.1.1 \
-       <http://www.ecma-international.org/publications/standards/Ecma-048.htm>`_
+       <http://ecma-international.org/publications/standards/Ecma-048.htm>`_
        for a description of the presentational component, implemented
        by ``Screen``.
     """
@@ -216,7 +216,7 @@ class Screen(object):
 
         .. note::
 
-           Neither VT220 nor VT102 manuals mentioned that terminal modes
+           Neither VT220 nor VT102 manuals mention that terminal modes
            and tabstops should be reset as well, thanks to
            :manpage:`xterm` -- we now know that.
         """
@@ -243,7 +243,7 @@ class Screen(object):
         self.cursor_position()
 
     def resize(self, lines=None, columns=None):
-        """Resize the screen to the given dimensions.
+        """Resize the screen to the given size.
 
         If the requested screen size has more lines than the existing
         screen, lines will be added at the bottom. If the requested
@@ -421,11 +421,13 @@ class Screen(object):
         .. note:: We currently follow ``"linux"`` and only use this
                   command to switch from ISO-8859-1 to UTF-8 and back.
 
+        .. versionadded:: 0.6.0
+
         .. seealso::
 
-        `Standard ECMA-35, Section 15.4 \
-        <http://www.ecma-international.org/publications/standards/Ecma-035.htm>`_
-        for a description of VTXXX character set machinery.
+           `Standard ECMA-35, Section 15.4 \
+           <http://ecma-international.org/publications/standards/Ecma-035.htm>`_
+           for a description of VTXXX character set machinery.
         """
         if code == b"@":
             self.use_utf8 = False
