@@ -812,8 +812,7 @@ class Screen(object):
 
         :param int count: number of lines to skip.
         """
-        self.cursor.y -= count or 1
-        self.ensure_vbounds(use_margins=True)
+        self.cursor.y = max(self.cursor.y - (count or 1), self.margins.top)
 
     def cursor_up1(self, count=None):
         """Moves cursor up the indicated # of lines to column 1. Cursor
@@ -830,8 +829,7 @@ class Screen(object):
 
         :param int count: number of lines to skip.
         """
-        self.cursor.y += count or 1
-        self.ensure_vbounds(use_margins=True)
+        self.cursor.y = min(self.cursor.y + (count or 1), self.margins.bottom)
 
     def cursor_down1(self, count=None):
         """Moves cursor down the indicated # of lines to column 1.

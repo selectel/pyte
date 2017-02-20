@@ -541,6 +541,16 @@ def test_linefeed():
     assert (screen.cursor.y, screen.cursor.x) == (1, 1)
 
 
+def test_linefeed_margins():
+    # See issue #63 on GitHub.
+    screen = Screen(80, 24)
+    screen.set_margins(3, 27)
+    screen.cursor_position()
+    assert (screen.cursor.y, screen.cursor.x) == (0, 0)
+    screen.linefeed()
+    assert (screen.cursor.y, screen.cursor.x) == (1, 0)
+
+
 def test_tabstops():
     screen = Screen(10, 10)
 
