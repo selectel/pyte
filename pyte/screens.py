@@ -189,7 +189,7 @@ class Screen(object):
 
     @property
     def display(self):
-        """Returns a :func:`list` of screen lines as unicode strings."""
+        """A :func:`list` of screen lines as unicode strings."""
         def render(line):
             it = iter(line)
             while True:
@@ -205,7 +205,7 @@ class Screen(object):
         return ["".join(render(line)) for line in self.buffer]
 
     def reset(self):
-        """Resets the terminal to its initial state.
+        """Reset the terminal to its initial state.
 
         * Scroll margins are reset to screen boundaries.
         * Cursor is moved to home location -- ``(0, 0)`` and its
@@ -294,7 +294,7 @@ class Screen(object):
         self.reset_mode(mo.DECOM)
 
     def set_margins(self, top=None, bottom=None):
-        """Selects top and bottom margins for the scrolling region.
+        """Select top and bottom margins for the scrolling region.
 
         Margins determine which screen lines move during scrolling
         (see :meth:`index` and :meth:`reverse_index`). Characters added
@@ -323,7 +323,7 @@ class Screen(object):
                 self.cursor_position()
 
     def set_mode(self, *modes, **kwargs):
-        """Sets (enables) a given list of modes.
+        """Set (enable) a given list of modes.
 
         :param list modes: modes to set, where each mode is a constant
                            from :mod:`pyte.modes`.
@@ -358,7 +358,7 @@ class Screen(object):
             self.cursor.hidden = False
 
     def reset_mode(self, *modes, **kwargs):
-        """Resets (disables) a given list of modes.
+        """Reset (disable) a given list of modes.
 
         :param list modes: modes to reset -- hopefully, each mode is a
                            constant from :mod:`pyte.modes`.
@@ -389,7 +389,7 @@ class Screen(object):
             self.cursor.hidden = True
 
     def define_charset(self, code, mode):
-        """Defines ``G0`` or ``G1`` charset.
+        """Define ``G0`` or ``G1`` charset.
 
         :param str code: character set code, should be a character
                          from ``b"B0UK"``, otherwise ignored.
@@ -405,15 +405,15 @@ class Screen(object):
                 self.g1_charset = cs.MAPS[code]
 
     def shift_in(self):
-        """Selects ``G0`` character set."""
+        """Select ``G0`` character set."""
         self.charset = 0
 
     def shift_out(self):
-        """Selects ``G1`` character set."""
+        """Select ``G1`` character set."""
         self.charset = 1
 
     def select_other_charset(self, code):
-        """Selects other (non G0 or G1) charset.
+        """Select other (non G0 or G1) charset.
 
         :param str code: character set code, should be a character from
                          ``b"@G8"``, otherwise ignored.
@@ -434,7 +434,7 @@ class Screen(object):
             self.use_utf8 = True
 
     def _decode(self, data):
-        """Decodes bytes to text according to the selected charset.
+        """Decode bytes to text according to the selected charset.
 
         :param bytes data: bytes to decode.
         """
@@ -446,7 +446,7 @@ class Screen(object):
             return "".join(self.g0_charset[b] for b in iter_bytes(data))
 
     def draw(self, data):
-        """Displays decoded characters at the current cursor position and
+        """Display decoded characters at the current cursor position and
         advances the cursor if :data:`~pyte.modes.DECAWM` is set.
 
         :param bytes data: bytes to display.
@@ -511,14 +511,14 @@ class Screen(object):
                 self.cursor.x = min(self.cursor.x + char_width, self.columns)
 
     def set_title(self, param):
-        """Sets terminal title.
+        """Set terminal title.
 
         .. note:: This is an XTerm extension supported by the Linux terminal.
         """
         self.title = self._decode(param)
 
     def set_icon_name(self, param):
-        """Sets icon name.
+        """Set icon name.
 
         .. note:: This is an XTerm extension supported by the Linux terminal.
         """
@@ -553,7 +553,7 @@ class Screen(object):
             self.cursor_up()
 
     def linefeed(self):
-        """Performs an index and, if :data:`~pyte.modes.LNM` is set, a
+        """Perform an index and, if :data:`~pyte.modes.LNM` is set, a
         carriage return.
         """
         self.index()
@@ -617,7 +617,7 @@ class Screen(object):
             self.cursor_position()
 
     def insert_lines(self, count=None):
-        """Inserts the indicated # of lines at line with cursor. Lines
+        """Insert the indicated # of lines at line with cursor. Lines
         displayed **at** and below the cursor move down. Lines moved
         past the bottom margin are lost.
 
@@ -637,7 +637,7 @@ class Screen(object):
             self.carriage_return()
 
     def delete_lines(self, count=None):
-        """Deletes the indicated # of lines, starting at line with
+        """Delete the indicated # of lines, starting at line with
         cursor. As lines are deleted, lines displayed below cursor
         move up. Lines added to bottom of screen have spaces with same
         character attributes as last line moved up.
@@ -658,7 +658,7 @@ class Screen(object):
             self.carriage_return()
 
     def insert_characters(self, count=None):
-        """Inserts the indicated # of blank characters at the cursor
+        """Insert the indicated # of blank characters at the cursor
         position. The cursor does not move and remains at the beginning
         of the inserted blank characters. Data on the line is shifted
         forward.
@@ -672,7 +672,7 @@ class Screen(object):
             self.buffer[self.cursor.y].pop()
 
     def delete_characters(self, count=None):
-        """Deletes the indicated # of characters, starting with the
+        """Delete the indicated # of characters, starting with the
         character at cursor position. When a character is deleted, all
         characters to the right of cursor move left. Character attributes
         move with the characters.
@@ -686,7 +686,7 @@ class Screen(object):
             self.buffer[self.cursor.y].append(self.cursor.attrs)
 
     def erase_characters(self, count=None):
-        """Erases the indicated # of characters, starting with the
+        """Erase the indicated # of characters, starting with the
         character at cursor position. Character attributes are set
         cursor attributes. The cursor remains in the same position.
 
@@ -706,7 +706,7 @@ class Screen(object):
             self.buffer[self.cursor.y][column] = self.cursor.attrs
 
     def erase_in_line(self, how=0, private=False):
-        """Erases a line in a specific way.
+        """Erase a line in a specific way.
 
         :param int how: defines the way the line should be erased in:
 
@@ -768,11 +768,11 @@ class Screen(object):
             self.erase_in_line(how)
 
     def set_tab_stop(self):
-        """Sets a horizontal tab stop at cursor position."""
+        """Set a horizontal tab stop at cursor position."""
         self.tabstops.add(self.cursor.x)
 
     def clear_tab_stop(self, how=0):
-        """Clears a horizontal tab stop.
+        """Clear a horizontal tab stop.
 
         :param int how: defines a way the tab stop should be cleared:
 
@@ -807,7 +807,7 @@ class Screen(object):
         self.cursor.y = min(max(top, self.cursor.y), bottom)
 
     def cursor_up(self, count=None):
-        """Moves cursor up the indicated # of lines in same column.
+        """Move cursor up the indicated # of lines in same column.
         Cursor stops at top margin.
 
         :param int count: number of lines to skip.
@@ -815,7 +815,7 @@ class Screen(object):
         self.cursor.y = max(self.cursor.y - (count or 1), self.margins.top)
 
     def cursor_up1(self, count=None):
-        """Moves cursor up the indicated # of lines to column 1. Cursor
+        """Move cursor up the indicated # of lines to column 1. Cursor
         stops at bottom margin.
 
         :param int count: number of lines to skip.
@@ -824,7 +824,7 @@ class Screen(object):
         self.carriage_return()
 
     def cursor_down(self, count=None):
-        """Moves cursor down the indicated # of lines in same column.
+        """Move cursor down the indicated # of lines in same column.
         Cursor stops at bottom margin.
 
         :param int count: number of lines to skip.
@@ -832,7 +832,7 @@ class Screen(object):
         self.cursor.y = min(self.cursor.y + (count or 1), self.margins.bottom)
 
     def cursor_down1(self, count=None):
-        """Moves cursor down the indicated # of lines to column 1.
+        """Move cursor down the indicated # of lines to column 1.
         Cursor stops at bottom margin.
 
         :param int count: number of lines to skip.
@@ -841,7 +841,7 @@ class Screen(object):
         self.carriage_return()
 
     def cursor_back(self, count=None):
-        """Moves cursor left the indicated # of columns. Cursor stops
+        """Move cursor left the indicated # of columns. Cursor stops
         at left margin.
 
         :param int count: number of columns to skip.
@@ -850,7 +850,7 @@ class Screen(object):
         self.ensure_hbounds()
 
     def cursor_forward(self, count=None):
-        """Moves cursor right the indicated # of columns. Cursor stops
+        """Move cursor right the indicated # of columns. Cursor stops
         at right margin.
 
         :param int count: number of columns to skip.
@@ -886,7 +886,7 @@ class Screen(object):
         self.ensure_vbounds()
 
     def cursor_to_column(self, column=None):
-        """Moves cursor to a specific column in the current line.
+        """Move cursor to a specific column in the current line.
 
         :param int column: column number to move the cursor to.
         """
@@ -894,7 +894,7 @@ class Screen(object):
         self.ensure_hbounds()
 
     def cursor_to_line(self, line=None):
-        """Moves cursor to a specific line in the current column.
+        """Move cursor to a specific line in the current column.
 
         :param int line: line number to move the cursor to.
         """
@@ -967,7 +967,7 @@ class Screen(object):
         self.cursor.attrs = self.cursor.attrs._replace(**replace)
 
     def report_device_attributes(self, mode=0, **kwargs):
-        """Reports terminal identity.
+        """Report terminal identity.
 
         .. versionadded:: 0.5.0
         """
@@ -977,7 +977,7 @@ class Screen(object):
             self.write_process_input(ctrl.CSI + b"?6c")
 
     def report_device_status(self, mode):
-        """Reports terminal status or cursor position.
+        """Report terminal status or cursor position.
 
         :param int mode: if 5 -- terminal status, 6 -- cursor position,
                          otherwise a noop.
@@ -997,7 +997,7 @@ class Screen(object):
                 ctrl.CSI + "{0};{1}R".format(y, x).encode())
 
     def write_process_input(self, data):
-        """Writes data to the process running inside the terminal.
+        """Write data to the process running inside the terminal.
 
         By default is a noop.
 
@@ -1112,8 +1112,8 @@ History = namedtuple("History", "top bottom ratio size position")
 
 
 class HistoryScreen(DiffScreen):
-    """A :class:~`pyte.screens.DiffScreen` subclass, which keeps track 
-    of screen history and allows pagination. This is not linux-specific, 
+    """A :class:~`pyte.screens.DiffScreen` subclass, which keeps track
+    of screen history and allows pagination. This is not linux-specific,
     but still useful; see page 462 of VT520 User's Manual.
 
     :param int history: total number of history lines to keep; is split
@@ -1178,7 +1178,7 @@ class HistoryScreen(DiffScreen):
             return value
 
     def before_event(self, event):
-        """Ensures a screen is at the bottom of the history buffer.
+        """Ensure a screen is at the bottom of the history buffer.
 
         :param str event: event name, for example ``"linefeed"``.
         """
@@ -1187,7 +1187,7 @@ class HistoryScreen(DiffScreen):
                 self.next_page()
 
     def after_event(self, event):
-        """Ensures all lines on a screen have proper width (:attr:`columns`).
+        """Ensure all lines on a screen have proper width (:attr:`columns`).
 
         Extra characters are truncated, missing characters are filled
         with whitespace.
@@ -1239,7 +1239,7 @@ class HistoryScreen(DiffScreen):
         super(HistoryScreen, self).reverse_index()
 
     def prev_page(self):
-        """Moves the screen page up through the history buffer. Page
+        """Move the screen page up through the history buffer. Page
         size is defined by ``history.ratio``, so for instance
         ``ratio = .5`` means that half the screen is restored from
         history on page switch.
@@ -1259,7 +1259,7 @@ class HistoryScreen(DiffScreen):
             self.dirty = set(range(self.lines))
 
     def next_page(self):
-        """Moves the screen page down through the history buffer."""
+        """Move the screen page down through the history buffer."""
         if self.history.position < self.history.size and self.history.bottom:
             mid = min(len(self.history.bottom),
                       int(math.ceil(self.lines * self.history.ratio)))

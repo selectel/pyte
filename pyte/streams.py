@@ -166,7 +166,7 @@ class Stream(object):
         self._taking_plain_text = next(self._parser)
 
     def detach(self, screen):
-        """Removes a given screen from the listener queue and fails
+        """Remove a given screen from the listener queue and fails
         silently if it's not attached.
 
         :param pyte.screens.Screen screen: a screen to detach.
@@ -175,7 +175,7 @@ class Stream(object):
             self.listener = None
 
     def feed(self, data):
-        """Consumes a string and advances the state as necessary.
+        """Consume a string and advances the state as necessary.
 
         :param bytes data: a blob of data to feed from.
         """
