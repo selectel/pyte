@@ -561,8 +561,6 @@ class Screen(object):
         if mo.LNM in self.mode:
             self.carriage_return()
 
-        self.ensure_bounds()
-
     def tab(self):
         """Move to the next tab space, or the end of the screen if there
         aren't anymore left.
@@ -610,7 +608,8 @@ class Screen(object):
                 self.set_mode(mo.DECAWM)
 
             self.cursor = savepoint.cursor
-            self.ensure_bounds(use_margins=True)
+            self.ensure_hbounds()
+            self.ensure_vbounds(use_margins=True)
         else:
             # If nothing was saved, the cursor moves to home position;
             # origin mode is reset. :todo: DECAWM?
@@ -788,8 +787,12 @@ class Screen(object):
         elif how == 3:
             self.tabstops = set()  # Clears all horizontal tab stops.
 
-    def ensure_bounds(self, use_margins=None):
-        """Ensure that current cursor position is within screen bounds.
+    def ensure_hbounds(self):
+        """Ensure the cursor is within horizontal screen bounds."""
+        self.cursor.x = min(max(0, self.cursor.x), self.columns - 1)
+
+    def ensure_vbounds(self, use_margins=None):
+        """Ensure the cursor is within vertical screen bounds.
 
         :param bool use_margins: when ``True`` or when
                                  :data:`~pyte.modes.DECOM` is set,
@@ -801,7 +804,6 @@ class Screen(object):
         else:
             top, bottom = 0, self.lines - 1
 
-        self.cursor.x = min(max(0, self.cursor.x), self.columns - 1)
         self.cursor.y = min(max(top, self.cursor.y), bottom)
 
     def cursor_up(self, count=None):
@@ -811,7 +813,7 @@ class Screen(object):
         :param int count: number of lines to skip.
         """
         self.cursor.y -= count or 1
-        self.ensure_bounds(use_margins=True)
+        self.ensure_vbounds(use_margins=True)
 
     def cursor_up1(self, count=None):
         """Moves cursor up the indicated # of lines to column 1. Cursor
@@ -829,7 +831,7 @@ class Screen(object):
         :param int count: number of lines to skip.
         """
         self.cursor.y += count or 1
-        self.ensure_bounds(use_margins=True)
+        self.ensure_vbounds(use_margins=True)
 
     def cursor_down1(self, count=None):
         """Moves cursor down the indicated # of lines to column 1.
@@ -847,7 +849,7 @@ class Screen(object):
         :param int count: number of columns to skip.
         """
         self.cursor.x -= count or 1
-        self.ensure_bounds()
+        self.ensure_hbounds()
 
     def cursor_forward(self, count=None):
         """Moves cursor right the indicated # of columns. Cursor stops
@@ -856,7 +858,7 @@ class Screen(object):
         :param int count: number of columns to skip.
         """
         self.cursor.x += count or 1
-        self.ensure_bounds()
+        self.ensure_hbounds()
 
     def cursor_position(self, line=None, column=None):
         """Set the cursor to a specific `line` and `column`.
@@ -880,8 +882,10 @@ class Screen(object):
             if not self.margins.top <= line <= self.margins.bottom:
                 return
 
-        self.cursor.x, self.cursor.y = column, line
-        self.ensure_bounds()
+        self.cursor.x = column
+        self.cursor.y = line
+        self.ensure_hbounds()
+        self.ensure_vbounds()
 
     def cursor_to_column(self, column=None):
         """Moves cursor to a specific column in the current line.
@@ -889,7 +893,7 @@ class Screen(object):
         :param int column: column number to move the cursor to.
         """
         self.cursor.x = (column or 1) - 1
-        self.ensure_bounds()
+        self.ensure_hbounds()
 
     def cursor_to_line(self, line=None):
         """Moves cursor to a specific line in the current column.
@@ -906,7 +910,7 @@ class Screen(object):
             # FIXME: should we also restrict the cursor to the scrolling
             # region?
 
-        self.ensure_bounds()
+        self.ensure_vbounds()
 
     def bell(self, *args):
         """Bell stub -- the actual implementation should probably be
