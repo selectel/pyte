@@ -37,6 +37,9 @@ This release is NOT backward compatible with 0.5.X branch!
   GitHub.
 - Fixed the way ``Screen.cursor_up`` and ``Screen.cursor_down`` interact
   with the scrolling region. See #63 on GitHub.
+- Added a minimal web terminal example by @demiurg906. For a faster and
+  more fully-featured version, see
+  `demiurg906/pyte_gui <https://github.com/demiurg906/pyte_gui>`_.
 
 Version 0.5.2
 -------------
