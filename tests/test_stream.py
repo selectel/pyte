@@ -9,6 +9,8 @@ if sys.version_info[0] == 2:
 else:
     from io import StringIO
 
+import pytest
+
 from pyte import control as ctrl, escape as esc
 from pyte.screens import Screen
 from pyte.streams import Stream, DebugStream
@@ -217,6 +219,18 @@ def test_compatibility_api():
 
     # c) detaching an attached screen.
     stream.detach(screen)
+
+
+@pytest.mark.xfail
+def test_draw_russian():
+    # Test from https://github.com/selectel/pyte/issues/65
+    screen = Screen(20, 1)
+    screen.draw = handler = argcheck()
+
+    stream = Stream(screen)
+    stream.feed("Нерусский текст".encode("utf-8"))
+    assert handler.count == 1
+    assert handler.args == ()
 
 
 def test_debug_stream():
