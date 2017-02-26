@@ -295,7 +295,7 @@ def test_draw_multiple_chars():
 
 @pytest.mark.xfail
 def test_draw_utf8():
-    # See issue #62 on GitHub.
+    # See https://github.com/selectel/pyte/issues/62
     screen = Screen(1, 1)
     stream = Stream(screen)
     stream.feed(b"\xE2\x80\x9D")
@@ -366,6 +366,25 @@ def test_draw_cp437():
     screen.draw("α ± ε".encode("cp437"))
 
     assert screen.display == ["α ± ε"]
+
+
+def test_draw_with_carriage_return():
+    # See https://github.com/selectel/pyte/issues/66
+    line = b"""\
+ipcs -s | grep nobody |awk '{print$2}'|xargs -n1 i\
+pcrm sem ;ps aux|grep -P 'httpd|fcgi'|grep -v grep\
+|awk '{print$2 \x0D}'|xargs kill -9;/etc/init.d/ht\
+tpd startssl"""
+
+    screen = Screen(50, 3)
+    stream = Stream(screen)
+    stream.feed(line)
+
+    assert screen.display == [
+        "ipcs -s | grep nobody |awk '{print$2}'|xargs -n1 i",
+        "pcrm sem ;ps aux|grep -P 'httpd|fcgi'|grep -v grep",
+        "}'|xargs kill -9;/etc/init.d/httpd startssl       "
+    ]
 
 
 def test_display_wcwidth():
