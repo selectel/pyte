@@ -31,7 +31,6 @@ class Terminal:
         self.screen = pyte.DiffScreen(columns, lines)
         self.stream = pyte.Stream()
         self.stream.attach(self.screen)
-        self.saved_state_exist = False
 
     def feed(self, data):
         self.stream.feed(data)
