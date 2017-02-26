@@ -16,7 +16,7 @@ from __future__ import print_function, unicode_literals
 import os
 import pty
 import select
-import subprocess
+import signal
 import sys
 
 import pyte
@@ -29,14 +29,17 @@ if __name__ == "__main__":
     screen = pyte.Screen(80, 24)
     stream = pyte.Stream(screen)
 
-    master, slave = pty.openpty()
-    p = subprocess.Popen(sys.argv[1:], stdout=slave, stderr=slave)
+    pid, master_fd = pty.fork()
+    if pid == 0:  # Child.
+        os.execvpe(sys.argv[1], sys.argv[1:],
+                   env=dict(COLUMNS="80", LINES="24"))
+
     while True:
         try:
-            [fd], _wlist, _xlist = select.select([master], [], [], 1)
+            [fd], _wlist, _xlist = select.select([master_fd], [], [], 1)
         except (KeyboardInterrupt,  # Stop right now!
                 ValueError):        # Nothing to read.
-            p.kill()
+            os.kill(pid, signal.SIGTERM)
             break
         else:
             stream.feed(os.read(fd, 1024))
