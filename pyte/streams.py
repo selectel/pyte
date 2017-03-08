@@ -218,9 +218,7 @@ class Stream(object):
         will be the bottleneck, because it processes just one character
         at a time.
 
-        We did many manual optimizations to this function in order to make
-        it as efficient as possible. Don't change anything without profiling
-        first.
+        Don't change anything without profiling first.
         """
         basic = self.basic
         listener = self.listener
@@ -248,7 +246,7 @@ class Stream(object):
         while True:
             # ``True`` tells ``Screen.feed`` that it is allowed to send
             # chunks of plain text directly to the listener, instead
-            # of this generator.)
+            # of this generator.
             char = yield True
 
             if char == ESC:
