@@ -136,8 +136,8 @@ VAX42_MAP = "".join(chr(c) for c in [
 
 
 MAPS = {
-    b"B": LAT1_MAP,
-    b"0": VT100_MAP,
-    b"U": IBMPC_MAP,
-    b"V": VAX42_MAP
+    "B": LAT1_MAP,
+    "0": VT100_MAP,
+    "U": IBMPC_MAP,
+    "V": VAX42_MAP
 }

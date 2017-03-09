@@ -14,57 +14,57 @@
 """
 
 #: *Space*: Not suprisingly -- ``" "``.
-SP = b" "
+SP = " "
 
 #: *Null*: Does nothing.
-NUL = b"\x00"
+NUL = "\x00"
 
 #: *Bell*: Beeps.
-BEL = b"\x07"
+BEL = "\x07"
 
 #: *Backspace*: Backspace one column, but not past the begining of the
 #: line.
-BS = b"\x08"
+BS = "\x08"
 
 #: *Horizontal tab*: Move cursor to the next tab stop, or to the end
 #: of the line if there is no earlier tab stop.
-HT = b"\x09"
+HT = "\x09"
 
 #: *Linefeed*: Give a line feed, and, if :data:`pyte.modes.LNM` (new
 #: line mode) is set also a carriage return.
-LF = b"\n"
+LF = "\n"
 #: *Vertical tab*: Same as :data:`LF`.
-VT = b"\x0b"
+VT = "\x0b"
 #: *Form feed*: Same as :data:`LF`.
-FF = b"\x0c"
+FF = "\x0c"
 
 #: *Carriage return*: Move cursor to left margin on current line.
-CR = b"\r"
+CR = "\r"
 
 #: *Shift out*: Activate G1 character set.
-SO = b"\x0e"
+SO = "\x0e"
 
 #: *Shift in*: Activate G0 character set.
-SI = b"\x0f"
+SI = "\x0f"
 
 #: *Cancel*: Interrupt escape sequence. If received during an escape or
 #: control sequence, cancels the sequence and displays substitution
 #: character.
-CAN = b"\x18"
+CAN = "\x18"
 #: *Substitute*: Same as :data:`CAN`.
-SUB = b"\x1a"
+SUB = "\x1a"
 
 #: *Escape*: Starts an escape sequence.
-ESC = b"\x1b"
+ESC = "\x1b"
 
 #: *Delete*: Is ignored.
-DEL = b"\x7f"
+DEL = "\x7f"
 
 #: *Control sequence introducer*: An equivalent for ``ESC [``.
-CSI = b"\x9b"
+CSI = "\x9b"
 
 #: *String terminator*.
-ST = b"\x9c"
+ST = "\x9c"
 
 #: *Operating system command*.
-OSC = b"\x9d"
+OSC = "\x9d"

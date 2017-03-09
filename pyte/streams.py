@@ -10,7 +10,7 @@
     >>> import pyte
     >>> screen = pyte.Screen(80, 24)
     >>> stream = pyte.Stream(screen)
-    >>> stream.feed(b"\x1B[5B")  # Move the cursor down 5 rows.
+    >>> stream.feed(b"\x1b[5B")  # Move the cursor down 5 rows.
     >>> screen.cursor.y
     5
 
@@ -22,6 +22,7 @@
 
 from __future__ import absolute_import, unicode_literals
 
+import codecs
 import itertools
 import os
 import re
@@ -43,8 +44,9 @@ class Stream(object):
 
     .. note::
 
-       Stream only accepts :func:`bytes` as input. Decoding it into text
-       is the responsibility of the :class:`~pyte.screens.Screen`.
+       Stream only accepts text as input, but if for some reason
+       you need to feed it with bytes, consider using
+       :class:`~pyte.streams.ByteStream` instead.
 
     .. versionchanged 0.6.0::
 
@@ -132,12 +134,13 @@ class Stream(object):
     _special = set([ctrl.ESC, ctrl.CSI, ctrl.NUL, ctrl.DEL, ctrl.OSC])
     _special.update(basic)
     _text_pattern = re.compile(
-        b"[^" + b"".join(map(re.escape, _special)) + b"]+")
+        "[^" + "".join(map(re.escape, _special)) + "]+")
     del _special
 
     def __init__(self, screen=None, strict=True):
         self.listener = None
         self.strict = False
+        self.use_utf8 = True
 
         if screen is not None:
             self.attach(screen)
@@ -175,25 +178,15 @@ class Stream(object):
             self.listener = None
 
     def feed(self, data):
-        """Consume a string and advances the state as necessary.
+        """Consume some data and advances the state as necessary.
 
-        :param bytes data: a blob of data to feed from.
+        :param str data: a blob of data to feed from.
         """
-        if isinstance(data, str):
-            warnings.warn("As of version 0.6.0 ``pyte.streams.Stream.feed``"
-                          "requires input in bytes. This warnings will become "
-                          "and error in 0.6.1.")
-            data = data.encode("utf-8")
-        elif not isinstance(data, bytes):
-            raise TypeError("{0} requires bytes input"
-                            .format(self.__class__.__name__))
-
         send = self._parser.send
         draw = self.listener.draw
         match_text = self._text_pattern.match
         taking_plain_text = self._taking_plain_text
 
-        # TODO: use memoryview?
         length = len(data)
         offset = 0
         while offset < length:
@@ -227,11 +220,11 @@ class Stream(object):
 
         ESC, CSI = ctrl.ESC, ctrl.CSI
         OSC, ST = ctrl.OSC, ctrl.ST
-        SP_OR_GT = ctrl.SP + b">"
+        SP_OR_GT = ctrl.SP + ">"
         NUL_OR_DEL = ctrl.NUL + ctrl.DEL
         CAN_OR_SUB = ctrl.CAN + ctrl.SUB
-        ALLOWED_IN_CSI = b"".join([ctrl.BEL, ctrl.BS, ctrl.HT, ctrl.LF,
-                                   ctrl.VT, ctrl.FF, ctrl.CR])
+        ALLOWED_IN_CSI = "".join([ctrl.BEL, ctrl.BS, ctrl.HT, ctrl.LF,
+                                  ctrl.VT, ctrl.FF, ctrl.CR])
 
         def create_dispatcher(mapping):
             return defaultdict(lambda: debug, dict(
@@ -262,22 +255,30 @@ class Stream(object):
                 #    character set. However, in the current version these
                 #    are noop.
                 char = yield
-                if char == b"[":
+                if char == "[":
                     char = CSI  # Go to CSI.
-                elif char == b"]":
+                elif char == "]":
                     char = OSC  # Go to OSC.
                 else:
-                    if char == b"#":
+                    if char == "#":
                         sharp_dispatch[(yield)]()
-                    if char == b"%":
-                        listener.select_other_charset((yield))
-                    elif char in b"()":
+                    if char == "%":
+                        self.select_other_charset((yield))
+                    elif char in "()" and not self.use_utf8:
+                        # See http://www.cl.cam.ac.uk/~mgk25/unicode.html#term
+                        # for the why on the UTF-8 restriction.
                         listener.define_charset((yield), mode=char)
                     else:
                         escape_dispatch[char]()
-                    continue     # Don't go to CSI.
+                    continue    # Don't go to CSI.
 
             if char in basic:
+                # Ignore shifts in UTF-8 mode. See
+                # http://www.cl.cam.ac.uk/~mgk25/unicode.html#term for
+                # the why on UTF-8 restriction.
+                if char == ctrl.SI or char == ctrl.SO and self.use_utf8:
+                    continue
+
                 basic_dispatch[char]()
             elif char == CSI:
                 # All parameters are unsigned, positive decimal integers, with
@@ -294,17 +295,16 @@ class Stream(object):
                 #        For details on the characters valid for use as
                 #        arguments.
                 params = []
-                current = bytearray()
+                current = ""
                 private = False
                 while True:
                     char = yield
-                    if char == b"?":
+                    if char == "?":
                         private = True
                     elif char in ALLOWED_IN_CSI:
                         basic_dispatch[char]()
                     elif char in SP_OR_GT:
-                        # We don't handle secondary DA atm.
-                        pass
+                        pass  # Secondary DA is not supported atm.
                     elif char in CAN_OR_SUB:
                         # If CAN or SUB is received during a sequence, the
                         # current sequence is aborted; terminal displays
@@ -313,12 +313,12 @@ class Stream(object):
                         draw(char)
                         break
                     elif char.isdigit():
-                        current.extend(char)
+                        current += char
                     else:
-                        params.append(min(int(bytes(current) or 0), 9999))
+                        params.append(min(int(current or 0), 9999))
 
-                        if char == b";":
-                            current = bytearray()
+                        if char == ";":
+                            current = ""
                         else:
                             if private:
                                 csi_dispatch[char](*params, private=True)
@@ -327,38 +327,83 @@ class Stream(object):
                             break  # CSI is finished.
             elif char == OSC:
                 code = yield
-                param = bytearray()
+                param = ""
                 while True:
                     char = yield
                     if char == ST or char == ctrl.BEL:
                         break
                     else:
-                        param.extend(char)
+                        param += char
 
-                param = bytes(param[1:])  # Drop the ;.
-                if code in b"01":
+                param = param[1:]  # Drop the ;.
+                if code in "01":
                     listener.set_icon_name(param)
-                if code in b"02":
+                if code in "02":
                     listener.set_title(param)
             elif char not in NUL_OR_DEL:
                 draw(char)
 
+    def select_other_charset(self, code):
+        """Select other (non G0 or G1) charset.
+
+        :param str code: character set code, should be a character from
+                         ``"@G8"``, otherwise ignored.
+
+        .. note:: We currently follow ``"linux"`` and only use this
+                  command to switch from ISO-8859-1 to UTF-8 and back.
+
+        .. versionadded:: 0.6.0
+
+        .. seealso::
+
+           `Standard ECMA-35, Section 15.4 \
+           <http://ecma-international.org/publications/standards/Ecma-035.htm>`_
+           for a description of VTXXX character set machinery.
+        """
+        # A noop since all input is Unicode-only.
+
+
 
 class ByteStream(Stream):
-    def __init__(self, *args, **kwargs):
-        warnings.warn("As of version 0.6.0 ``pyte.streams.ByteStream`` is an "
-                      "alias for ``pyte.streams.Stream``. The former will be "
-                      "removed in pyte 0.6.1.", DeprecationWarning)
+    """A stream which takes bytes as input.
 
+    Bytes are decoded to text using either UTF-8 (default) or the encoding
+    selected via :meth:`~pyte.Stream.select_other_charset`.
+
+    .. attribute:: use_utf8
+
+       Assume the input to :meth:`~pyte.streams.ByteStream.feed` is encoded
+       using UTF-8. Defaults to ``True``.
+    """
+    def __init__(self, *args, **kwargs):
         if kwargs.pop("encodings", None):
             warnings.warn(
                 "As of version 0.6.0 ``pyte.streams.ByteStream`` no longer "
-                "decodes input.", DeprecationWarning)
+                "accepts an encoding as an argument an instead uses the "
+                "encoding provided via a CSI command.", UserWarning)
 
         super(ByteStream, self).__init__(*args, **kwargs)
 
+        self.utf8_decoder = codecs.getincrementaldecoder("utf-8")("replace")
 
-class DebugStream(Stream):
+    def feed(self, data):
+        if self.use_utf8:
+            data = self.utf8_decoder.decode(data)
+        else:
+            data = "".join(map(chr, data))  # Pass-through encoding.
+
+        super(ByteStream, self).feed(data)
+
+    def select_other_charset(self, code):
+        if code == "@":
+            self.use_utf8 = False
+            self.utf8_decoder.reset()
+        elif code in "G8":
+            self.use_utf8 = True
+
+
+
+class DebugStream(ByteStream):
     r"""Stream, which dumps a subset of the dispatched events to a given
     file-like object (:data:`sys.stdout` by default).
 

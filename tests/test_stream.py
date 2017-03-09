@@ -13,7 +13,7 @@ import pytest
 
 from pyte import control as ctrl, escape as esc
 from pyte.screens import Screen
-from pyte.streams import Stream, DebugStream
+from pyte.streams import Stream, ByteStream, DebugStream
 
 
 class counter(object):
@@ -71,7 +71,7 @@ def test_unknown_sequences():
     screen.debug = handler
 
     stream = Stream(screen)
-    stream.feed(ctrl.CSI + b"6;Z")
+    stream.feed(ctrl.CSI + "6;Z")
     assert handler.count == 1
     assert handler.args == (6, 0)
     assert handler.kwargs == {}
@@ -85,7 +85,7 @@ def test_non_csi_sequences():
         setattr(screen, event, handler)
 
         stream = Stream(screen)
-        stream.feed(ctrl.ESC + b"[5" + cmd)
+        stream.feed(ctrl.ESC + "[5" + cmd)
         assert handler.count == 1
         assert handler.args == (5, )
 
@@ -95,7 +95,7 @@ def test_non_csi_sequences():
         setattr(screen, event, handler)
 
         stream = Stream(screen)
-        stream.feed(ctrl.CSI + b"5;12" + cmd)
+        stream.feed(ctrl.CSI + "5;12" + cmd)
         assert handler.count == 1
         assert handler.args == (5, 12)
 
@@ -108,7 +108,7 @@ def test_set_mode():
     screen.set_mode = handler
 
     stream = Stream(screen)
-    stream.feed(ctrl.CSI + b"?9;2h")
+    stream.feed(ctrl.CSI + "?9;2h")
     assert not bugger.count
     assert handler.count == 1
     assert handler.args == (9, 2)
@@ -123,7 +123,7 @@ def test_reset_mode():
     screen.reset_mode = handler
 
     stream = Stream(screen)
-    stream.feed(ctrl.CSI + b"?9;2l")
+    stream.feed(ctrl.CSI + "?9;2l")
     assert not bugger.count
     assert handler.count == 1
     assert handler.args == (9, 2)
@@ -135,7 +135,7 @@ def test_missing_params():
     screen.cursor_position = handler
 
     stream = Stream(screen)
-    stream.feed(ctrl.CSI + b";" + esc.HVP)
+    stream.feed(ctrl.CSI + ";" + esc.HVP)
     assert handler.count == 1
     assert handler.args == (0, 0)
 
@@ -146,7 +146,7 @@ def test_overflow():
     screen.cursor_position = handler
 
     stream = Stream(screen)
-    stream.feed(ctrl.CSI + b"999999999999999;99999999999999" + esc.HVP)
+    stream.feed(ctrl.CSI + "999999999999999;99999999999999" + esc.HVP)
     assert handler.count == 1
     assert handler.args == (9999, 9999)
 
@@ -160,11 +160,11 @@ def test_interrupt():
     screen.cursor_position = handler
 
     stream = Stream(screen)
-    stream.feed(ctrl.CSI + b"10;" + ctrl.SUB + b"10" + esc.HVP)
+    stream.feed(ctrl.CSI + "10;" + ctrl.SUB + "10" + esc.HVP)
 
     assert not handler.count
     assert bugger.seen == [
-        ctrl.SUB, b"10" + esc.HVP
+        ctrl.SUB, "10" + esc.HVP
     ]
 
 
@@ -174,7 +174,7 @@ def test_control_characters():
     screen.cursor_position = handler
 
     stream = Stream(screen)
-    stream.feed(ctrl.CSI + b"10;\t\t\n\r\n10" + esc.HVP)
+    stream.feed(ctrl.CSI + "10;\t\t\n\r\n10" + esc.HVP)
 
     assert handler.count == 1
     assert handler.args == (10, 10)
@@ -185,23 +185,23 @@ def test_set_title_icon_name():
     stream = Stream(screen)
 
     # a) set only icon name
-    stream.feed(ctrl.OSC + b"1;foo" + ctrl.ST)
+    stream.feed(ctrl.OSC + "1;foo" + ctrl.ST)
     assert screen.icon_name == "foo"
 
     # b) set only title
-    stream.feed(ctrl.OSC + b"2;foo" + ctrl.ST)
+    stream.feed(ctrl.OSC + "2;foo" + ctrl.ST)
     assert screen.title == "foo"
 
     # c) set both icon name and title
-    stream.feed(ctrl.OSC + b"0;bar" + ctrl.ST)
+    stream.feed(ctrl.OSC + "0;bar" + ctrl.ST)
     assert screen.title == screen.icon_name == "bar"
 
     # d) set both icon name and title then terminate with BEL
-    stream.feed(ctrl.OSC + b"0;bar" + ctrl.BEL)
+    stream.feed(ctrl.OSC + "0;bar" + ctrl.BEL)
     assert screen.title == screen.icon_name == "bar"
 
     # e) test ➜ ('\xe2\x9e\x9c') symbol, that contains string terminator \x9c
-    stream.feed(u"➜".encode("utf-8"))
+    stream.feed("➜")
     assert screen.buffer[0][0].data == u"➜"
 
 
@@ -221,22 +221,21 @@ def test_compatibility_api():
     stream.detach(screen)
 
 
-@pytest.mark.xfail
 def test_draw_russian():
     # Test from https://github.com/selectel/pyte/issues/65
     screen = Screen(20, 1)
     screen.draw = handler = argcheck()
 
     stream = Stream(screen)
-    stream.feed("Нерусский текст".encode("utf-8"))
+    stream.feed("Нерусский текст")
     assert handler.count == 1
-    assert handler.args == ()
+    assert handler.args == ("Нерусский текст", )
 
 
 def test_debug_stream():
     tests = [
-        (b"foo", "DRAW foo"),
-        (b"\x1b[1;24r\x1b[4l\x1b[24;1H",
+        ("foo", "DRAW foo"),
+        ("\x1b[1;24r\x1b[4l\x1b[24;1H",
          "SET_MARGINS 1; 24\nRESET_MODE 4\nCURSOR_POSITION 24; 1"),
     ]
 
@@ -247,3 +246,20 @@ def test_debug_stream():
 
         lines = [l.rstrip() for l in output.getvalue().splitlines()]
         assert lines == expected.splitlines()
+
+
+def test_byte_stream_select_other_charset():
+    stream = ByteStream(Screen(3, 3))
+    assert stream.use_utf8  # on by default.
+
+    # a) disable utf-8
+    stream.select_other_charset("@")
+    assert not stream.use_utf8
+
+    # b) unknown code -- noop
+    stream.select_other_charset("X")
+    assert not stream.use_utf8
+
+    # c) enable utf-8
+    stream.select_other_charset("G")
+    assert stream.use_utf8

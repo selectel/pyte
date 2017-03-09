@@ -29,7 +29,7 @@ import pyte
 class Terminal:
     def __init__(self, columns, lines):
         self.screen = pyte.DiffScreen(columns, lines)
-        self.stream = pyte.Stream()
+        self.stream = pyte.ByteStream()
         self.stream.attach(self.screen)
 
     def feed(self, data):

@@ -37,8 +37,8 @@ def test_mark_single_line():
 
     # a) draw().
     screen.dirty.clear()
-    screen.draw(b"f")
-    assert len(screen.dirty) is 1
+    screen.draw("f")
+    assert len(screen.dirty) == 1
     assert screen.cursor.y in screen.dirty
 
     # b) rest ...
@@ -46,7 +46,7 @@ def test_mark_single_line():
                    "erase_characters", "erase_in_line"]:
         screen.dirty.clear()
         getattr(screen, method)()
-        assert len(screen.dirty) is 1
+        assert len(screen.dirty) == 1
         assert screen.cursor.y in screen.dirty
 
 
@@ -128,12 +128,12 @@ def test_draw_wrap():
 
     # fill every character cell on the first row
     for _ in range(80):
-        screen.draw(b"g")
+        screen.draw("g")
     assert screen.cursor.y == 0
     screen.dirty.clear()
 
     # now write one more character which should cause wrapping
-    screen.draw(b"h")
+    screen.draw("h")
     assert screen.cursor.y == 1
     # regression test issue #36 where the wrong line was marked as
     # dirty
