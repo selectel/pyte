@@ -4,9 +4,7 @@ from __future__ import unicode_literals
 
 import copy
 
-import pytest
-
-from pyte import Screen, Stream, ByteStream
+import pyte
 from pyte import modes as mo, control as ctrl
 from pyte.screens import Char
 
@@ -39,7 +37,7 @@ def test_initialize_char():
 
 
 def test_remove_non_existant_attribute():
-    screen = Screen(2, 2)
+    screen = pyte.Screen(2, 2)
     assert screen.buffer == [[screen.default_char, screen.default_char]] * 2
 
     screen.select_graphic_rendition(24)  # underline-off.
@@ -48,7 +46,7 @@ def test_remove_non_existant_attribute():
 
 
 def test_attributes():
-    screen = Screen(2, 2)
+    screen = pyte.Screen(2, 2)
     assert screen.buffer == [[screen.default_char, screen.default_char]] * 2
     screen.select_graphic_rendition(1)  # bold.
 
@@ -64,7 +62,7 @@ def test_attributes():
 
 
 def test_colors():
-    screen = Screen(2, 2)
+    screen = pyte.Screen(2, 2)
 
     screen.select_graphic_rendition(30)
     screen.select_graphic_rendition(40)
@@ -77,7 +75,7 @@ def test_colors():
 
 
 def test_colors256():
-    screen = Screen(2, 2)
+    screen = pyte.Screen(2, 2)
 
     # a) OK-case.
     screen.select_graphic_rendition(38, 5, 0)
@@ -90,7 +88,7 @@ def test_colors256():
 
 
 def test_colors24bit():
-    screen = Screen(2, 2)
+    screen = pyte.Screen(2, 2)
 
     # a) OK-case
     screen.select_graphic_rendition(38, 2, 0, 0, 0)
@@ -104,7 +102,7 @@ def test_colors24bit():
 
 def test_colors_aixterm():
     # See issue #57 on GitHub.
-    screen = Screen(2, 2)
+    screen = pyte.Screen(2, 2)
 
     # a) foreground color.
     screen.select_graphic_rendition(94)
@@ -118,7 +116,7 @@ def test_colors_aixterm():
 
 
 def test_colors_ignore_invalid():
-    screen = Screen(2, 2)
+    screen = pyte.Screen(2, 2)
     default_attrs = screen.cursor.attrs
 
     screen.select_graphic_rendition(100500)
@@ -132,7 +130,7 @@ def test_colors_ignore_invalid():
 
 
 def test_reset_resets_colors():
-    screen = Screen(2, 2)
+    screen = pyte.Screen(2, 2)
     assert screen.buffer == [[screen.default_char, screen.default_char]] * 2
 
     screen.select_graphic_rendition(30)
@@ -145,7 +143,7 @@ def test_reset_resets_colors():
 
 
 def test_multi_attribs():
-    screen = Screen(2, 2)
+    screen = pyte.Screen(2, 2)
     assert screen.buffer == [[screen.default_char, screen.default_char]] * 2
     screen.select_graphic_rendition(1)
     screen.select_graphic_rendition(3)
@@ -155,7 +153,7 @@ def test_multi_attribs():
 
 
 def test_attributes_reset():
-    screen = Screen(2, 2)
+    screen = pyte.Screen(2, 2)
     screen.set_mode(mo.LNM)
     assert screen.buffer == [[screen.default_char, screen.default_char]] * 2
     screen.select_graphic_rendition(1)
@@ -177,7 +175,7 @@ def test_attributes_reset():
 
 
 def test_resize():
-    screen = Screen(2, 2)
+    screen = pyte.Screen(2, 2)
     screen.set_mode(mo.DECOM)
     screen.set_margins(0, 1)
     assert screen.columns == screen.lines == 2
@@ -203,33 +201,33 @@ def test_resize():
     # Quirks:
     # a) if the current display is thinner than the requested size,
     #    new columns should be added to the right.
-    screen = update(Screen(2, 2), ["bo", "sh"], [None, None])
+    screen = update(pyte.Screen(2, 2), ["bo", "sh"], [None, None])
     screen.resize(2, 3)
     assert screen.display == ["bo ", "sh "]
 
     # b) if the current display is wider than the requested size,
     #    columns should be removed from the right...
-    screen = update(Screen(2, 2), ["bo", "sh"], [None, None])
+    screen = update(pyte.Screen(2, 2), ["bo", "sh"], [None, None])
     screen.resize(2, 1)
     assert screen.display == ["b", "s"]
 
     # c) if the current display is shorter than the requested
     #    size, new rows should be added on the bottom.
-    screen = update(Screen(2, 2), ["bo", "sh"], [None, None])
+    screen = update(pyte.Screen(2, 2), ["bo", "sh"], [None, None])
     screen.resize(3, 2)
 
     assert screen.display == ["bo", "sh", "  "]
 
     # d) if the current display is taller than the requested
     #    size, rows should be removed from the top.
-    screen = update(Screen(2, 2), ["bo", "sh"], [None, None])
+    screen = update(pyte.Screen(2, 2), ["bo", "sh"], [None, None])
     screen.resize(1, 2)
     assert screen.display == ["sh"]
 
 
 def test_draw():
     # ``DECAWM`` on (default).
-    screen = Screen(3, 3)
+    screen = pyte.Screen(3, 3)
     screen.set_mode(mo.LNM)
     assert mo.DECAWM in screen.mode
 
@@ -244,7 +242,7 @@ def test_draw():
     assert (screen.cursor.y, screen.cursor.x) == (1, 1)
 
     # ``DECAWM`` is off.
-    screen = Screen(3, 3)
+    screen = pyte.Screen(3, 3)
     screen.reset_mode(mo.DECAWM)
 
     for ch in "abc":
@@ -272,14 +270,14 @@ def test_draw():
 
 def test_draw_russian():
     # Test from https://github.com/selectel/pyte/issues/65
-    screen = Screen(20, 1)
-    stream = Stream(screen)
+    screen = pyte.Screen(20, 1)
+    stream = pyte.Stream(screen)
     stream.feed("Нерусский текст")
     assert screen.display == ["Нерусский текст     "]
 
 
 def test_draw_multiple_chars():
-    screen = Screen(10, 1)
+    screen = pyte.Screen(10, 1)
     screen.draw("foobar")
     assert screen.cursor.x == 6
     assert screen.display == ["foobar    "]
@@ -287,28 +285,28 @@ def test_draw_multiple_chars():
 
 def test_draw_utf8():
     # See https://github.com/selectel/pyte/issues/62
-    screen = Screen(1, 1)
-    stream = ByteStream(screen)
+    screen = pyte.Screen(1, 1)
+    stream = pyte.ByteStream(screen)
     stream.feed(b"\xE2\x80\x9D")
     assert screen.display == ["”"]
 
 
 def test_draw_width2():
     # Example from https://github.com/selectel/pyte/issues/9
-    screen = Screen(10, 1)
+    screen = pyte.Screen(10, 1)
     screen.draw("コンニチハ")
     assert screen.cursor.x == screen.columns
 
 
 def test_draw_width2_line_end():
     # Test from https://github.com/selectel/pyte/issues/55
-    screen = Screen(10, 1)
+    screen = pyte.Screen(10, 1)
     screen.draw(" コンニチハ")
     assert screen.cursor.x == screen.columns
 
 
 def test_draw_width0_combining():
-    screen = Screen(4, 2)
+    screen = pyte.Screen(4, 2)
 
     # a) no prev. character
     screen.draw("\N{COMBINING DIAERESIS}")
@@ -327,7 +325,7 @@ def test_draw_width0_combining():
 
 
 def test_draw_width0_irm():
-    screen = Screen(10, 1)
+    screen = pyte.Screen(10, 1)
     screen.set_mode(mo.IRM)
 
     # The following should not insert any blanks.
@@ -337,7 +335,7 @@ def test_draw_width0_irm():
 
 
 def test_draw_width0_decawm_off():
-    screen = Screen(10, 1)
+    screen = pyte.Screen(10, 1)
     screen.reset_mode(mo.DECAWM)
     screen.draw(" コンニチハ")
     assert screen.cursor.x == screen.columns
@@ -349,8 +347,8 @@ def test_draw_width0_decawm_off():
 
 
 def test_draw_cp437():
-    screen = Screen(5, 1)
-    stream = ByteStream(screen)
+    screen = pyte.Screen(5, 1)
+    stream = pyte.ByteStream(screen)
     assert screen.charset == 0
 
     screen.define_charset("U", "(")
@@ -368,8 +366,8 @@ pcrm sem ;ps aux|grep -P 'httpd|fcgi'|grep -v grep\
 |awk '{print$2 \x0D}'|xargs kill -9;/etc/init.d/ht\
 tpd startssl"""
 
-    screen = Screen(50, 3)
-    stream = Stream(screen)
+    screen = pyte.Screen(50, 3)
+    stream = pyte.Stream(screen)
     stream.feed(line)
 
     assert screen.display == [
@@ -380,13 +378,13 @@ tpd startssl"""
 
 
 def test_display_wcwidth():
-    screen = Screen(10, 1)
+    screen = pyte.Screen(10, 1)
     screen.draw("コンニチハ")
     assert screen.display == ["コンニチハ"]
 
 
 def test_carriage_return():
-    screen = Screen(3, 3)
+    screen = pyte.Screen(3, 3)
     screen.cursor.x = 2
     screen.carriage_return()
 
@@ -394,7 +392,7 @@ def test_carriage_return():
 
 
 def test_index():
-    screen = update(Screen(2, 2), ["wo", "ot"], colored=[1])
+    screen = update(pyte.Screen(2, 2), ["wo", "ot"], colored=[1])
 
     # a) indexing on a row that isn't the last should just move
     # the cursor down.
@@ -415,7 +413,7 @@ def test_index():
     ]
 
     # c) same with margins
-    screen = update(Screen(2, 5), ["bo", "sh", "th", "er", "oh"],
+    screen = update(pyte.Screen(2, 5), ["bo", "sh", "th", "er", "oh"],
                     colored=[1, 2])
     screen.set_margins(2, 4)
     screen.cursor.y = 3
@@ -470,7 +468,7 @@ def test_index():
 
 
 def test_reverse_index():
-    screen = update(Screen(2, 2), ["wo", "ot"], colored=[0])
+    screen = update(pyte.Screen(2, 2), ["wo", "ot"], colored=[0])
 
     # a) reverse indexing on the first row should push rows down
     # and create a new row at the top.
@@ -490,7 +488,7 @@ def test_reverse_index():
     ]
 
     # c) same with margins
-    screen = update(Screen(2, 5), ["bo", "sh", "th", "er", "oh"],
+    screen = update(pyte.Screen(2, 5), ["bo", "sh", "th", "er", "oh"],
                     colored=[2, 3])
     screen.set_margins(2, 4)
     screen.cursor.y = 1
@@ -545,7 +543,7 @@ def test_reverse_index():
 
 
 def test_linefeed():
-    screen = update(Screen(2, 2), ["bo", "sh"], [None, None])
+    screen = update(pyte.Screen(2, 2), ["bo", "sh"], [None, None])
     screen.set_mode(mo.LNM)
 
     # a) LNM on by default (that's what `vttest` forces us to do).
@@ -563,7 +561,7 @@ def test_linefeed():
 
 def test_linefeed_margins():
     # See issue #63 on GitHub.
-    screen = Screen(80, 24)
+    screen = pyte.Screen(80, 24)
     screen.set_margins(3, 27)
     screen.cursor_position()
     assert (screen.cursor.y, screen.cursor.x) == (0, 0)
@@ -572,7 +570,7 @@ def test_linefeed_margins():
 
 
 def test_tabstops():
-    screen = Screen(10, 10)
+    screen = pyte.Screen(10, 10)
 
     # Making sure initial tabstops are in place ...
     assert screen.tabstops == set([7])
@@ -598,7 +596,7 @@ def test_tabstops():
 
 
 def test_clear_tabstops():
-    screen = Screen(10, 10)
+    screen = pyte.Screen(10, 10)
     screen.clear_tab_stop(3)
 
     # a) clear a tabstop at current cusor location
@@ -625,7 +623,7 @@ def test_clear_tabstops():
 
 
 def test_backspace():
-    screen = Screen(2, 2)
+    screen = pyte.Screen(2, 2)
     assert screen.cursor.x == 0
     screen.backspace()
     assert screen.cursor.x == 0
@@ -636,7 +634,7 @@ def test_backspace():
 
 def test_save_cursor():
     # a) cursor position
-    screen = Screen(10, 10)
+    screen = pyte.Screen(10, 10)
     screen.save_cursor()
     screen.cursor.x, screen.cursor.y = 3, 5
     screen.save_cursor()
@@ -651,7 +649,7 @@ def test_save_cursor():
     assert screen.cursor.y == 0
 
     # b) modes
-    screen = Screen(10, 10)
+    screen = pyte.Screen(10, 10)
     screen.set_mode(mo.DECAWM, mo.DECOM)
     screen.save_cursor()
 
@@ -662,7 +660,7 @@ def test_save_cursor():
     assert mo.DECOM in screen.mode
 
     # c) attributes
-    screen = Screen(10, 10)
+    screen = pyte.Screen(10, 10)
     screen.select_graphic_rendition(4)
     screen.save_cursor()
     screen.select_graphic_rendition(24)
@@ -676,7 +674,7 @@ def test_save_cursor():
 
 
 def test_restore_cursor_with_none_saved():
-    screen = Screen(10, 10)
+    screen = pyte.Screen(10, 10)
     screen.set_mode(mo.DECOM)
     screen.cursor.x, screen.cursor.y = 5, 5
     screen.restore_cursor()
@@ -686,7 +684,7 @@ def test_restore_cursor_with_none_saved():
 
 
 def test_restore_cursor_out_of_bounds():
-    screen = Screen(10, 10)
+    screen = pyte.Screen(10, 10)
 
     # a) origin mode off.
     screen.cursor_position(5, 5)
@@ -712,7 +710,7 @@ def test_restore_cursor_out_of_bounds():
 
 def test_insert_lines():
     # a) without margins
-    screen = update(Screen(3, 3), ["sam", "is ", "foo"], colored=[1])
+    screen = update(pyte.Screen(3, 3), ["sam", "is ", "foo"], colored=[1])
     screen.insert_lines()
 
     assert (screen.cursor.y, screen.cursor.x) == (0, 0)
@@ -723,7 +721,7 @@ def test_insert_lines():
         [Char("i", fg="red"), Char("s", fg="red"), Char(" ", fg="red")],
     ]
 
-    screen = update(Screen(3, 3), ["sam", "is ", "foo"], colored=[1])
+    screen = update(pyte.Screen(3, 3), ["sam", "is ", "foo"], colored=[1])
     screen.insert_lines(2)
 
     assert (screen.cursor.y, screen.cursor.x) == (0, 0)
@@ -735,7 +733,7 @@ def test_insert_lines():
     ]
 
     # b) with margins
-    screen = update(Screen(3, 5), ["sam", "is ", "foo", "bar", "baz"],
+    screen = update(pyte.Screen(3, 5), ["sam", "is ", "foo", "bar", "baz"],
                     colored=[2, 3])
     screen.set_margins(1, 4)
     screen.cursor.y = 1
@@ -751,7 +749,7 @@ def test_insert_lines():
         [Char("b"), Char("a"), Char("z")],
     ]
 
-    screen = update(Screen(3, 5), ["sam", "is ", "foo", "bar", "baz"],
+    screen = update(pyte.Screen(3, 5), ["sam", "is ", "foo", "bar", "baz"],
                     colored=[2, 3])
     screen.set_margins(1, 3)
     screen.cursor.y = 1
@@ -779,7 +777,7 @@ def test_insert_lines():
     ]
 
     # c) with margins -- trying to insert more than we have available
-    screen = update(Screen(3, 5), ["sam", "is ", "foo", "bar", "baz"],
+    screen = update(pyte.Screen(3, 5), ["sam", "is ", "foo", "bar", "baz"],
                     colored=[2, 3])
     screen.set_margins(2, 4)
     screen.cursor.y = 1
@@ -797,7 +795,7 @@ def test_insert_lines():
 
     # d) with margins -- trying to insert outside scroll boundaries;
     #    expecting nothing to change
-    screen = update(Screen(3, 5), ["sam", "is ", "foo", "bar", "baz"],
+    screen = update(pyte.Screen(3, 5), ["sam", "is ", "foo", "bar", "baz"],
                     colored=[2, 3])
     screen.set_margins(2, 4)
     screen.insert_lines(5)
@@ -815,7 +813,7 @@ def test_insert_lines():
 
 def test_delete_lines():
     # a) without margins
-    screen = update(Screen(3, 3), ["sam", "is ", "foo"], colored=[1])
+    screen = update(pyte.Screen(3, 3), ["sam", "is ", "foo"], colored=[1])
     screen.delete_lines()
 
     assert (screen.cursor.y, screen.cursor.x) == (0, 0)
@@ -837,7 +835,7 @@ def test_delete_lines():
     ]
 
     # b) with margins
-    screen = update(Screen(3, 5), ["sam", "is ", "foo", "bar", "baz"],
+    screen = update(pyte.Screen(3, 5), ["sam", "is ", "foo", "bar", "baz"],
                     colored=[2, 3])
     screen.set_margins(1, 4)
     screen.cursor.y = 1
@@ -853,7 +851,7 @@ def test_delete_lines():
         [Char("b"), Char("a"), Char("z")],
     ]
 
-    screen = update(Screen(3, 5), ["sam", "is ", "foo", "bar", "baz"],
+    screen = update(pyte.Screen(3, 5), ["sam", "is ", "foo", "bar", "baz"],
                     colored=[2, 3])
     screen.set_margins(1, 4)
     screen.cursor.y = 1
@@ -870,7 +868,7 @@ def test_delete_lines():
     ]
 
     # c) with margins -- trying to delete  more than we have available
-    screen = update(Screen(3, 5),
+    screen = update(pyte.Screen(3, 5),
                     ["sam", "is ", "foo", "bar", "baz"],
                     [None,
                      None,
@@ -893,7 +891,7 @@ def test_delete_lines():
 
     # d) with margins -- trying to delete outside scroll boundaries;
     #    expecting nothing to change
-    screen = update(Screen(3, 5), ["sam", "is ", "foo", "bar", "baz"],
+    screen = update(pyte.Screen(3, 5), ["sam", "is ", "foo", "bar", "baz"],
                     colored=[2, 3])
     screen.set_margins(2, 4)
     screen.cursor.y = 0
@@ -911,7 +909,7 @@ def test_delete_lines():
 
 
 def test_insert_characters():
-    screen = update(Screen(3, 3), ["sam", "is ", "foo"], colored=[0])
+    screen = update(pyte.Screen(3, 3), ["sam", "is ", "foo"], colored=[0])
 
     # a) normal case
     cursor = copy.copy(screen.cursor)
@@ -935,7 +933,7 @@ def test_insert_characters():
     ]
 
     # d) 0 is 1
-    screen = update(Screen(3, 3), ["sam", "is ", "foo"], colored=[0])
+    screen = update(pyte.Screen(3, 3), ["sam", "is ", "foo"], colored=[0])
 
     screen.cursor_position()
     screen.insert_characters()
@@ -944,7 +942,7 @@ def test_insert_characters():
         Char("s", fg="red"), Char("a", fg="red")
     ]
 
-    screen = update(Screen(3, 3), ["sam", "is ", "foo"], colored=[0])
+    screen = update(pyte.Screen(3, 3), ["sam", "is ", "foo"], colored=[0])
     screen.cursor_position()
     screen.insert_characters(1)
     assert screen.buffer[0] == [
@@ -954,7 +952,7 @@ def test_insert_characters():
 
 
 def test_delete_characters():
-    screen = update(Screen(3, 3), ["sam", "is ", "foo"], colored=[0])
+    screen = update(pyte.Screen(3, 3), ["sam", "is ", "foo"], colored=[0])
     screen.delete_characters(2)
     assert (screen.cursor.y, screen.cursor.x) == (0, 0)
     assert screen.display == ["m  ", "is ", "foo"]
@@ -974,7 +972,7 @@ def test_delete_characters():
     assert screen.display == ["m  ", "i  ", "fo "]
 
     # ! extreme cases.
-    screen = update(Screen(5, 1), ["12345"], colored=[0])
+    screen = update(pyte.Screen(5, 1), ["12345"], colored=[0])
     screen.cursor.x = 1
     screen.delete_characters(3)
     assert (screen.cursor.y, screen.cursor.x) == (0, 1)
@@ -987,7 +985,7 @@ def test_delete_characters():
         screen.default_char
     ]
 
-    screen = update(Screen(5, 1), ["12345"], colored=[0])
+    screen = update(pyte.Screen(5, 1), ["12345"], colored=[0])
     screen.cursor.x = 2
     screen.delete_characters(10)
     assert (screen.cursor.y, screen.cursor.x) == (0, 2)
@@ -1000,7 +998,7 @@ def test_delete_characters():
         screen.default_char
     ]
 
-    screen = update(Screen(5, 1), ["12345"], colored=[0])
+    screen = update(pyte.Screen(5, 1), ["12345"], colored=[0])
     screen.delete_characters(4)
     assert (screen.cursor.y, screen.cursor.x) == (0, 0)
     assert screen.display == ["5    "]
@@ -1014,7 +1012,7 @@ def test_delete_characters():
 
 
 def test_erase_character():
-    screen = update(Screen(3, 3), ["sam", "is ", "foo"], colored=[0])
+    screen = update(pyte.Screen(3, 3), ["sam", "is ", "foo"], colored=[0])
 
     screen.erase_characters(2)
     assert (screen.cursor.y, screen.cursor.x) == (0, 0)
@@ -1036,7 +1034,7 @@ def test_erase_character():
     assert screen.display == ["  m", "i  ", "fo "]
 
     # ! extreme cases.
-    screen = update(Screen(5, 1), ["12345"], colored=[0])
+    screen = update(pyte.Screen(5, 1), ["12345"], colored=[0])
     screen.cursor.x = 1
     screen.erase_characters(3)
     assert (screen.cursor.y, screen.cursor.x) == (0, 1)
@@ -1049,7 +1047,7 @@ def test_erase_character():
         Char("5", "red")
     ]
 
-    screen = update(Screen(5, 1), ["12345"], colored=[0])
+    screen = update(pyte.Screen(5, 1), ["12345"], colored=[0])
     screen.cursor.x = 2
     screen.erase_characters(10)
     assert (screen.cursor.y, screen.cursor.x) == (0, 2)
@@ -1062,7 +1060,7 @@ def test_erase_character():
         screen.default_char
     ]
 
-    screen = update(Screen(5, 1), ["12345"], colored=[0])
+    screen = update(pyte.Screen(5, 1), ["12345"], colored=[0])
     screen.erase_characters(4)
     assert (screen.cursor.y, screen.cursor.x) == (0, 0)
     assert screen.display == ["    5"]
@@ -1076,7 +1074,7 @@ def test_erase_character():
 
 
 def test_erase_in_line():
-    screen = update(Screen(5, 5),
+    screen = update(pyte.Screen(5, 5),
                     ["sam i",
                      "s foo",
                      "but a",
@@ -1140,7 +1138,7 @@ def test_erase_in_line():
 
 
 def test_erase_in_display():
-    screen = update(Screen(5, 5),
+    screen = update(pyte.Screen(5, 5),
                     ["sam i",
                      "s foo",
                      "but a",
@@ -1204,7 +1202,7 @@ def test_erase_in_display():
 
 
 def test_cursor_up():
-    screen = Screen(10, 10)
+    screen = pyte.Screen(10, 10)
 
     # Moving the cursor up at the top doesn't do anything
     screen.cursor_up(1)
@@ -1223,7 +1221,7 @@ def test_cursor_up():
 
 
 def test_cursor_down():
-    screen = Screen(10, 10)
+    screen = pyte.Screen(10, 10)
 
     # Moving the cursor down at the bottom doesn't do anything
     screen.cursor.y = 9
@@ -1243,7 +1241,7 @@ def test_cursor_down():
 
 
 def test_cursor_back():
-    screen = Screen(10, 10)
+    screen = pyte.Screen(10, 10)
 
     # Moving the cursor left at the margin doesn't do anything
     screen.cursor.x = 0
@@ -1263,7 +1261,7 @@ def test_cursor_back():
 
 
 def test_cursor_forward():
-    screen = Screen(10, 10)
+    screen = pyte.Screen(10, 10)
 
     # Moving the cursor right at the margin doesn't do anything
     screen.cursor.x = 9
@@ -1282,7 +1280,7 @@ def test_cursor_forward():
 
 
 def test_cursor_position():
-    screen = Screen(10, 10)
+    screen = pyte.Screen(10, 10)
 
     # a) testing that we expect 1-indexed values
     screen.cursor_position(5, 10)
@@ -1315,15 +1313,15 @@ def test_cursor_position():
 
 
 def test_unicode():
-    screen = Screen(4, 2)
-    stream = ByteStream(screen)
+    screen = pyte.Screen(4, 2)
+    stream = pyte.ByteStream(screen)
 
     stream.feed("тест".encode("utf-8"))
     assert screen.display == ["тест", "    "]
 
 
 def test_alignment_display():
-    screen = Screen(5, 5)
+    screen = pyte.Screen(5, 5)
     screen.set_mode(mo.LNM)
     screen.draw("a")
     screen.linefeed()
@@ -1346,7 +1344,7 @@ def test_alignment_display():
 
 
 def test_set_margins():
-    screen = Screen(10, 10)
+    screen = pyte.Screen(10, 10)
 
     assert screen.margins == (0, 9)
 
@@ -1365,7 +1363,7 @@ def test_set_margins():
 
 
 def test_hide_cursor():
-    screen = Screen(10, 10)
+    screen = pyte.Screen(10, 10)
 
     # DECTCEM is set by default.
     assert mo.DECTCEM in screen.mode
@@ -1381,7 +1379,7 @@ def test_hide_cursor():
 
 
 def test_report_device_attributes():
-    screen = Screen(10, 10)
+    screen = pyte.Screen(10, 10)
 
     acc = []
     screen.write_process_input = acc.append
@@ -1398,8 +1396,8 @@ def test_report_device_attributes():
 def test_private_report_device_attributes():
     # Some console apps (e.g. ADOM) might add ``?`` to the DA request,
     # even though the VT102/VT220 spec does not allow this.
-    screen = Screen(10, 10)
-    stream = Stream(screen)
+    screen = pyte.Screen(10, 10)
+    stream = pyte.Stream(screen)
 
     acc = []
     screen.write_process_input = acc.append
@@ -1408,7 +1406,7 @@ def test_private_report_device_attributes():
 
 
 def test_report_device_status():
-    screen = Screen(10, 10)
+    screen = pyte.Screen(10, 10)
 
     acc = []
     screen.write_process_input = acc.append
@@ -1436,7 +1434,7 @@ def test_report_device_status():
 
 
 def test_screen_set_icon_name_title():
-    screen = Screen(10, 1)
+    screen = pyte.Screen(10, 1)
 
     text = "±"
     screen.set_icon_name(text)

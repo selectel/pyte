@@ -5,7 +5,8 @@ from __future__ import unicode_literals
 import operator
 import os
 
-from pyte import HistoryScreen, Stream, control as ctrl, modes as mo
+import pyte
+from pyte import control as ctrl, modes as mo
 from pyte.compat import map, str
 
 
@@ -15,7 +16,7 @@ def chars(lines):
 
 
 def test_index():
-    screen = HistoryScreen(5, 5, history=50)
+    screen = pyte.HistoryScreen(5, 5, history=50)
 
     # Filling the screen with line numbers, so it's easier to
     # track history contents.
@@ -47,7 +48,7 @@ def test_index():
 
 
 def test_reverse_index():
-    screen = HistoryScreen(5, 5, history=50)
+    screen = pyte.HistoryScreen(5, 5, history=50)
 
     # Filling the screen with line numbers, so it's easier to
     # track history contents.
@@ -81,7 +82,7 @@ def test_reverse_index():
 
 
 def test_prev_page():
-    screen = HistoryScreen(4, 4, history=40)
+    screen = pyte.HistoryScreen(4, 4, history=40)
     screen.set_mode(mo.LNM)
 
     assert screen.history.position == 40
@@ -155,7 +156,7 @@ def test_prev_page():
     ]
 
     # c) same with odd number of lines.
-    screen = HistoryScreen(5, 5, history=50)
+    screen = pyte.HistoryScreen(5, 5, history=50)
     screen.set_mode(mo.LNM)
 
     for idx in range(len(screen.buffer) * 10):
@@ -193,7 +194,7 @@ def test_prev_page():
     ]
 
     # d) same with cursor in the middle of the screen.
-    screen = HistoryScreen(5, 5, history=50)
+    screen = pyte.HistoryScreen(5, 5, history=50)
     screen.set_mode(mo.LNM)
 
     for idx in range(len(screen.buffer) * 10):
@@ -241,7 +242,7 @@ def test_prev_page():
     ]
 
     # e) same with cursor near the middle of the screen.
-    screen = HistoryScreen(5, 5, history=50)
+    screen = pyte.HistoryScreen(5, 5, history=50)
     screen.set_mode(mo.LNM)
 
     for idx in range(len(screen.buffer) * 10):
@@ -290,7 +291,7 @@ def test_prev_page():
 
 
 def test_next_page():
-    screen = HistoryScreen(5, 5, history=50)
+    screen = pyte.HistoryScreen(5, 5, history=50)
     screen.set_mode(mo.LNM)
 
     # Once again filling the screen with line numbers, but this time,
@@ -364,13 +365,13 @@ def test_next_page():
 
 
 def test_ensure_width(monkeypatch):
-    screen = HistoryScreen(5, 5, history=50)
+    screen = pyte.HistoryScreen(5, 5, history=50)
     screen.set_mode(mo.LNM)
-    escape = dict(Stream.escape)
+    escape = dict(pyte.Stream.escape)
     escape.update({"N": "next_page", "P": "prev_page"})
-    monkeypatch.setattr(Stream, "escape", escape)
+    monkeypatch.setattr(pyte.Stream, "escape", escape)
 
-    stream = Stream(screen)
+    stream = pyte.Stream(screen)
 
     for idx in range(len(screen.buffer) * 5):
         stream.feed(str(idx) + os.linesep)
@@ -415,7 +416,7 @@ def test_ensure_width(monkeypatch):
 
 
 def test_not_enough_lines():
-    screen = HistoryScreen(5, 5, history=6)
+    screen = pyte.HistoryScreen(5, 5, history=6)
     screen.set_mode(mo.LNM)
 
     for idx in range(len(screen.buffer)):
@@ -459,13 +460,13 @@ def test_not_enough_lines():
 
 
 def test_draw(monkeypatch):
-    screen = HistoryScreen(5, 5, history=50)
+    screen = pyte.HistoryScreen(5, 5, history=50)
     screen.set_mode(mo.LNM)
-    escape = dict(Stream.escape)
+    escape = dict(pyte.Stream.escape)
     escape.update({"N": "next_page", "P": "prev_page"})
-    monkeypatch.setattr(Stream, "escape", escape)
+    monkeypatch.setattr(pyte.Stream, "escape", escape)
 
-    stream = Stream(screen)
+    stream = pyte.Stream(screen)
     for idx in range(len(screen.buffer) * 5):
         stream.feed(str(idx) + os.linesep)
 
@@ -494,12 +495,12 @@ def test_draw(monkeypatch):
 
 
 def test_cursor_is_hidden(monkeypatch):
-    screen = HistoryScreen(5, 5, history=50)
-    escape = dict(Stream.escape)
+    screen = pyte.HistoryScreen(5, 5, history=50)
+    escape = dict(pyte.Stream.escape)
     escape.update({"N": "next_page", "P": "prev_page"})
-    monkeypatch.setattr(Stream, "escape", escape)
+    monkeypatch.setattr(pyte.Stream, "escape", escape)
 
-    stream = Stream(screen)
+    stream = pyte.Stream(screen)
     for idx in range(len(screen.buffer) * 5):
         stream.feed(str(idx) + os.linesep)
 
