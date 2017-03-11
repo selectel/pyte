@@ -45,7 +45,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'pyte'
-copyright = u'2011-2012 Selectel, 2012-2016 pyte authors and contributors'
+copyright = u'2011-2012 Selectel, 2012-2017 pyte authors and contributors'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

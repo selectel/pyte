@@ -21,7 +21,7 @@
               how to do -- feel free to submit a pull request.
 
     :copyright: (c) 2011-2012 by Selectel.
-    :copyright: (c) 2012-2016 by pyte authors and contributors,
+    :copyright: (c) 2012-2017 by pyte authors and contributors,
                     see AUTHORS for details.
     :license: LGPL, see LICENSE for more details.
 """
