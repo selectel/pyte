@@ -60,7 +60,6 @@ def open_terminal(command="bash", columns=80, lines=24):
     return Terminal(columns, lines), p_pid, p_out
 
 
-
 async def websocket_handler(request):
     ws = web.WebSocketResponse()
     await ws.prepare(request)
@@ -82,7 +81,8 @@ async def websocket_handler(request):
                 p_out.write(msg.data.encode())
             elif msg.type == aiohttp.WSMsgType.ERROR:
                 raise ws.exception()
-    except asyncio.CancelledError:
+    except (asyncio.CancelledError,
+            OSError):  # Process died?
         pass
     finally:
         loop.remove_reader(p_out)

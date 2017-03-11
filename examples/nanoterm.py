@@ -32,18 +32,17 @@ if __name__ == "__main__":
     p_pid, master_fd = pty.fork()
     if p_pid == 0:  # Child.
         os.execvpe(sys.argv[1], sys.argv[1:],
-                   env=dict(COLUMNS="80", LINES="24", TERM="linux"))
-
-    p_out = os.fdopen(master_fd, "w+b", 0)
+                   env=dict(TERM="linux", COLUMNS="80", LINES="24"))
 
     while True:
         try:
-            [_p_out], _wlist, _xlist = select.select([p_out], [], [], 1)
+            [_master_fd], _wlist, _xlist = select.select(
+                [master_fd], [], [], 1)
         except (KeyboardInterrupt,  # Stop right now!
                 ValueError):        # Nothing to read.
             break
         else:
-            data = p_out.read(1024)
+            data = os.read(master_fd, 1024)
             if not data:
                 break
 

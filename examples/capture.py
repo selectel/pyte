@@ -14,30 +14,39 @@ from __future__ import print_function, unicode_literals
 
 import os
 import pty
+import signal
 import select
-import subprocess
 import sys
 
 import pyte
 
 
 if __name__ == "__main__":
-    if len(sys.argv) <= 2:
+    try:
+        output_path, command, *args = sys.argv[1:]
+    except ValueError:
         sys.exit("usage: %prog% output command [args]")
 
     stream = pyte.Stream(pyte.Screen(80, 24))
 
-    master, slave = pty.openpty()
-    with open(sys.argv[1], "wb") as handle:
-        p = subprocess.Popen(sys.argv[2:], stdout=slave, stderr=slave)
+    p_pid, master_fd = pty.fork()
+    if p_pid == 0:  # Child.
+        os.execvpe(command, args,
+                   env=dict(TERM="linux", COLUMNS="80", LINES="24"))
+
+    with open(output_path, "wb") as handle:
         while True:
             try:
-                rlist, _wlist, _xlist = select.select([master], [], [], 1)
+                [_master_fd], _wlist, _xlist = select.select(
+                    [master_fd], [], [], 1)
             except (KeyboardInterrupt,  # Stop right now!
                     ValueError):        # Nothing to read.
-                p.kill()
                 break
             else:
-                for fd in rlist:
-                    if fd is master:
-                        handle.write(os.read(master, 1024))
+                data = os.read(master_fd, 1024)
+                if not data:
+                    break
+
+                handle.write(data)
+
+        os.kill(p_pid, signal.SIGTERM)
