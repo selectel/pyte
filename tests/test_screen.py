@@ -270,6 +270,14 @@ def test_draw():
     assert screen.display == ["yxa", "   ", "   "]
 
 
+def test_draw_russian():
+    # Test from https://github.com/selectel/pyte/issues/65
+    screen = Screen(20, 1)
+    stream = Stream(screen)
+    stream.feed("Нерусский текст")
+    assert screen.display == ["Нерусский текст     "]
+
+
 def test_draw_multiple_chars():
     screen = Screen(10, 1)
     screen.draw("foobar")
@@ -277,12 +285,11 @@ def test_draw_multiple_chars():
     assert screen.display == ["foobar    "]
 
 
-@pytest.mark.xfail
 def test_draw_utf8():
     # See https://github.com/selectel/pyte/issues/62
     screen = Screen(1, 1)
-    stream = Stream(screen)
-    stream.feed("\xE2\x80\x9D")
+    stream = ByteStream(screen)
+    stream.feed(b"\xE2\x80\x9D")
     assert screen.display == ["”"]
 
 

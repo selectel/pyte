@@ -221,21 +221,10 @@ def test_compatibility_api():
     stream.detach(screen)
 
 
-def test_draw_russian():
-    # Test from https://github.com/selectel/pyte/issues/65
-    screen = Screen(20, 1)
-    screen.draw = handler = argcheck()
-
-    stream = Stream(screen)
-    stream.feed("Нерусский текст")
-    assert handler.count == 1
-    assert handler.args == ("Нерусский текст", )
-
-
 def test_debug_stream():
     tests = [
-        ("foo", "DRAW foo"),
-        ("\x1b[1;24r\x1b[4l\x1b[24;1H",
+        (b"foo", "DRAW foo"),
+        (b"\x1b[1;24r\x1b[4l\x1b[24;1H",
          "SET_MARGINS 1; 24\nRESET_MODE 4\nCURSOR_POSITION 24; 1"),
     ]
 
@@ -246,6 +235,16 @@ def test_debug_stream():
 
         lines = [l.rstrip() for l in output.getvalue().splitlines()]
         assert lines == expected.splitlines()
+
+
+def test_byte_stream_feed():
+    screen = Screen(20, 1)
+    screen.draw = handler = argcheck()
+
+    stream = ByteStream(screen)
+    stream.feed("Нерусский текст".encode("utf-8"))
+    assert handler.count == 1
+    assert handler.args == ("Нерусский текст", )
 
 
 def test_byte_stream_select_other_charset():
