@@ -10,7 +10,7 @@
     >>> import pyte
     >>> screen = pyte.Screen(80, 24)
     >>> stream = pyte.Stream(screen)
-    >>> stream.feed(b"\x1b[5B")  # Move the cursor down 5 rows.
+    >>> stream.feed("\x1b[5B")  # Move the cursor down 5 rows.
     >>> screen.cursor.y
     5
 
