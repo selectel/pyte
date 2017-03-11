@@ -43,7 +43,7 @@ from . import (
     graphics as g,
     modes as mo
 )
-from .compat import iter_bytes, map, range
+from .compat import map, range
 from .streams import Stream
 
 
@@ -136,11 +136,6 @@ class Screen(object):
 
        Current charset number; can be either ``0`` or ``1`` for `G0`
        and `G1` respectively, note that `G0` is activated by default.
-
-    .. attribute:: use_utf8
-
-       Assume the input to :meth:`~pyte.screens.Screen.draw` is encoded
-       using UTF-8. Defaults to ``True``.
 
     .. note::
 
@@ -392,16 +387,16 @@ class Screen(object):
         """Define ``G0`` or ``G1`` charset.
 
         :param str code: character set code, should be a character
-                         from ``b"B0UK"``, otherwise ignored.
+                         from ``"B0UK"``, otherwise ignored.
         :param str mode: if ``"("`` ``G0`` charset is defined, if
                          ``")"`` -- we operate on ``G1``.
 
         .. warning:: User-defined charsets are currently not supported.
         """
         if code in cs.MAPS:
-            if mode == b"(":
+            if mode == "(":
                 self.g0_charset = cs.MAPS[code]
-            elif mode == b")":
+            elif mode == ")":
                 self.g1_charset = cs.MAPS[code]
 
     def shift_in(self):
@@ -412,59 +407,22 @@ class Screen(object):
         """Select ``G1`` character set."""
         self.charset = 1
 
-    def select_other_charset(self, code):
-        """Select other (non G0 or G1) charset.
-
-        :param str code: character set code, should be a character from
-                         ``b"@G8"``, otherwise ignored.
-
-        .. note:: We currently follow ``"linux"`` and only use this
-                  command to switch from ISO-8859-1 to UTF-8 and back.
-
-        .. versionadded:: 0.6.0
-
-        .. seealso::
-
-           `Standard ECMA-35, Section 15.4 \
-           <http://ecma-international.org/publications/standards/Ecma-035.htm>`_
-           for a description of VTXXX character set machinery.
-        """
-        if code == b"@":
-            self.use_utf8 = False
-            self.utf8_decoder.reset()
-        elif code in b"G8":
-            self.use_utf8 = True
-
-    def _decode(self, data):
-        """Decode bytes to text according to the selected charset.
-
-        :param bytes data: bytes to decode.
-        """
-        if self.charset:
-            return "".join(self.g1_charset[b] for b in iter_bytes(data))
-        elif self.use_utf8:
-            return self.utf8_decoder.decode(data)
-        else:
-            return "".join(self.g0_charset[b] for b in iter_bytes(data))
-
     def draw(self, data):
         """Display decoded characters at the current cursor position and
         advances the cursor if :data:`~pyte.modes.DECAWM` is set.
 
-        :param bytes data: bytes to display.
+        :param str data: text to display.
 
         .. versionchanged:: 0.5.0
 
            Character width is taken into account. Specifically, zero-width
            and unprintable characters do not affect screen state. Full-width
            characters are rendered into two consecutive character containers.
-
-        .. versionchanged:: 0.6.0
-
-           The input is now supposed to be in :func:`bytes`, which may encode
-           multiple characters.
         """
-        for char in self._decode(data):
+        data = data.translate(
+            self.g1_charset if self.charset else self.g0_charset)
+
+        for char in data:
             char_width = wcwidth(char)
 
             # If this was the last column in a line and auto wrap mode is
@@ -517,14 +475,14 @@ class Screen(object):
 
         .. note:: This is an XTerm extension supported by the Linux terminal.
         """
-        self.title = self._decode(param)
+        self.title = param
 
     def set_icon_name(self, param):
         """Set icon name.
 
         .. note:: This is an XTerm extension supported by the Linux terminal.
         """
-        self.icon_name = self._decode(param)
+        self.icon_name = param
 
     def carriage_return(self):
         """Move the cursor to the beginning of the current line."""
@@ -976,7 +934,7 @@ class Screen(object):
         # We only implement "primary" DA which is the only DA request
         # VT102 understood, see ``VT102ID`` in ``linux/drivers/tty/vt.c``.
         if mode == 0:
-            self.write_process_input(ctrl.CSI + b"?6c")
+            self.write_process_input(ctrl.CSI + "?6c")
 
     def report_device_status(self, mode):
         """Report terminal status or cursor position.
@@ -987,7 +945,7 @@ class Screen(object):
         .. versionadded:: 0.5.0
         """
         if mode == 5:    # Request for terminal status.
-            self.write_process_input(ctrl.CSI + b"0n")
+            self.write_process_input(ctrl.CSI + "0n")
         elif mode == 6:  # Request for cursor position.
             x = self.cursor.x + 1
             y = self.cursor.y + 1
@@ -995,15 +953,14 @@ class Screen(object):
             # "Origin mode (DECOM) selects line numbering."
             if mo.DECOM in self.mode:
                 y -= self.margins.top
-            self.write_process_input(
-                ctrl.CSI + "{0};{1}R".format(y, x).encode())
+            self.write_process_input(ctrl.CSI + "{0};{1}R".format(y, x))
 
     def write_process_input(self, data):
         """Write data to the process running inside the terminal.
 
         By default is a noop.
 
-        :param bytes data: data to write to the process ``stdin``.
+        :param str data: text to write to the process ``stdin``.
 
         .. versionadded:: 0.5.0
         """
@@ -1149,8 +1106,8 @@ class HistoryScreen(DiffScreen):
        appropriate escape sequences -- you can use any, since pagination
        protocol is not standardized, for example::
 
-           Stream.escape[b"N"] = "next_page"
-           Stream.escape[b"P"] = "prev_page"
+           Stream.escape["N"] = "next_page"
+           Stream.escape["P"] = "prev_page"
     """
     _wrapped = set(Stream.events)
     _wrapped.update(["next_page", "prev_page"])

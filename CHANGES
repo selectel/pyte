@@ -16,14 +16,12 @@ This release is NOT backward compatible with 0.5.X branch!
 - Restricted ``Stream`` to a single listener and deprecated ``attach`` and
   ``detach``. The old logic can be emulated by a fanout proxy, forwarding
   events to a list of its listeners.
-- Merged ``Stream`` and ``ByteStream`` and required bytes as input.
-  This allows to decode the bytes on the ``Screen`` side. The next version
-  will force the use of ``bytes``. See issue #49 on GitHub.
 - Removed overly generic ``Screen.__before__`` and ``Screen.__after__``.
 - Renamed ``Screen.set_charset`` to a more appropriate
   ``Screen.define_charset``.
-- Added support for ECMA-035 `DOCS` command, which the Linux terminal uses
-  to enable UTF-8.
+- Added support for ECMA-035 `DOCS` command to ``ByteStream`` which no longer
+  accepts ``encoding`` as an argument and instead sets it as instructed by
+  `DOCS`. The default encoding is assumed to be UTF-8.
 - Added support for OSC sequences allowing to set terminal title and
   icon name.
 - Allowed 256 and 24bit colours in ``Screen.select_graphic_rendition``.

@@ -25,6 +25,6 @@ def test_input_output(name):
         output = json.load(handle)
 
     screen = pyte.Screen(80, 24)
-    stream = pyte.Stream(screen)
+    stream = pyte.ByteStream(screen)
     stream.feed(input)
     assert screen.display == output

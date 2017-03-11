@@ -27,21 +27,27 @@ if __name__ == "__main__":
         sys.exit("usage: %prog% command [args]")
 
     screen = pyte.Screen(80, 24)
-    stream = pyte.Stream(screen)
+    stream = pyte.ByteStream(screen)
 
-    pid, master_fd = pty.fork()
-    if pid == 0:  # Child.
+    p_pid, master_fd = pty.fork()
+    if p_pid == 0:  # Child.
         os.execvpe(sys.argv[1], sys.argv[1:],
-                   env=dict(COLUMNS="80", LINES="24"))
+                   env=dict(COLUMNS="80", LINES="24", TERM="linux"))
+
+    p_out = os.fdopen(master_fd, "w+b", 0)
 
     while True:
         try:
-            [fd], _wlist, _xlist = select.select([master_fd], [], [], 1)
+            [_p_out], _wlist, _xlist = select.select([p_out], [], [], 1)
         except (KeyboardInterrupt,  # Stop right now!
                 ValueError):        # Nothing to read.
-            os.kill(pid, signal.SIGTERM)
             break
         else:
-            stream.feed(os.read(fd, 1024))
+            data = p_out.read(1024)
+            if not data:
+                break
 
+            stream.feed(data)
+
+    os.kill(p_pid, signal.SIGTERM)
     print(*screen.display, sep="\n")

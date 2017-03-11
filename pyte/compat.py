@@ -18,9 +18,5 @@ if sys.version_info[0] == 2:
     range = xrange
     str = unicode
     chr = unichr
-
-    from functools import partial
-    iter_bytes = partial(map, ord)
 else:
     from builtins import map, range, str, chr
-    iter_bytes = iter
