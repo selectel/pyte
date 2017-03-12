@@ -29,7 +29,10 @@ import pyte
 
 class Terminal:
     def __init__(self, columns, lines):
+    def __init__(self, columns, lines, p_in):
         self.screen = pyte.DiffScreen(columns, lines)
+        self.screen.write_process_input = \
+            lambda data: p_in.write(data.encode())
         self.stream = pyte.ByteStream()
         self.stream.attach(self.screen)
 
@@ -58,7 +61,7 @@ def open_terminal(command="bash", columns=80, lines=24):
 
     # File-like object for I/O with the child process aka command.
     p_out = os.fdopen(master_fd, "w+b", 0)
-    return Terminal(columns, lines), p_pid, p_out
+    return Terminal(columns, lines, p_out), p_pid, p_out
 
 
 async def websocket_handler(request):
@@ -114,7 +117,6 @@ def start_server():
     app = web.Application()
     app["websockets"] = set()
     app.router.add_get("/ws", websocket_handler)
-    app.router.add_static("/", "static")
     app.router.add_static("/", Path(__file__).parent / "static",
                           show_index=True)
     app.on_shutdown.append(on_shutdown)
