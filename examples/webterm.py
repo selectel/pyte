@@ -18,6 +18,7 @@ import pty
 import signal
 import shlex
 import json
+from pathlib import Path
 
 import aiohttp
 import asyncio
@@ -114,6 +115,8 @@ def start_server():
     app["websockets"] = set()
     app.router.add_get("/ws", websocket_handler)
     app.router.add_static("/", "static")
+    app.router.add_static("/", Path(__file__).parent / "static",
+                          show_index=True)
     app.on_shutdown.append(on_shutdown)
 
     web.run_app(app)
