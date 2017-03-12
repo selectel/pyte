@@ -20,6 +20,7 @@ This release is NOT backward compatible with 0.5.X branch!
   listener limitation (previsouly ``DebugStream`` implicitly added a
   listener when instantiated). Unlike other screens ``DebugScreen`` does
   not maintain any state.
+- Changed ``DebugScreen`` to emit JSON instead of custom text format.
 - Removed overly generic ``Screen.__before__`` and ``Screen.__after__``.
 - Renamed ``Screen.set_charset`` to a more appropriate
   ``Screen.define_charset``.

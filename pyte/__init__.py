@@ -42,9 +42,9 @@ if __debug__:
         """A :func:`dis.dis` for terminals.
 
         >>> dis(b"\x07")       # doctest: +NORMALIZE_WHITESPACE
-        BELL
+        ["bell", [], {}]
         >>> dis(b"\x1b[20m")   # doctest: +NORMALIZE_WHITESPACE
-        SELECT_GRAPHIC_RENDITION 20
+        ["select_graphic_rendition", [20], {}]
         """
         if isinstance(chars, str):
             chars = chars.encode("utf-8")

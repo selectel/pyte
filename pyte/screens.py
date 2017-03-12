@@ -30,6 +30,7 @@ from __future__ import absolute_import, unicode_literals, division
 
 import codecs
 import copy
+import json
 import math
 import os
 import sys
@@ -1236,6 +1237,26 @@ class HistoryScreen(DiffScreen):
             self.dirty = set(range(self.lines))
 
 
+class DebugEvent(namedtuple("Event", "name args kwargs")):
+    """Event dispatched to :class:`~pyte.screens.DebugScreen`.
+
+    .. warning::
+
+       This is developer API with no backward compatibility guarantees.
+       Use at your own risk!
+    """
+    @staticmethod
+    def from_string(line):
+        return DebugEvent(*json.loads(line))
+
+    def __str__(self):
+        return json.dumps(self)
+
+    def __call__(self, screen):
+        """Execute this event on a given ``screen``."""
+        return getattr(screen, self.name)(*self.args, **self.kwargs)
+
+
 class DebugScreen(object):
     r"""A screen which dumps a subset of the received events to a file.
 
@@ -1246,10 +1267,10 @@ class DebugScreen(object):
     ...     print(buf.getvalue())
     ...
     ... # doctest: +NORMALIZE_WHITESPACE
-    SET_MARGINS 1; 24
-    RESET_MODE 4
-    CURSOR_POSITION 24; 1
-    SELECT_GRAPHIC_RENDITION 0; 10
+    ["set_margins", [1, 24], {}]
+    ["reset_mode", [4], {}]
+    ["cursor_position", [24, 1], {}]
+    ["select_graphic_rendition", [0, 10], {}]
 
     :param file to: a file-like object to write debug information to.
     :param list only: a list of events you want to debug (empty by
@@ -1264,16 +1285,9 @@ class DebugScreen(object):
         self.to = to
         self.only = only
 
-    def format_event(self, event, args, kwargs):
-        return "{} {} {}".format(
-            event.upper(),
-            "; ".join(map(str, args)),
-            ", ".join("{0}: {1}".format(k, str(v))
-                      for k, v in kwargs.items()))
-
-    def only_wrapper(self, event):
+    def only_wrapper(self, attr):
         def wrapper(*args, **kwargs):
-            self.to.write(self.format_event(event, args, kwargs))
+            self.to.write(str(DebugEvent(attr, args, kwargs)))
             self.to.write(os.linesep)
 
         return wrapper
