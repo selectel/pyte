@@ -220,12 +220,14 @@ def test_compatibility_api():
 
 
 def test_attach_only():
+    called = []
+
     class DrawOnly(object):
         def linefeed(self):
             raise RuntimeError
 
         def draw(self, data):
-            pass
+            called.append(data)
 
     screen = DrawOnly()
     stream = pyte.Stream()
@@ -233,6 +235,7 @@ def test_attach_only():
         stream.attach(screen, only=["draw"])
 
     stream.feed("foo\nbar")
+    assert drawn == ["foo", "bar"]
 
 
 def test_debug_stream():

@@ -125,8 +125,8 @@ class Stream(object):
     #: A set of all events dispatched by the stream.
     events = frozenset(itertools.chain(
         basic.values(), escape.values(), sharp.values(), csi.values(),
-        ["define_charset", "select_other_charset"],
-        ["set_icon", "set_title"],  # OSC.
+        ["define_charset"],
+        ["set_icon_name", "set_title"],  # OSC.
         ["draw", "debug"]))
 
     #: A regular expression pattern matching everything what can be
@@ -139,7 +139,7 @@ class Stream(object):
 
     def __init__(self, screen=None, strict=True):
         self.listener = None
-        self.strict = False
+        self.strict = strict
         self.use_utf8 = True
 
         if screen is not None:
@@ -460,6 +460,9 @@ class DebugStream(ByteStream):
 
 class _RestrictedListener(object):
     def __init__(self, listener, only):
+        if not only:
+            raise ValueError("``only`` must be non-empty")
+
         self.listener = listener
         self.only = only
 
