@@ -153,16 +153,21 @@ class Stream(object):
                           given screen (empty by default, which means
                           -- dispatch all events).
         """
-        if self.strict:
-            for event in self.events:
-                if not hasattr(screen, event):
-                    error_message = "{0} is missing {1}".format(screen, event)
-                    raise TypeError(error_message)
         if self.listener is not None:
             warnings.warn("As of version 0.6.0 the listener queue is "
                           "restricted to a single element. Existing "
                           "listener {0} will be replaced."
                           .format(self.listener), DeprecationWarning)
+
+        if only:
+            warnings.warn(
+                "Passing ``only`` to ``Stream.attach`` is deprecated "
+                "and will be removed in 0.7.0", DeprecationWarning)
+            screen = _RestrictedListener(screen, only)
+        elif self.strict:
+            for event in self.events:
+                if not hasattr(screen, event):
+                    raise TypeError("{0} is missing {1}".format(screen, event))
 
         self.listener = screen
         self._parser = self._parser_fsm()
@@ -451,3 +456,17 @@ class DebugStream(ByteStream):
                 return inner
 
         super(DebugStream, self).__init__(Bugger(), *args, **kwargs)
+
+
+class _RestrictedListener(object):
+    def __init__(self, listener, only):
+        self.listener = listener
+        self.only = only
+
+    def __getattribute__(self, attr):
+        if attr not in Stream.events:
+            return super(_RestrictedListener, self).__getattribute__(attr)
+        elif attr in self.only:
+            return getattr(self.listener, attr)
+        else:
+            return lambda *args, **kwargs: None

@@ -3,6 +3,7 @@
 from __future__ import unicode_literals
 
 import sys
+import warnings
 
 if sys.version_info[0] == 2:
     from cStringIO import StringIO
@@ -216,6 +217,22 @@ def test_compatibility_api():
 
     # c) detaching an attached screen.
     stream.detach(screen)
+
+
+def test_attach_only():
+    class DrawOnly(object):
+        def linefeed(self):
+            raise RuntimeError
+
+        def draw(self, data):
+            pass
+
+    screen = DrawOnly()
+    stream = pyte.Stream()
+    with warnings.catch_warnings():
+        stream.attach(screen, only=["draw"])
+
+    stream.feed("foo\nbar")
 
 
 def test_debug_stream():
