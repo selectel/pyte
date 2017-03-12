@@ -16,6 +16,10 @@ This release is NOT backward compatible with 0.5.X branch!
 - Restricted ``Stream`` to a single listener and deprecated ``attach`` and
   ``detach``. The old logic can be emulated by a fanout proxy, forwarding
   events to a list of its listeners.
+- Replaced ``DebugStream`` with ``DebugScreen`` to workaround the single
+  listener limitation (previsouly ``DebugStream`` implicitly added a
+  listener when instantiated). Unlike other screens ``DebugScreen`` does
+  not maintain any state.
 - Removed overly generic ``Screen.__before__`` and ``Screen.__after__``.
 - Renamed ``Screen.set_charset`` to a more appropriate
   ``Screen.define_charset``.

@@ -25,13 +25,14 @@
 
 from __future__ import absolute_import
 
-__all__ = ("Screen", "DiffScreen", "HistoryScreen",
-           "Stream", "ByteStream", "DebugStream")
+__all__ = ("Screen", "DiffScreen", "HistoryScreen", "DebugScreen",
+           "Stream", "ByteStream")
 
 import io
+import sys
 
-from .screens import Screen, DiffScreen, HistoryScreen
-from .streams import Stream, ByteStream, DebugStream
+from .screens import Screen, DiffScreen, HistoryScreen, DebugScreen
+from .streams import Stream, ByteStream
 
 
 if __debug__:
@@ -49,5 +50,5 @@ if __debug__:
             chars = chars.encode("utf-8")
 
         with io.StringIO() as buf:
-            DebugStream(to=buf).feed(chars)
+            ByteStream(DebugScreen(to=buf)).feed(chars)
             print(buf.getvalue())

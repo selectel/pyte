@@ -31,6 +31,8 @@ from __future__ import absolute_import, unicode_literals, division
 import codecs
 import copy
 import math
+import os
+import sys
 import unicodedata
 from collections import deque, namedtuple
 from itertools import islice, repeat
@@ -1232,3 +1234,54 @@ class HistoryScreen(DiffScreen):
             ]
 
             self.dirty = set(range(self.lines))
+
+
+class DebugScreen(object):
+    r"""A screen which dumps a subset of the received events to a file.
+
+    >>> import io
+    >>> with io.StringIO() as buf:
+    ...     stream = Stream(DebugScreen(to=buf))
+    ...     stream.feed("\x1b[1;24r\x1b[4l\x1b[24;1H\x1b[0;10m")
+    ...     print(buf.getvalue())
+    ...
+    ... # doctest: +NORMALIZE_WHITESPACE
+    SET_MARGINS 1; 24
+    RESET_MODE 4
+    CURSOR_POSITION 24; 1
+    SELECT_GRAPHIC_RENDITION 0; 10
+
+    :param file to: a file-like object to write debug information to.
+    :param list only: a list of events you want to debug (empty by
+                      default, which means -- debug all events).
+
+    .. warning::
+
+       This is developer API with no backward compatibility guarantees.
+       Use at your own risk!
+    """
+    def __init__(self, to=sys.stderr, only=()):
+        self.to = to
+        self.only = only
+
+    def format_event(self, event, args, kwargs):
+        return "{} {} {}".format(
+            event.upper(),
+            "; ".join(map(str, args)),
+            ", ".join("{0}: {1}".format(k, str(v))
+                      for k, v in kwargs.items()))
+
+    def only_wrapper(self, event):
+        def wrapper(*args, **kwargs):
+            self.to.write(self.format_event(event, args, kwargs))
+            self.to.write(os.linesep)
+
+        return wrapper
+
+    def __getattribute__(self, attr):
+        if attr not in Stream.events:
+            return super(DebugScreen, self).__getattribute__(attr)
+        elif not self.only or attr in self.only:
+            return self.only_wrapper(attr)
+        else:
+            return lambda *args, **kwargs: None

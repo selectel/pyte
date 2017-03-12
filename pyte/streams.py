@@ -385,7 +385,8 @@ class ByteStream(Stream):
             warnings.warn(
                 "As of version 0.6.0 ``pyte.streams.ByteStream`` no longer "
                 "accepts an encoding as an argument an instead uses the "
-                "encoding provided via a CSI command.", UserWarning)
+                "encoding provided via a CSI command. ``encoding`` will "
+                "be removed in 0.7.0", UserWarning)
 
         super(ByteStream, self).__init__(*args, **kwargs)
 
@@ -405,57 +406,6 @@ class ByteStream(Stream):
             self.utf8_decoder.reset()
         elif code in "G8":
             self.use_utf8 = True
-
-
-
-class DebugStream(ByteStream):
-    r"""Stream, which dumps a subset of the dispatched events to a given
-    file-like object (:data:`sys.stdout` by default).
-
-    >>> import io
-    >>> with io.StringIO() as buf:
-    ...     stream = DebugStream(to=buf)
-    ...     stream.feed(b"\x1b[1;24r\x1b[4l\x1b[24;1H\x1b[0;10m")
-    ...     print(buf.getvalue())
-    ...
-    ... # doctest: +NORMALIZE_WHITESPACE
-    SET_MARGINS 1; 24
-    RESET_MODE 4
-    CURSOR_POSITION 24; 1
-    SELECT_GRAPHIC_RENDITION 0; 10
-
-    :param file to: a file-like object to write debug information to.
-    :param list only: a list of events you want to debug (empty by
-                      default, which means -- debug all events).
-    """
-
-    def __init__(self, to=sys.stdout, only=(), *args, **kwargs):
-        def safe_str(chunk):
-            if isinstance(chunk, bytes):
-                chunk = chunk.decode("utf-8")
-            elif not isinstance(chunk, str):
-                chunk = str(chunk)
-
-            return chunk
-
-        def noop(*args, **kwargs):
-            pass
-
-        class Bugger(object):
-            def __getattr__(self, event):
-                if only and event not in only:
-                    return noop
-
-                def inner(*args, **kwargs):
-                    to.write(event.upper() + " ")
-                    to.write("; ".join(map(safe_str, args)))
-                    to.write(" ")
-                    to.write(", ".join("{0}: {1}".format(k, safe_str(v))
-                                       for k, v in kwargs.items()))
-                    to.write(os.linesep)
-                return inner
-
-        super(DebugStream, self).__init__(Bugger(), *args, **kwargs)
 
 
 class _RestrictedListener(object):

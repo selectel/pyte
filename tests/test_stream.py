@@ -220,14 +220,14 @@ def test_compatibility_api():
 
 
 def test_attach_only():
-    called = []
+    drawn = []
 
     class DrawOnly(object):
         def linefeed(self):
             raise RuntimeError
 
         def draw(self, data):
-            called.append(data)
+            drawn.append(data)
 
     screen = DrawOnly()
     stream = pyte.Stream()
@@ -247,7 +247,7 @@ def test_debug_stream():
 
     for input, expected in tests:
         output = StringIO()
-        stream = pyte.DebugStream(to=output)
+        stream = pyte.ByteStream(pyte.DebugScreen(to=output))
         stream.feed(input)
 
         lines = [l.rstrip() for l in output.getvalue().splitlines()]
