@@ -1,0 +1,2 @@
+pytest
+perf >= 0.8.0
