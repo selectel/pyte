@@ -1,8 +1,8 @@
-import os
 import os.path
+import sys
 from functools import partial
 
-from perf.text_runner import TextRunner
+from perf import Runner
 
 from pyte import Screen, Stream
 
@@ -18,6 +18,7 @@ def make_benchmark(path):
 if __name__ == "__main__":
     benchmark_dir = os.path.dirname(__file__)
     benchmark = os.path.join(benchmark_dir, os.environ["BENCHMARK"])
+    sys.argv += ("--inherit-environ", "BENCHMARK")
 
-    runner = TextRunner()
-    runner.bench_func(make_benchmark(benchmark))
+    runner = Runner()
+    runner.bench_func("MAIN_BENCHMARK", make_benchmark(benchmark))
