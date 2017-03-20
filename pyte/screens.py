@@ -150,7 +150,8 @@ class Screen(object):
     .. warning::
 
        :data:`~pyte.modes.LNM` is reset by default, to match VT220
-       specification.
+       specification. Unfortunatelly this makes :mode:`pyte` fail
+       ``vttest`` for cursor movement.
 
     .. versionchanged:: 0.4.8
     .. warning::
