@@ -10,6 +10,8 @@ if sys.version_info[0] == 2:
 else:
     from io import StringIO
 
+import pytest
+
 import pyte
 from pyte import control as ctrl, escape as esc
 
@@ -238,20 +240,20 @@ def test_attach_only():
     assert drawn == ["foo", "bar"]
 
 
-def test_debug_stream():
-    tests = [
-        (b"foo", "DRAW foo"),
-        (b"\x1b[1;24r\x1b[4l\x1b[24;1H",
-         "SET_MARGINS 1; 24\nRESET_MODE 4\nCURSOR_POSITION 24; 1"),
-    ]
+@pytest.mark.parametrize("input,expected", [
+    (b"foo", [["draw", ["foo"], {}]]),
+    (b"\x1b[1;24r\x1b[4l\x1b[24;1H", [
+        ["set_margins", [1, 24], {}],
+        ["reset_mode", [4], {}],
+        ["cursor_position", [24, 1], {}]])
+])
+def test_debug_stream(input, expected):
+    output = StringIO()
+    stream = pyte.ByteStream(pyte.DebugScreen(to=output))
+    stream.feed(input)
 
-    for input, expected in tests:
-        output = StringIO()
-        stream = pyte.ByteStream(pyte.DebugScreen(to=output))
-        stream.feed(input)
-
-        lines = [l.rstrip() for l in output.getvalue().splitlines()]
-        assert lines == expected.splitlines()
+    output.seek(0)
+    assert [eval(line) for line in output] == expected
 
 
 def test_byte_stream_feed():
