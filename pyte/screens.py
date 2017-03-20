@@ -810,6 +810,11 @@ class Screen(object):
 
         :param int count: number of columns to skip.
         """
+        # Handle the case when we've just drawn in the last column
+        # and would wrap the line on the next :meth:`draw()` call.
+        if self.cursor.x == self.columns:
+            self.cursor.x -= 1
+
         self.cursor.x -= count or 1
         self.ensure_hbounds()
 

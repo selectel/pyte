@@ -1260,6 +1260,15 @@ def test_cursor_back():
     assert screen.cursor.x == 2
 
 
+def test_cursor_back_last_column():
+    screen = pyte.Screen(13, 1)
+    screen.draw("Hello, world!")
+    assert screen.cursor.x == screen.columns
+
+    screen.cursor_back(5)
+    assert screen.cursor.x == (screen.columns - 1) - 5
+
+
 def test_cursor_forward():
     screen = pyte.Screen(10, 10)
 
