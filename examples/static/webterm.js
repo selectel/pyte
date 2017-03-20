@@ -82,6 +82,10 @@ class Terminal {
     }
 
     setStyle(char, fg, bg) {
+        if (char === null) {
+            return;  // Ignore out of bounds chars.
+        }
+
         char.className = char.className
             .replace(new RegExp(`fg-\\w+`), "fg-" + fg)
             .replace(new RegExp(`bg-\\w+`), "bg-" + bg);
