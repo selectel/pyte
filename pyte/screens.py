@@ -46,7 +46,7 @@ from . import (
     graphics as g,
     modes as mo
 )
-from .compat import map, range
+from .compat import map, range, str
 from .streams import Stream
 
 
@@ -1294,7 +1294,7 @@ class DebugScreen(object):
     def only_wrapper(self, attr):
         def wrapper(*args, **kwargs):
             self.to.write(str(DebugEvent(attr, args, kwargs)))
-            self.to.write(os.linesep)
+            self.to.write(str(os.linesep))
 
         return wrapper
 

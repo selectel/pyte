@@ -11,6 +11,7 @@
                     see AUTHORS for details.
     :license: LGPL, see LICENSE for more details.
 """
+from __future__ import unicode_literals
 
 #: *Reset*.
 RIS = "c"

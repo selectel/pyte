@@ -15,6 +15,7 @@
     :license: LGPL, see LICENSE for more details.
 """
 
+import io
 import os.path
 import sys
 from functools import partial
@@ -28,7 +29,7 @@ from pyte import Screen, Stream
 
 
 def make_benchmark(path):
-    with open(path, "rt") as handle:
+    with io.open(path, "rt", encoding="utf-8") as handle:
         data = handle.read()
 
     stream = Stream(Screen(80, 24))
