@@ -12,6 +12,7 @@
                     see AUTHORS for details.
     :license: LGPL, see LICENSE for more details.
 """
+from __future__ import unicode_literals
 
 #: *Space*: Not suprisingly -- ``" "``.
 SP = " "
@@ -58,13 +59,13 @@ SUB = "\x1a"
 ESC = "\x1b"
 
 #: *Delete*: Is ignored.
-DEL = u"\x7f"
+DEL = "\x7f"
 
 #: *Control sequence introducer*: An equivalent for ``ESC [``.
-CSI = u"\x9b"
+CSI = "\x9b"
 
 #: *String terminator*.
-ST = u"\x9c"
+ST = "\x9c"
 
 #: *Operating system command*.
-OSC = u"\x9d"
+OSC = "\x9d"
