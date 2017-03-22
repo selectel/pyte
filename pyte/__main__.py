@@ -23,6 +23,8 @@
     :license: LGPL, see LICENSE for more details.
 """
 
+from __future__ import unicode_literals
+
 if __name__ == "__main__":
     import sys
     import pyte
@@ -30,4 +32,4 @@ if __name__ == "__main__":
     if len(sys.argv) == 1:
         pyte.dis(sys.stdin.read())
     else:
-        pyte.dis(u"".join(sys.argv[1:]))
+        pyte.dis("".join(sys.argv[1:]))

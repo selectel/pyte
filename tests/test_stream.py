@@ -202,7 +202,7 @@ def test_set_title_icon_name():
 
     # e) test ➜ ('\xe2\x9e\x9c') symbol, that contains string terminator \x9c
     stream.feed("➜")
-    assert screen.buffer[0][0].data == u"➜"
+    assert screen.buffer[0][0].data == "➜"
 
 
 def test_compatibility_api():
