@@ -35,7 +35,7 @@ import math
 import os
 import sys
 import unicodedata
-from collections import deque, namedtuple
+from collections import deque, namedtuple, defaultdict
 from itertools import islice, repeat
 
 from wcwidth import wcwidth
@@ -179,7 +179,7 @@ class Screen(object):
         self.savepoints = []
         self.columns = columns
         self.lines = lines
-        self.buffer = []
+        self.buffer = defaultdict(lambda: defaultdict(lambda: Screen.default_char))
         self.reset()
 
     def __repr__(self):
@@ -219,8 +219,7 @@ class Screen(object):
            and tabstops should be reset as well, thanks to
            :manpage:`xterm` -- we now know that.
         """
-        self.buffer[:] = (take(self.columns, self.default_line)
-                          for _ in range(self.lines))
+        self.buffer.clear()
         self.mode = set([mo.DECAWM, mo.DECTCEM])
         self.margins = Margins(0, self.lines - 1)
 
