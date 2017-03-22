@@ -58,13 +58,13 @@ SUB = "\x1a"
 ESC = "\x1b"
 
 #: *Delete*: Is ignored.
-DEL = "\x7f"
+DEL = u"\x7f"
 
 #: *Control sequence introducer*: An equivalent for ``ESC [``.
-CSI = "\x9b"
+CSI = u"\x9b"
 
 #: *String terminator*.
-ST = "\x9c"
+ST = u"\x9c"
 
 #: *Operating system command*.
-OSC = "\x9d"
+OSC = u"\x9d"
