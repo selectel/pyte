@@ -31,7 +31,7 @@ import warnings
 from collections import defaultdict
 
 from . import control as ctrl, escape as esc
-from .compat import str
+from .compat import str, pass_through_str
 
 
 class Stream(object):
@@ -396,7 +396,7 @@ class ByteStream(Stream):
         if self.use_utf8:
             data = self.utf8_decoder.decode(data)
         else:
-            data = "".join(map(chr, data))  # Pass-through encoding.
+            data = pass_through_str(data)
 
         super(ByteStream, self).feed(data)
 
