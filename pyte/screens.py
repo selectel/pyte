@@ -498,8 +498,8 @@ class Screen(object):
         top, bottom = self.margins
 
         if self.cursor.y == bottom:
-            self.buffer.pop(top)
-            self.buffer.insert(bottom, take(self.columns, self.default_line))
+            for line in range(top, bottom):
+                self.buffer[line] = self.buffer[line+1]
         else:
             self.cursor_down()
 
