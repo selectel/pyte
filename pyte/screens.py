@@ -593,7 +593,7 @@ class Screen(object):
         if top <= self.cursor.y <= bottom:
             #                           v +1, because range() is exclusive.
             y_offset = min(bottom, self.cursor.y + count) - self.cursor.y
-            # Shift old lines down
+            # Shift old lines down (backwards)
             for old_line in range(bottom - y_offset, self.cursor.y - 1, -1):
                 self.buffer[old_line + y_offset] = self.buffer[old_line]
                 self.buffer.pop(old_line)
@@ -615,8 +615,8 @@ class Screen(object):
         if top <= self.cursor.y <= bottom:
             #                v -- +1 to include the bottom margin.
             y_offset = min(bottom, self.cursor.y + count) - self.cursor.y
-            # Shift old lines up
-            for old_line in range(bottom, self.cursor.y - y_offset - 1, -1):
+            # Shift old lines up (backwards)
+            for old_line in range(bottom, self.cursor.y + y_offset - 1, -1):
                 self.buffer[old_line - y_offset] = self.buffer[old_line]
                 self.buffer.pop(old_line)
 
@@ -631,10 +631,12 @@ class Screen(object):
         :param int count: number of characters to insert.
         """
         count = count or 1
+        x_offset = min(self.columns, self.cursor.x + count) - self.cursor.x
 
-        for _ in range(min(self.columns - self.cursor.x, count)):
-            self.buffer[self.cursor.y].insert(self.cursor.x, self.cursor.attrs)
-            self.buffer[self.cursor.y].pop()
+        # Shift old chars right (backwards)
+        for old_char in range(self.columns - x_offset, self.cursor.x - 1, -1):
+            self.buffer[self.cursor.y][old_char + x_offset] = self.buffer[self.cursor.y][old_char]
+            self.buffer[self.cursor.y].pop(old_char)
 
     def delete_characters(self, count=None):
         """Delete the indicated # of characters, starting with the
@@ -645,10 +647,12 @@ class Screen(object):
         :param int count: number of characters to delete.
         """
         count = count or 1
+        x_offset = min(self.columns, self.cursor.x + count) - self.cursor.x
 
-        for _ in range(min(self.columns - self.cursor.x, count)):
-            self.buffer[self.cursor.y].pop(self.cursor.x)
-            self.buffer[self.cursor.y].append(self.cursor.attrs)
+        # Shift old chars left (backwards)
+        for old_char in range(self.columns, self.cursor.x + x_offset - 1, -1):
+            self.buffer[self.cursor.y][old_char - x_offset] = self.buffer[self.cursor.y][old_char]
+            self.buffer[self.cursor.y].pop(old_char)
 
     def erase_characters(self, count=None):
         """Erase the indicated # of characters, starting with the
