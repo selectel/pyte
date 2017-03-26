@@ -4,6 +4,8 @@ from __future__ import unicode_literals
 
 import copy
 
+import pytest
+
 import pyte
 from pyte import modes as mo, control as ctrl
 from pyte.screens import Char
@@ -303,6 +305,20 @@ def test_draw_width2_line_end():
     screen = pyte.Screen(10, 1)
     screen.draw(" コンニチハ")
     assert screen.cursor.x == screen.columns
+
+
+@pytest.mark.xfail
+def test_draw_width2_irm():
+    screen = pyte.Screen(2, 1)
+    screen.draw("コ")
+    assert screen.display == ["コ"]
+    assert screen.buffer == [[Char("コ"), Char(" ")]]
+
+    # Overwrite the stub part of a width 2 character.
+    screen.set_mode(mo.IRM)
+    screen.cursor_to_column(screen.columns)
+    screen.draw("x")
+    assert screen.display == [" x"]
 
 
 def test_draw_width0_combining():
