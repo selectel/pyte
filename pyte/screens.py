@@ -631,7 +631,7 @@ class Screen(object):
         """
         count = count or 1
 
-        for _ in range(min(self.columns - self.cursor.y, count)):
+        for _ in range(min(self.columns - self.cursor.x, count)):
             self.buffer[self.cursor.y].insert(self.cursor.x, self.cursor.attrs)
             self.buffer[self.cursor.y].pop()
 
