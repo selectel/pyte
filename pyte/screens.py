@@ -199,6 +199,9 @@ class Screen(object):
 
         return ["".join(render(self.buffer[line])) for line in self.buffer]
 
+    def get_list_of_line(self, line):
+        return [self.buffer[line][char] for char in self.buffer[line]]
+
     def reset(self):
         """Reset the terminal to its initial state.
 
