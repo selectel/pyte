@@ -44,6 +44,8 @@ This release is NOT backward compatible with 0.5.X branch!
   more fully-featured version, see
   `demiurg906/pyte_gui <https://github.com/demiurg906/pyte_gui>`_.
 - Fixed ``Screen.cursor_back`` when called after the draw in the last column.
+- Fixed ``Screen.inser_characters`` when called with an argument larger
+  than the number of columns. Thanks to @istarion! See PR #74 on GitHub.
 
 Version 0.5.2
 -------------
