@@ -54,10 +54,10 @@ class Terminal:
 def open_terminal(command="bash", columns=80, lines=24):
     p_pid, master_fd = pty.fork()
     if p_pid == 0:  # Child.
-        path, *args = shlex.split(command)
+        argv = shlex.split(command)
         env = dict(TERM="linux", LC_ALL="en_GB.UTF-8",
                    COLUMNS=str(columns), LINES=str(lines))
-        os.execvpe(path, args, env)
+        os.execvpe(argv[0], argv, env)
 
     # File-like object for I/O with the child process aka command.
     p_out = os.fdopen(master_fd, "w+b", 0)
