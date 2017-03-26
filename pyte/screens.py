@@ -592,9 +592,8 @@ class Screen(object):
             y_offset = min(bottom, self.cursor.y + count) - self.cursor.y
             # Shift old lines down
             for old_line in range(bottom - y_offset, self.cursor.y - 1, -1):
-                buffer[old_line + y_offset] = buffer[old_line]
-            for new_line in range(self.cursor.y, self.cursor.y + y_offset):
-                self.buffer.pop(new_line)
+                self.buffer[old_line + y_offset] = self.buffer[old_line]
+                self.buffer.pop(old_line)
 
             self.carriage_return()
 
@@ -612,10 +611,11 @@ class Screen(object):
         # If cursor is outside scrolling margins it -- do nothin'.
         if top <= self.cursor.y <= bottom:
             #                v -- +1 to include the bottom margin.
-            for _ in range(min(bottom - self.cursor.y + 1, count)):
-                self.buffer.pop(self.cursor.y)
-                self.buffer.insert(bottom, list(
-                    repeat(self.cursor.attrs, self.columns)))
+            y_offset = min(bottom, self.cursor.y + count) - self.cursor.y
+            # Shift old lines up
+            for old_line in range(bottom, self.cursor.y - y_offset - 1, -1):
+                self.buffer[old_line - y_offset] = self.buffer[old_line]
+                self.buffer.pop(old_line)
 
             self.carriage_return()
 
