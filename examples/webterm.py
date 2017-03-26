@@ -13,11 +13,12 @@
     :license: LGPL, see LICENSE for more details.
 """
 
+import json
 import os
 import pty
-import signal
 import shlex
-import json
+import signal
+import webbrowser
 from pathlib import Path
 
 import aiohttp
@@ -113,7 +114,7 @@ async def on_shutdown(app):
             pass
 
 
-def start_server():
+if __name__ == "__main__":
     app = web.Application()
     app["websockets"] = set()
     app.router.add_get("/ws", websocket_handler)
@@ -121,8 +122,6 @@ def start_server():
                           show_index=True)
     app.on_shutdown.append(on_shutdown)
 
+    webbrowser.open_new_tab("http://localhost:8080/index.html")
+
     web.run_app(app)
-
-
-if __name__ == "__main__":
-    start_server()
