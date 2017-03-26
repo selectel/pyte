@@ -909,7 +909,8 @@ def test_delete_lines():
 
 
 def test_insert_characters():
-    screen = update(pyte.Screen(3, 3), ["sam", "is ", "foo"], colored=[0])
+    screen = update(pyte.Screen(3, 4), ["sam", "is ", "foo", "bar"],
+                    colored=[0])
 
     # a) normal case
     cursor = copy.copy(screen.cursor)
@@ -927,9 +928,10 @@ def test_insert_characters():
     assert screen.buffer[2] == [Char("f"), screen.default_char, Char("o")]
 
     # c) inserting more than we have
+    screen.cursor.y, screen.cursor.x = 3, 1
     screen.insert_characters(10)
-    assert screen.buffer[2] == [
-        Char("f"), screen.default_char, screen.default_char
+    assert screen.buffer[3] == [
+        Char("b"), screen.default_char, screen.default_char
     ]
 
     # d) 0 is 1
