@@ -171,10 +171,6 @@ class Screen(object):
     #: colors.
     default_char = Char(data=" ", fg="default", bg="default")
 
-    #: An infinite sequence of default characters, used for populating
-    #: new lines and columns.
-    default_line = repeat(default_char)
-
     def __init__(self, columns, lines):
         self.savepoints = []
         self.columns = columns
@@ -192,7 +188,7 @@ class Screen(object):
         def render(line):
             it = iter(line)
             while True:
-                char = next(it).data
+                char = line[next(it)].data
                 assert sum(map(wcwidth, char[1:])) == 0
                 char_width = wcwidth(char[0])
                 if char_width == 1:
@@ -201,7 +197,7 @@ class Screen(object):
                     yield char
                     next(it)  # Skip stub.
 
-        return ["".join(render(line)) for line in self.buffer]
+        return ["".join(render(self.buffer[line])) for line in self.buffer]
 
     def reset(self):
         """Reset the terminal to its initial state.
@@ -280,7 +276,7 @@ class Screen(object):
         #    size, expand each line to the new size.
         if diff < 0:
             for y in range(lines):
-                self.buffer[y].extend(take(abs(diff), self.default_line))
+                self.buffer[y].extend(take(abs(diff)))
         # b) if the current display size is greater than requested
         #    size, trim each line from the right to the new size.
         elif diff > 0:
@@ -511,7 +507,8 @@ class Screen(object):
 
         if self.cursor.y == top:
             self.buffer.pop(bottom)
-            self.buffer.insert(top, take(self.columns, self.default_line))
+            for line in range(top, bottom):
+                self.buffer[line] = self.buffer[line-1]
         else:
             self.cursor_up()
 
@@ -592,10 +589,12 @@ class Screen(object):
         # If cursor is outside scrolling margins it -- do nothin'.
         if top <= self.cursor.y <= bottom:
             #                           v +1, because range() is exclusive.
-            for line in range(self.cursor.y,
-                              min(bottom + 1, self.cursor.y + count)):
-                self.buffer.pop(bottom)
-                self.buffer.insert(line, take(self.columns, self.default_line))
+            y_offset = min(bottom, self.cursor.y + count) - self.cursor.y
+            # Shift old lines down
+            for old_line in range(bottom - y_offset, self.cursor.y - 1, -1):
+                buffer[old_line + y_offset] = buffer[old_line]
+            for new_line in range(self.cursor.y, self.cursor.y + y_offset):
+                self.buffer.pop(new_line)
 
             self.carriage_return()
 
