@@ -10,9 +10,13 @@ from pyte import control as ctrl, modes as mo
 from pyte.compat import map, str
 
 
-def chars(lines):
-    return ["".join(map(operator.attrgetter("data"), line))
-            for line in lines]
+def chars(lines, columns):
+    result = []
+    for line in range(len(lines)):
+        result.append("")
+        for char in range(columns):
+            result[line] += lines[line][char].data
+    return result
 
 
 def test_index():
@@ -20,9 +24,9 @@ def test_index():
 
     # Filling the screen with line numbers, so it's easier to
     # track history contents.
-    for idx in range(len(screen.buffer)):
+    for idx in range(screen.lines):
         screen.draw(str(idx))
-        if idx != len(screen.buffer) - 1:
+        if idx != screen.lines - 1:
             screen.linefeed()
 
     assert not screen.history.top
@@ -41,7 +45,7 @@ def test_index():
     assert screen.history.top[-1] == line
 
     # c) rotation.
-    for _ in range(len(screen.buffer) * screen.lines):
+    for _ in range(screen.lines * screen.lines):
         screen.index()
 
     assert len(screen.history.top) == 25  # pages // 2 * lines
@@ -89,7 +93,7 @@ def test_prev_page():
 
     # Once again filling the screen with line numbers, but this time,
     # we need them to span on multiple lines.
-    for idx in range(len(screen.buffer) * 10):
+    for idx in range(screen.lines * 10):
         screen.draw(str(idx))
 
         screen.linefeed()
@@ -97,7 +101,6 @@ def test_prev_page():
     assert screen.history.top
     assert not screen.history.bottom
     assert screen.history.position == 40
-    assert len(screen.buffer) == screen.lines
     assert screen.display == [
         "37  ",
         "38  ",
@@ -105,7 +108,7 @@ def test_prev_page():
         "    "
     ]
 
-    assert chars(screen.history.top)[-4:] == [
+    assert chars(screen.history.top, screen.columns)[-4:] == [
         "33  ",
         "34  ",
         "35  ",
@@ -123,7 +126,7 @@ def test_prev_page():
         "38  "
     ]
 
-    assert chars(screen.history.top)[-4:] == [
+    assert chars(screen.history.top, screen.columns)[-4:] == [
         "31  ",
         "32  ",
         "33  ",
@@ -131,7 +134,7 @@ def test_prev_page():
     ]
 
     assert len(screen.history.bottom) == 2
-    assert chars(screen.history.bottom) == [
+    assert chars(screen.history.bottom, screen.columns) == [
         "39  ",
         "    ",
     ]
@@ -148,7 +151,7 @@ def test_prev_page():
     ]
 
     assert len(screen.history.bottom) == 4
-    assert chars(screen.history.bottom) == [
+    assert chars(screen.history.bottom, screen.columns) == [
         "37  ",
         "38  ",
         "39  ",
@@ -159,7 +162,7 @@ def test_prev_page():
     screen = pyte.HistoryScreen(5, 5, history=50)
     screen.set_mode(mo.LNM)
 
-    for idx in range(len(screen.buffer) * 10):
+    for idx in range(screen.lines * 10):
         screen.draw(str(idx))
 
         screen.linefeed()
@@ -177,7 +180,6 @@ def test_prev_page():
 
     screen.prev_page()
     assert screen.history.position == 45
-    assert len(screen.buffer) == screen.lines
     assert screen.display == [
         "43   ",
         "44   ",
@@ -187,7 +189,7 @@ def test_prev_page():
     ]
 
     assert len(screen.history.bottom) == 3
-    assert chars(screen.history.bottom) == [
+    assert chars(screen.history.bottom, screen.columns) == [
         "48   ",
         "49   ",
         "     ",
@@ -197,7 +199,7 @@ def test_prev_page():
     screen = pyte.HistoryScreen(5, 5, history=50)
     screen.set_mode(mo.LNM)
 
-    for idx in range(len(screen.buffer) * 10):
+    for idx in range(screen.lines * 10):
         screen.draw(str(idx))
 
         screen.linefeed()
@@ -232,7 +234,6 @@ def test_prev_page():
         screen.next_page()
 
     assert screen.history.position == screen.history.size
-    assert len(screen.buffer) == screen.lines
     assert screen.display == [
         "46   ",
         "47   ",
@@ -245,7 +246,7 @@ def test_prev_page():
     screen = pyte.HistoryScreen(5, 5, history=50)
     screen.set_mode(mo.LNM)
 
-    for idx in range(len(screen.buffer) * 10):
+    for idx in range(screen.lines * 10):
         screen.draw(str(idx))
 
         screen.linefeed()
@@ -296,7 +297,7 @@ def test_next_page():
 
     # Once again filling the screen with line numbers, but this time,
     # we need them to span on multiple lines.
-    for idx in range(len(screen.buffer) * 5):
+    for idx in range(screen.lines * 5):
         screen.draw(str(idx))
 
         screen.linefeed()
@@ -304,7 +305,6 @@ def test_next_page():
     assert screen.history.top
     assert not screen.history.bottom
     assert screen.history.position == 50
-    assert len(screen.buffer) == screen.lines
     assert screen.display == [
         "21   ",
         "22   ",
@@ -333,13 +333,12 @@ def test_next_page():
     screen.next_page()
     assert screen.history.position == 45
     assert screen.history.top
-    assert chars(screen.history.bottom) == [
+    assert chars(screen.history.bottom, screen.columns) == [
         "23   ",
         "24   ",
         "     "
     ]
 
-    assert len(screen.buffer) == screen.lines
     assert screen.display == [
         "18   ",
         "19   ",
@@ -373,7 +372,7 @@ def test_ensure_width(monkeypatch):
 
     stream = pyte.Stream(screen)
 
-    for idx in range(len(screen.buffer) * 5):
+    for idx in range(screen.lines * 5):
         stream.feed(str(idx) + os.linesep)
 
     assert screen.display == [
@@ -419,7 +418,7 @@ def test_not_enough_lines():
     screen = pyte.HistoryScreen(5, 5, history=6)
     screen.set_mode(mo.LNM)
 
-    for idx in range(len(screen.buffer)):
+    for idx in range(screen.lines):
         screen.draw(str(idx))
 
         screen.linefeed()
@@ -438,7 +437,7 @@ def test_not_enough_lines():
     screen.prev_page()
     assert not screen.history.top
     assert len(screen.history.bottom) is 1
-    assert chars(screen.history.bottom) == ["     "]
+    assert chars(screen.history.bottom, screen.columns) == ["     "]
     assert screen.display == [
         "0    ",
         "1    ",
@@ -467,7 +466,7 @@ def test_draw(monkeypatch):
     monkeypatch.setattr(pyte.Stream, "escape", escape)
 
     stream = pyte.Stream(screen)
-    for idx in range(len(screen.buffer) * 5):
+    for idx in range(screen.lines * 5):
         stream.feed(str(idx) + os.linesep)
 
     assert screen.display == [
@@ -501,7 +500,7 @@ def test_cursor_is_hidden(monkeypatch):
     monkeypatch.setattr(pyte.Stream, "escape", escape)
 
     stream = pyte.Stream(screen)
-    for idx in range(len(screen.buffer) * 5):
+    for idx in range(screen.lines * 5):
         stream.feed(str(idx) + os.linesep)
 
     assert not screen.cursor.hidden

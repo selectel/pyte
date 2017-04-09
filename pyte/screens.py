@@ -359,8 +359,9 @@ class Screen(object):
 
         # Mark all displayed characters as reverse.
         if mo.DECSCNM in modes:
-            self.buffer[:] = ([char._replace(reverse=True) for char in line]
-                              for line in self.buffer)
+            for line in self.buffer:
+                for char in self.buffer[line]:
+                    self.buffer[line][char]._replace(reverse=True)
             self.select_graphic_rendition(7)  # +reverse.
 
         # Make the cursor visible.
@@ -390,8 +391,10 @@ class Screen(object):
             self.cursor_position()
 
         if mo.DECSCNM in modes:
-            self.buffer[:] = ([char._replace(reverse=False) for char in line]
-                              for line in self.buffer)
+            if mo.DECSCNM in modes:
+                for line in self.buffer:
+                    for char in self.buffer[line]:
+                        self.buffer[line][char]._replace(reverse=False)
             self.select_graphic_rendition(27)  # -reverse.
 
         # Hide the cursor.
@@ -1117,7 +1120,7 @@ class HistoryScreen(DiffScreen):
 
        A pair of history queues for top and bottom margins accordingly;
        here's the overall screen structure::
-
+p
             [ 1: .......]
             [ 2: .......]  <- top history
             [ 3: .......]
@@ -1187,12 +1190,10 @@ class HistoryScreen(DiffScreen):
         :param str event: event name, for example ``"linefeed"``.
         """
         if event in ["prev_page", "next_page"]:
-            for idx, line in enumerate(self.buffer):
-                if len(line) > self.columns:
-                    self.buffer[idx] = line[:self.columns]
-                elif len(line) < self.columns:
-                    self.buffer[idx] = line + take(self.columns - len(line),
-                                                   self.default_line)
+            for line in self.buffer:
+                for char in self.buffer[line]:
+                    if char > self.columns:
+                        self.buffer[line].pop(char, None)
 
         # If we're at the bottom of the history buffer and `DECTCEM`
         # mode is set -- show the cursor.
@@ -1240,13 +1241,16 @@ class HistoryScreen(DiffScreen):
             mid = min(len(self.history.top),
                       int(math.ceil(self.lines * self.history.ratio)))
 
-            self.history.bottom.extendleft(reversed(self.buffer[-mid:]))
+            extension = [self.buffer[line] for line in reversed(range(self.lines - mid, self.lines))]
+            self.history.bottom.extendleft(extension)
             self.history = self.history \
                 ._replace(position=self.history.position - self.lines)
 
-            self.buffer[:] = list(reversed([
-                self.history.top.pop() for _ in range(mid)
-            ])) + self.buffer[:-mid]
+            for line in reversed(range(self.lines)):
+                if line >= mid:
+                    self.buffer[line] = self.buffer[line - mid]
+                else:
+                    self.buffer[line] = self.history.top.pop()
 
             self.dirty = set(range(self.lines))
 
@@ -1256,13 +1260,16 @@ class HistoryScreen(DiffScreen):
             mid = min(len(self.history.bottom),
                       int(math.ceil(self.lines * self.history.ratio)))
 
-            self.history.top.extend(self.buffer[:mid])
+            extension = [self.buffer[line] for line in range(mid)]
+            self.history.top.extend(extension)
             self.history = self.history \
                 ._replace(position=self.history.position + self.lines)
 
-            self.buffer[:] = self.buffer[mid:] + [
-                self.history.bottom.popleft() for _ in range(mid)
-            ]
+            for line in range(self.lines):
+                if line < self.lines - mid:
+                    self.buffer[line] = self.buffer[line + mid]
+                else:
+                    self.buffer[line] = self.history.bottom.popleft()
 
             self.dirty = set(range(self.lines))
 
