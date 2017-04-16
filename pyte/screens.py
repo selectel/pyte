@@ -1224,12 +1224,12 @@ class HistoryScreen(DiffScreen):
                       int(math.ceil(self.lines * self.history.ratio)))
 
             self.history.bottom.extendleft([self.buffer[line]
-                                            for line in reversed(range(self.lines - mid, self.lines))])
+                                            for line in range(self.lines - 1, self.lines - mid - 1, -1)])
             self.history = self.history._replace(position=self.history.position - self.lines)
 
-            for line in reversed(range(mid, self.lines)):
+            for line in range(self.lines - 1, mid - 1, -1):
                 self.buffer[line] = self.buffer[line - mid]
-            for line in reversed(range(mid)):
+            for line in range(mid - 1, -1, -1):
                 self.buffer[line] = self.history.top.pop()
 
             self.dirty = set(range(self.lines))
