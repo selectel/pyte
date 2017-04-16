@@ -186,40 +186,27 @@ class Screen(object):
     def display(self):
         """A :func:`list` of screen lines as unicode strings."""
         def render(line):
-            it = iter(line)
-            while True:
-                char = next(it).data
+            wide_char = False
+            for col in range(self.columns):
+                if wide_char:  # Skip stub
+                    wide_char = False
+                    continue
+                char = line[col].data
                 assert sum(map(wcwidth, char[1:])) == 0
-                char_width = wcwidth(char[0])
-                if char_width == 1:
-                    yield char
-                elif char_width == 2:
-                    yield char
-                    next(it)  # Skip stub.
+                wide_char = wcwidth(char[0]) == 2
+                yield char
 
-        return ["".join(render(self.get_list_of_line(line))) for line in range(self.lines)]
+        return ["".join(render(self.buffer[line])) for line in range(self.lines)]
 
-    def get_list_of_line(self, line):
-        """ Get buffer line as list
-        :param line: line index 
-        :return: list
+    def tolist(self, line=None):
+        """Represent defaultdict buffer as matrix. If line present: represent line as list
+        :param line: line index
+        :return Buffer or single line in list
         """
-        return [self.buffer[line][col] for col in range(self.columns)]
-
-    def to_list(self):
-        """Represent defaultdict buffer as matrix
-        :return: List of lists
-        """
-        return [[self.buffer[line][col] for col in range(self.columns)] for line in range(self.lines)]
-
-    def from_list(self, lst):
-        """Fill defaultdict buffer from matrix
-        :param lst: List of lists
-        :return: None, changes screen.buffer
-        """
-        for line in range(len(lst)):
-            for col in range(len(lst[0])):
-                self.buffer[line][col] = lst[line][col]
+        if line is None:
+            return [[self.buffer[line][col] for col in range(self.columns)] for line in range(self.lines)]
+        else:
+            return [self.buffer[line][col] for col in range(self.columns)]
 
     def reset(self):
         """Reset the terminal to its initial state.
@@ -348,7 +335,6 @@ class Screen(object):
         # When DECOLM mode is set, the screen is erased and the cursor
         # moves to the home position.
         if mo.DECCOLM in modes:
-            self.resize(columns=132)
             self.erase_in_display(2)
             self.cursor_position()
 
@@ -360,8 +346,8 @@ class Screen(object):
         # Mark all displayed characters as reverse.
         if mo.DECSCNM in modes:
             for line in self.buffer:
-                for char in self.buffer[line]:
-                    self.buffer[line][char]._replace(reverse=True)
+                for column in self.buffer[line]:
+                    self.buffer[line][column] = self.buffer[line][column]._replace(reverse=True)
             self.select_graphic_rendition(7)  # +reverse.
 
         # Make the cursor visible.
@@ -391,10 +377,10 @@ class Screen(object):
             self.cursor_position()
 
         if mo.DECSCNM in modes:
-            if mo.DECSCNM in modes:
-                for line in self.buffer:
-                    for char in self.buffer[line]:
-                        self.buffer[line][char]._replace(reverse=False)
+            for line in self.buffer:
+                for column in self.buffer[line]:
+                    self.buffer[line][column] = self.buffer[line][column]._replace(reverse=False)
+
             self.select_graphic_rendition(27)  # -reverse.
 
         # Hide the cursor.
@@ -514,7 +500,7 @@ class Screen(object):
 
         if self.cursor.y == bottom:
             for line in range(top, bottom):
-                self.buffer[line] = self.buffer[line+1]
+                self.buffer[line] = self.buffer[line + 1]
             self.buffer.pop(bottom, None)
         else:
             self.cursor_down()
@@ -527,7 +513,7 @@ class Screen(object):
 
         if self.cursor.y == top:
             for line in range(bottom, top, -1):
-                self.buffer[line] = self.buffer[line-1]
+                self.buffer[line] = self.buffer[line - 1]
             self.buffer.pop(top, None)
         else:
             self.cursor_up()
@@ -612,9 +598,7 @@ class Screen(object):
             for old_line in range(bottom, self.cursor.y - 1, -1):
                 if old_line + count <= bottom:  # There is place inside margins
                     self.buffer[old_line + count] = self.buffer[old_line]
-                    self.buffer.pop(old_line, None)
-                else:  # There is no place for line, just drop it
-                    self.buffer.pop(old_line, None)
+                self.buffer.pop(old_line, None)
 
             self.carriage_return()
 
@@ -632,7 +616,7 @@ class Screen(object):
         # If cursor is outside scrolling margins it -- do nothin'.
         if top <= self.cursor.y <= bottom:
             # Shift old lines up
-            for old_line in range(self.cursor.y, bottom+1):
+            for old_line in range(self.cursor.y, bottom + 1):
                 if old_line + count <= bottom:  # Substitute line inside margins
                     self.buffer[old_line] = self.buffer[old_line + count]
                     self.buffer.pop(old_line + count, None)
@@ -655,9 +639,7 @@ class Screen(object):
         for old_char in range(self.columns, self.cursor.x - 1, -1):
             if old_char + count <= self.columns:
                 self.buffer[self.cursor.y][old_char + count] = self.buffer[self.cursor.y][old_char]
-                self.buffer[self.cursor.y].pop(old_char, None)
-            else:
-                self.buffer[self.cursor.y].pop(old_char, None)
+            self.buffer[self.cursor.y].pop(old_char, None)
 
     def delete_characters(self, count=None):
         """Delete the indicated # of characters, starting with the
@@ -671,8 +653,8 @@ class Screen(object):
         # Shift old chars left
         for old_char in range(self.cursor.x, self.columns + 1):
             if old_char + count <= self.columns:
-                self.buffer[self.cursor.y][old_char] = self.buffer[self.cursor.y][old_char + count]
-                self.buffer[self.cursor.y].pop(old_char + count, None)
+                self.buffer[self.cursor.y][old_char] = self.buffer[self.cursor.y].pop(old_char + count,
+                                                                                      self.default_char)
             else:
                 self.buffer[self.cursor.y].pop(old_char, None)
 
@@ -913,9 +895,9 @@ class Screen(object):
 
     def alignment_display(self):
         """Fills screen with uppercase E's for screen focus and alignment."""
-        self.from_list(
-            [[Char(data="E", fg="default", bg="default") for _ in range(self.columns)] for _ in range(self.lines)]
-        )
+        for line in range(self.lines):
+            for col in range(self.columns):
+                self.buffer[line][col] = self.buffer[line][col]._replace(data="E")
 
     def select_graphic_rendition(self, *attrs):
         """Set display attributes.
@@ -1120,7 +1102,7 @@ class HistoryScreen(DiffScreen):
 
        A pair of history queues for top and bottom margins accordingly;
        here's the overall screen structure::
-p
+
             [ 1: .......]
             [ 2: .......]  <- top history
             [ 3: .......]
@@ -1241,16 +1223,14 @@ p
             mid = min(len(self.history.top),
                       int(math.ceil(self.lines * self.history.ratio)))
 
-            extension = [self.buffer[line] for line in reversed(range(self.lines - mid, self.lines))]
-            self.history.bottom.extendleft(extension)
-            self.history = self.history \
-                ._replace(position=self.history.position - self.lines)
+            self.history.bottom.extendleft([self.buffer[line]
+                                            for line in reversed(range(self.lines - mid, self.lines))])
+            self.history = self.history._replace(position=self.history.position - self.lines)
 
-            for line in reversed(range(self.lines)):
-                if line >= mid:
-                    self.buffer[line] = self.buffer[line - mid]
-                else:
-                    self.buffer[line] = self.history.top.pop()
+            for line in reversed(range(mid, self.lines)):
+                self.buffer[line] = self.buffer[line - mid]
+            for line in reversed(range(mid)):
+                self.buffer[line] = self.history.top.pop()
 
             self.dirty = set(range(self.lines))
 
@@ -1262,14 +1242,12 @@ p
 
             extension = [self.buffer[line] for line in range(mid)]
             self.history.top.extend(extension)
-            self.history = self.history \
-                ._replace(position=self.history.position + self.lines)
+            self.history = self.history._replace(position=self.history.position + self.lines)
 
-            for line in range(self.lines):
-                if line < self.lines - mid:
-                    self.buffer[line] = self.buffer[line + mid]
-                else:
-                    self.buffer[line] = self.history.bottom.popleft()
+            for line in range(self.lines - mid):
+                self.buffer[line] = self.buffer[line + mid]
+            for line in range(self.lines - mid, self.lines):
+                self.buffer[line] = self.history.bottom.popleft()
 
             self.dirty = set(range(self.lines))
 

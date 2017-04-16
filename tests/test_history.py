@@ -10,13 +10,9 @@ from pyte import control as ctrl, modes as mo
 from pyte.compat import map, str
 
 
-def chars(lines, columns):
-    result = []
-    for line in range(len(lines)):
-        result.append("")
-        for char in range(columns):
-            result[line] += lines[line][char].data
-    return result
+def chars(history_lines, columns):
+    return ["".join(history_lines[line][col].data for col in range(columns))
+            for line in range(len(history_lines))]
 
 
 def test_index():

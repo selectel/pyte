@@ -45,7 +45,7 @@ class Terminal:
         lines = []
         for line in self.screen.dirty:
             data = [(char.data, char.reverse, char.fg, char.bg)
-                    for char in self.screen.get_list_of_line(line)]
+                    for char in self.screen.tolist(line=line)]
             lines.append((line, data))
 
         self.screen.dirty.clear()
