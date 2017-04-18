@@ -191,7 +191,7 @@ class Screen(object):
                 if wide_char:  # Skip stub
                     wide_char = False
                     continue
-                char = line[col].data
+                char = line[col].data if col in line else self.default_char.data
                 assert sum(map(wcwidth, char[1:])) == 0
                 wide_char = wcwidth(char[0]) == 2
                 yield char
@@ -335,6 +335,7 @@ class Screen(object):
         # When DECOLM mode is set, the screen is erased and the cursor
         # moves to the home position.
         if mo.DECCOLM in modes:
+            self.resize(columns=132)
             self.erase_in_display(2)
             self.cursor_position()
 
@@ -597,6 +598,8 @@ class Screen(object):
             # Shift old lines down (backwards)
             for old_line in range(bottom, self.cursor.y - 1, -1):
                 if old_line + count <= bottom:  # There is place inside margins
+                    # This would create dummy line if old_line + count not in buffer
+                    # TODO: Check performance impact of this
                     self.buffer[old_line + count] = self.buffer[old_line]
                 self.buffer.pop(old_line, None)
 
@@ -618,6 +621,8 @@ class Screen(object):
             # Shift old lines up
             for old_line in range(self.cursor.y, bottom + 1):
                 if old_line + count <= bottom:  # Substitute line inside margins
+                    # This would create dummy line if old_line not in buffer
+                    # TODO: Check performance impact of this
                     self.buffer[old_line] = self.buffer[old_line + count]
                     self.buffer.pop(old_line + count, None)
                 else:  # Substitute line outside, just delete

@@ -236,8 +236,11 @@ def test_set_mode():
     for line in range(3):
         for char in screen.tolist(line):
             assert char == screen.default_char
+    assert screen.columns == 132
     assert screen.cursor.x == 0
     assert screen.cursor.y == 0
+    screen.reset_mode(mo.DECCOLM)
+    assert screen.columns == 80
 
     # Test mo.DECOM mode
     screen = update(pyte.Screen(3, 3), ["sam", "is ", "foo"])
