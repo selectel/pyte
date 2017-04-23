@@ -186,14 +186,14 @@ class Screen(object):
     def display(self):
         """A :func:`list` of screen lines as unicode strings."""
         def render(line):
-            wide_char = False
+            is_wide_char = False
             for col in range(self.columns):
-                if wide_char:  # Skip stub
-                    wide_char = False
+                if is_wide_char:  # Skip stub
+                    is_wide_char = False
                     continue
                 char = line[col].data if col in line else self.default_char.data
                 assert sum(map(wcwidth, char[1:])) == 0
-                wide_char = wcwidth(char[0]) == 2
+                is_wide_char = wcwidth(char[0]) == 2
                 yield char
 
         return ["".join(render(self.buffer[line])) for line in range(self.lines)]
