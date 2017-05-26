@@ -10,6 +10,9 @@ This release is NOT backward compatible with 0.5.X branch!
 
 - Optimized ``Stream.feed`` for plain-text input. The code was backported
   from ``pymux`` project by Jonathan Slenders.
+- Optimized ``Screen`` by changing ``Screen.buffer`` to dict-of-dicts. The
+  idea was borrowed from ``pymux`` project by Jonathan Slenders. The
+  implementation was done by @istarion.
 - Further optimized ``Stream._parser_fsm`` by forcing static binding between
   ``Stream`` events and ``Screen`` methods. The code was backported from
   ``pmux`` project by Jonathan Slenders.
