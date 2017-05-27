@@ -188,17 +188,18 @@ class Screen(object):
         """A :func:`list` of screen lines as unicode strings."""
         def render(line):
             is_wide_char = False
-            for col in range(self.columns):
+            for x in range(self.columns):
                 if is_wide_char:  # Skip stub
                     is_wide_char = False
                     continue
-                char = line[col].data if col in line else self.default_char.data
+                char = line.get(x, self.default_char).data
                 assert sum(map(wcwidth, char[1:])) == 0
                 is_wide_char = wcwidth(char[0]) == 2
                 yield char
 
-        return ["".join(render(self.buffer[line])) for line in range(self.lines)]
+        return ["".join(render(self.buffer[y])) for y in range(self.lines)]
 
+    # TODO: move to tests.
     def tolist(self, line=None):
         """Represent defaultdict buffer as matrix. If line present: represent line as list
         :param line: line index
@@ -283,9 +284,9 @@ class Screen(object):
         # if the current display size is greater than requested
         #    size, trim each line from the right to the new size.
         if diff > 0:
-            for line in range(self.lines):
-                for col in range(self.columns - diff, self.columns):
-                    self.buffer[line].pop(col, None)
+            for line in self.buffer.values():
+                for x in range(self.columns - diff, self.columns):
+                    line.pop(x, None)
 
         self.lines, self.columns = lines, columns
         self.set_margins()
@@ -347,9 +348,10 @@ class Screen(object):
 
         # Mark all displayed characters as reverse.
         if mo.DECSCNM in modes:
-            for line in self.buffer:
-                for column in self.buffer[line]:
-                    self.buffer[line][column] = self.buffer[line][column]._replace(reverse=True)
+            for line in self.buffer.values():
+                for x in line:
+                    line[x] = line[x]._replace(reverse=True)
+
             self.select_graphic_rendition(7)  # +reverse.
 
         # Make the cursor visible.
@@ -379,9 +381,9 @@ class Screen(object):
             self.cursor_position()
 
         if mo.DECSCNM in modes:
-            for line in self.buffer:
-                for column in self.buffer[line]:
-                    self.buffer[line][column] = self.buffer[line][column]._replace(reverse=False)
+            for line in self.buffer.values():
+                for x in line:
+                    line[x] = line[x]._replace(reverse=False)
 
             self.select_graphic_rendition(27)  # -reverse.
 
@@ -589,20 +591,17 @@ class Screen(object):
         displayed **at** and below the cursor move down. Lines moved
         past the bottom margin are lost.
 
-        :param count: number of lines to delete.
+        :param count: number of lines to insert.
         """
         count = count or 1
         top, bottom = self.margins
 
         # If cursor is outside scrolling margins it -- do nothin'.
         if top <= self.cursor.y <= bottom:
-            # Shift old lines down (backwards)
-            for old_line in range(bottom, self.cursor.y - 1, -1):
-                if old_line + count <= bottom:  # There is place inside margins
-                    # This would create dummy line if old_line + count not in buffer
-                    # TODO: Check performance impact of this
-                    self.buffer[old_line + count] = self.buffer[old_line]
-                self.buffer.pop(old_line, None)
+            for y in range(bottom, self.cursor.y - 1, -1):
+                if y + count <= bottom and y in self.buffer:
+                    self.buffer[y + count] = self.buffer[y]
+                self.buffer.pop(y, None)
 
             self.carriage_return()
 
@@ -617,17 +616,14 @@ class Screen(object):
         count = count or 1
         top, bottom = self.margins
 
-        # If cursor is outside scrolling margins it -- do nothin'.
+        # If cursor is outside scrolling margins -- do nothin'.
         if top <= self.cursor.y <= bottom:
-            # Shift old lines up
-            for old_line in range(self.cursor.y, bottom + 1):
-                if old_line + count <= bottom:  # Substitute line inside margins
-                    # This would create dummy line if old_line not in buffer
-                    # TODO: Check performance impact of this
-                    self.buffer[old_line] = self.buffer[old_line + count]
-                    self.buffer.pop(old_line + count, None)
-                else:  # Substitute line outside, just delete
-                    self.buffer.pop(old_line, None)
+            for y in range(self.cursor.y, bottom + 1):
+                if y + count <= bottom:
+                    if y + count in self.buffer:
+                        self.buffer[y] = self.buffer.pop(y + count)
+                else:
+                    self.buffer.pop(y, None)
 
             self.carriage_return()
 
@@ -640,12 +636,11 @@ class Screen(object):
         :param int count: number of characters to insert.
         """
         count = count or 1
-
-        # Shift old chars right (backwards)
-        for old_char in range(self.columns, self.cursor.x - 1, -1):
-            if old_char + count <= self.columns:
-                self.buffer[self.cursor.y][old_char + count] = self.buffer[self.cursor.y][old_char]
-            self.buffer[self.cursor.y].pop(old_char, None)
+        line = self.buffer[self.cursor.y]
+        for x in range(self.columns, self.cursor.x - 1, -1):
+            if x + count <= self.columns:
+                line[x + count] = line[x]
+            line.pop(x, None)
 
     def delete_characters(self, count=None):
         """Delete the indicated # of characters, starting with the
@@ -656,13 +651,12 @@ class Screen(object):
         :param int count: number of characters to delete.
         """
         count = count or 1
-        # Shift old chars left
-        for old_char in range(self.cursor.x, self.columns + 1):
-            if old_char + count <= self.columns:
-                self.buffer[self.cursor.y][old_char] = self.buffer[self.cursor.y].pop(old_char + count,
-                                                                                      self.default_char)
+        line = self.buffer[self.cursor.y]
+        for x in range(self.cursor.x, self.columns):
+            if x + count <= self.columns:
+                line[x] = line.pop(x + count, self.default_char)
             else:
-                self.buffer[self.cursor.y].pop(old_char, None)
+                line.pop(x, None)
 
     def erase_characters(self, count=None):
         """Erase the indicated # of characters, starting with the
@@ -680,9 +674,9 @@ class Screen(object):
         """
         count = count or 1
 
-        for column in range(self.cursor.x,
-                            min(self.cursor.x + count, self.columns)):
-            self.buffer[self.cursor.y][column] = self.cursor.attrs
+        for x in range(self.cursor.x,
+                       min(self.cursor.x + count, self.columns)):
+            self.buffer[self.cursor.y][x] = self.cursor.attrs
 
     def erase_in_line(self, how=0, private=False):
         """Erase a line in a specific way.
@@ -709,8 +703,9 @@ class Screen(object):
             # c) erase the entire line.
             interval = range(self.columns)
 
-        for column in interval:
-            self.buffer[self.cursor.y][column] = self.cursor.attrs
+        line = self.buffer[self.cursor.y]
+        for x in interval:
+            line[x] = self.cursor.attrs
 
     def erase_in_display(self, how=0, private=False):
         """Erases display in a specific way.
@@ -738,9 +733,10 @@ class Screen(object):
             # c) erase the whole display.
             interval = range(self.lines)
 
-        for line in interval:
-            for c in self.buffer[line]:
-                self.buffer[line][c] = self.cursor.attrs
+        for y in interval:
+            line = self.buffer[y]
+            for x in line:
+                line[x] = self.cursor.attrs
 
         # In case of 0 or 1 we have to erase the line with the cursor.
         if how == 0 or how == 1:
@@ -901,9 +897,9 @@ class Screen(object):
 
     def alignment_display(self):
         """Fills screen with uppercase E's for screen focus and alignment."""
-        for line in range(self.lines):
-            for col in range(self.columns):
-                self.buffer[line][col] = self.buffer[line][col]._replace(data="E")
+        for y in range(self.lines):
+            for x in range(self.columns):
+                self.buffer[y][x] = self.buffer[y][x]._replace(data="E")
 
     def select_graphic_rendition(self, *attrs):
         """Set display attributes.
@@ -1178,10 +1174,10 @@ class HistoryScreen(DiffScreen):
         :param str event: event name, for example ``"linefeed"``.
         """
         if event in ["prev_page", "next_page"]:
-            for line in self.buffer:
-                for column in self.buffer[line]:
-                    if column > self.columns:
-                        self.buffer[line].pop(column)
+            for line in self.buffer.values():
+                for x in line:
+                    if x > self.columns:
+                        line.pop(x)
 
         # If we're at the bottom of the history buffer and `DECTCEM`
         # mode is set -- show the cursor.
