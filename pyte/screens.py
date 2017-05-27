@@ -199,17 +199,6 @@ class Screen(object):
 
         return ["".join(render(self.buffer[y])) for y in range(self.lines)]
 
-    # TODO: move to tests.
-    def tolist(self, line=None):
-        """Represent defaultdict buffer as matrix. If line present: represent line as list
-        :param line: line index
-        :return Buffer or single line in list
-        """
-        if line is None:
-            return [[self.buffer[line][col] for col in range(self.columns)] for line in range(self.lines)]
-        else:
-            return [self.buffer[line][col] for col in range(self.columns)]
-
     def reset(self):
         """Reset the terminal to its initial state.
 

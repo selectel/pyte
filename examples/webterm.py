@@ -43,10 +43,11 @@ class Terminal:
     def dumps(self):
         cursor = self.screen.cursor
         lines = []
-        for line in self.screen.dirty:
+        for y in self.screen.dirty:
+            line = self.screen.buffer[y]
             data = [(char.data, char.reverse, char.fg, char.bg)
-                    for char in self.screen.tolist(line=line)]
-            lines.append((line, data))
+                    for char in (line[x] for x in range(self.screen.columns))]
+            lines.append((y, data))
 
         self.screen.dirty.clear()
         return json.dumps({"c": (cursor.x, cursor.y), "lines": lines})
