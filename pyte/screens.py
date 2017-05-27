@@ -1179,9 +1179,9 @@ class HistoryScreen(DiffScreen):
         """
         if event in ["prev_page", "next_page"]:
             for line in self.buffer:
-                for char in self.buffer[line]:
-                    if char > self.columns:
-                        self.buffer[line].pop(char, None)
+                for column in self.buffer[line]:
+                    if column > self.columns:
+                        self.buffer[line].pop(column)
 
         # If we're at the bottom of the history buffer and `DECTCEM`
         # mode is set -- show the cursor.
@@ -1229,9 +1229,11 @@ class HistoryScreen(DiffScreen):
             mid = min(len(self.history.top),
                       int(math.ceil(self.lines * self.history.ratio)))
 
-            self.history.bottom.extendleft([self.buffer[line]
-                                            for line in range(self.lines - 1, self.lines - mid - 1, -1)])
-            self.history = self.history._replace(position=self.history.position - self.lines)
+            self.history.bottom.extendleft([
+                self.buffer[line]
+                for line in range(self.lines - 1, self.lines - mid - 1, -1)])
+            self.history = self.history \
+                ._replace(position=self.history.position - self.lines)
 
             for line in range(self.lines - 1, mid - 1, -1):
                 self.buffer[line] = self.buffer[line - mid]
@@ -1246,9 +1248,9 @@ class HistoryScreen(DiffScreen):
             mid = min(len(self.history.bottom),
                       int(math.ceil(self.lines * self.history.ratio)))
 
-            extension = [self.buffer[line] for line in range(mid)]
-            self.history.top.extend(extension)
-            self.history = self.history._replace(position=self.history.position + self.lines)
+            self.history.top.extend([self.buffer[line] for line in range(mid)])
+            self.history = self.history \
+                ._replace(position=self.history.position + self.lines)
 
             for line in range(self.lines - mid):
                 self.buffer[line] = self.buffer[line + mid]

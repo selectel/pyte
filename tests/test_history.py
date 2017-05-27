@@ -369,44 +369,28 @@ def test_ensure_width(monkeypatch):
     stream = pyte.Stream(screen)
 
     for idx in range(screen.lines * 5):
-        stream.feed(str(idx) + os.linesep)
+        stream.feed("{:04d}".format(idx) + os.linesep)
 
     assert screen.display == [
-        "21   ",
-        "22   ",
-        "23   ",
-        "24   ",
+        "0021 ",
+        "0022 ",
+        "0023 ",
+        "0024 ",
         "     "
     ]
 
-    # a) shrinking the screen, expecting the lines displayed to
-    #    be truncated.
-    screen.resize(5, 2)
+    # Shrinking the screen should truncate the displayed lines following lines.
+    screen.resize(5, 3)
     stream.feed(ctrl.ESC + "P")
 
-    assert all(len(l) != 2 for l in screen.history.top)
-    assert all(len(l) == 2 for l in screen.history.bottom)
+    # Inequality because we have an all-empty last line.
+    assert all(len(l) <= 3 for l in screen.history.bottom)
     assert screen.display == [
-        "18",
-        "19",
-        "20",
-        "21",
-        "22"
-    ]
-
-    # b) expading the screen, expecting the lines displayed to
-    #    be filled with whitespace characters.
-    screen.resize(5, 10)
-    stream.feed(ctrl.ESC + "N")
-
-    assert all(len(l) == 10 for l in list(screen.history.top)[-3:])
-    assert all(len(l) != 10 for l in screen.history.bottom)
-    assert screen.display == [
-        "21        ",
-        "22        ",
-        "23        ",
-        "24        ",
-        "          "
+        "001",  # 18
+        "001",  # 19
+        "002",  # 20
+        "002",  # 21
+        "002"   # 22
     ]
 
 
