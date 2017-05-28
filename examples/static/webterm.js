@@ -135,11 +135,11 @@ function keyToMessage(e) {
     case 37:  // Left
         message = CSI + "D"; break;
     case 38:  // Up
-        message = CSI + "A"; break;
+        message = e.metaKey ? ESC + "P" : CSI + "A"; break;
     case 39:  // Right
         message = CSI + "C"; break;
     case 40:  // Down
-        message = CSI + "B"; break;
+        message = e.metaKey ? ESC + "N" : CSI + "B"; break;
     case 45:  // INS
         message = CSI + "2~"; break;
     case 46:  // DEL

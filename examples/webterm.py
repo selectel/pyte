@@ -5,6 +5,11 @@
     An example showing how to use :mod:`pyte` to implement a basic
     single-user web terminal.
 
+    Client-side ``webterm.js`` supports
+    * incremental rendering via :data:`~pyte.screens.DiffScreen.dirty`,
+    * most of the common keyboard events,
+    * pagination on Meta + P/Meta + A.
+
     .. note:: This example requires at least Python 3.5 and a recent
               version of ``aiohttp`` library.
 
@@ -30,7 +35,7 @@ import pyte
 
 class Terminal:
     def __init__(self, columns, lines, p_in):
-        self.screen = pyte.DiffScreen(columns, lines)
+        self.screen = pyte.HistoryScreen(columns, lines)
         self.screen.set_mode(pyte.modes.LNM)
         self.screen.write_process_input = \
             lambda data: p_in.write(data.encode())
@@ -84,7 +89,14 @@ async def websocket_handler(request):
     try:
         async for msg in ws:
             if msg.type == aiohttp.WSMsgType.TEXT:
-                p_out.write(msg.data.encode())
+                if msg.data == pyte.control.ESC + "N":
+                    terminal.screen.next_page()
+                    ws.send_str(terminal.dumps())
+                elif msg.data == pyte.control.ESC + "P":
+                    terminal.screen.prev_page()
+                    ws.send_str(terminal.dumps())
+                else:
+                    p_out.write(msg.data.encode())
             elif msg.type == aiohttp.WSMsgType.ERROR:
                 raise ws.exception()
     except (asyncio.CancelledError,
