@@ -371,13 +371,6 @@ class ByteStream(Stream):
        using UTF-8. Defaults to ``True``.
     """
     def __init__(self, *args, **kwargs):
-        if kwargs.pop("encodings", None):
-            warnings.warn(
-                "As of version 0.6.0 ``pyte.streams.ByteStream`` no longer "
-                "accepts an encoding as an argument an instead uses the "
-                "encoding provided via a CSI command. ``encoding`` will "
-                "be removed in 0.7.0", UserWarning)
-
         super(ByteStream, self).__init__(*args, **kwargs)
 
         self.utf8_decoder = codecs.getincrementaldecoder("utf-8")("replace")

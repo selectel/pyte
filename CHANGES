@@ -7,6 +7,7 @@ Version 0.7.0-dev
 -------------
 
 - Removed deprecated ``only`` parameter of ``Stream.attach``.
+- Removed deprecated ``encoding`` parameter of ``ByteStream``.
 
 Version 0.6.0
 -------------

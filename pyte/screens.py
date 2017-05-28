@@ -243,7 +243,6 @@ class Screen(object):
         self.g0_charset = cs.LAT1_MAP
         self.g1_charset = cs.VT100_MAP
         self.use_utf8 = True
-        self.utf8_decoder = codecs.getincrementaldecoder("utf-8")("replace")
 
         # From ``man terminfo`` -- "... hardware tabs are initially
         # set every `n` spaces when the terminal is powered up. Since
