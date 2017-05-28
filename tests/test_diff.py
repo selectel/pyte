@@ -122,6 +122,10 @@ def test_erase_in_display():
     screen.erase_in_display(2)
     assert screen.dirty == set(range(0, screen.lines))
 
+    screen.dirty.clear()
+    screen.erase_in_display(3)
+    assert screen.dirty == set(range(0, screen.lines))
+
 
 def test_draw_wrap():
     screen = pyte.DiffScreen(80, 24)

@@ -1083,7 +1083,7 @@ class DiffScreen(Screen):
             self.dirty.update(range(self.cursor.y + 1, self.lines))
         elif how == 1:
             self.dirty.update(range(self.cursor.y))
-        elif how == 2:
+        elif how == 2 or how == 3:
             self.dirty.update(range(self.lines))
 
         super(DiffScreen, self).erase_in_display(how)
