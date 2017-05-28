@@ -24,14 +24,12 @@ from __future__ import absolute_import, unicode_literals
 
 import codecs
 import itertools
-import os
 import re
-import sys
 import warnings
 from collections import defaultdict
 
 from . import control as ctrl, escape as esc
-from .compat import str, pass_through_str
+from .compat import pass_through_str
 
 
 class Stream(object):

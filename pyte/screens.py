@@ -36,7 +36,6 @@ import os
 import sys
 import unicodedata
 from collections import deque, namedtuple, defaultdict
-from itertools import islice, repeat
 
 from wcwidth import wcwidth
 
@@ -48,11 +47,6 @@ from . import (
 )
 from .compat import map, range, str
 from .streams import Stream
-
-
-def take(n, iterable):
-    """Returns first n items of the iterable as a list."""
-    return list(islice(iterable, n))
 
 
 #: A container for screen's scroll margins.
