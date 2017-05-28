@@ -35,6 +35,9 @@ This release is NOT backward compatible with 0.5.X branch!
 - Allowed 256 and 24bit colours in ``Screen.select_graphic_rendition``.
 - Added support for ``aixterm`` colours in ``Screen.select_graphic_rendition``,
   see issue #57 on GitHub.
+- Changed ``Screen.select_graphic_rendition`` to ignore 0 if it is
+  given along with other attributes, ie ``"0;1;2"`` is now equivalent
+  to ``"1;2"``.
 - Fixed rendering of multicolumn characters at ``Screen` boundaries.
   Thanks to @shaform! See PR #55 on GitHub.
 - Fixed ``Screen.display`` in the case of multicolumn characters. See

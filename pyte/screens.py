@@ -170,7 +170,6 @@ class Screen(object):
     #: A plain empty character with default foreground and background
     #: colors.
     default_char = Char(data=" ", fg="default", bg="default")
-    default_char_dict = default_char._asdict()
 
     def __init__(self, columns, lines):
         self.savepoints = []
@@ -897,8 +896,10 @@ class Screen(object):
         """
         replace = {}
 
-        if not attrs:
-            attrs = [0]
+        # Fast path for resetting all attributes.
+        if not attrs or attrs == (0, ):
+            self.cursor.attrs = self.default_char
+            return
         else:
             attrs = list(reversed(attrs))
 
@@ -911,8 +912,6 @@ class Screen(object):
             elif attr in g.TEXT:
                 attr = g.TEXT[attr]
                 replace[attr[1:]] = attr.startswith("+")
-            elif not attr:
-                replace = self.default_char_dict
             elif attr in g.FG_AIXTERM:
                 replace.update(fg=g.FG_AIXTERM[attr], bold=True)
             elif attr in g.BG_AIXTERM:
