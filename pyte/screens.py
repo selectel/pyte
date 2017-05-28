@@ -135,13 +135,13 @@ class StaticDefaultDict(dict):
 class Screen(object):
     """
     A screen is an in-memory matrix of characters that represents the
-    screen display of the terminal. It can be instantiated on it's own
+    screen display of the terminal. It can be instantiated on its own
     and given explicit commands, or it can be attached to a stream and
     will respond to events.
 
     .. attribute:: buffer
 
-       A ``lines x columns`` :class:`~pyte.screens.Char` matrix.
+       A sparse ``lines x columns`` :class:`~pyte.screens.Char` matrix.
 
     .. attribute:: cursor
 
@@ -551,7 +551,7 @@ class Screen(object):
         self.cursor.x = column
 
     def backspace(self):
-        """Move cursor to the left one or keep it in it's position if
+        """Move cursor to the left one or keep it in its position if
         it's at the beginning of the line already.
         """
         self.cursor_back()
