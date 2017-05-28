@@ -52,6 +52,8 @@ This release is NOT backward compatible with 0.5.X branch!
 - Fixed ``Screen.cursor_back`` when called after the draw in the last column.
 - Fixed ``Screen.inser_characters`` when called with an argument larger
   than the number of columns. Thanks to @istarion! See PR #74 on GitHub.
+- Fixed ``Screen.erase_in_display`` which did not handle all values supported
+  by ``TERM=linux``. See #80 on GitHub.
 
 Version 0.5.2
 -------------

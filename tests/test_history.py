@@ -91,7 +91,6 @@ def test_prev_page():
     # we need them to span on multiple lines.
     for idx in range(screen.lines * 10):
         screen.draw(str(idx))
-
         screen.linefeed()
 
     assert screen.history.top
@@ -160,7 +159,6 @@ def test_prev_page():
 
     for idx in range(screen.lines * 10):
         screen.draw(str(idx))
-
         screen.linefeed()
 
     assert screen.history.top
@@ -197,7 +195,6 @@ def test_prev_page():
 
     for idx in range(screen.lines * 10):
         screen.draw(str(idx))
-
         screen.linefeed()
 
     assert screen.history.top
@@ -295,7 +292,6 @@ def test_next_page():
     # we need them to span on multiple lines.
     for idx in range(screen.lines * 5):
         screen.draw(str(idx))
-
         screen.linefeed()
 
     assert screen.history.top
@@ -400,7 +396,6 @@ def test_not_enough_lines():
 
     for idx in range(screen.lines):
         screen.draw(str(idx))
-
         screen.linefeed()
 
     assert screen.history.top
@@ -493,3 +488,19 @@ def test_cursor_is_hidden(monkeypatch):
     assert screen.cursor.hidden
     stream.feed(ctrl.ESC + "N")
     assert not screen.cursor.hidden
+
+
+def test_erase_in_display():
+    screen = pyte.HistoryScreen(5, 5, history=6)
+    screen.set_mode(mo.LNM)
+
+    for idx in range(screen.lines):
+        screen.draw(str(idx))
+        screen.linefeed()
+
+    screen.prev_page()
+
+    # See #80 on GitHub for details.
+    screen.erase_in_display(3)
+    assert not screen.history.top
+    assert not screen.history.bottom

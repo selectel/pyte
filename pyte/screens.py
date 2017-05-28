@@ -722,8 +722,9 @@ class Screen(object):
               cursor position.
             * ``1`` -- Erases from beginning of screen to cursor,
               including cursor position.
-            * ``2`` -- Erases complete display. All lines are erased
-              and changed to single-width. Cursor does not move.
+            * ``2`` and ``3`` -- Erases complete display. All lines
+              are erased and changed to single-width. Cursor does not
+              move.
         :param bool private: when ``True`` character attributes are left
                              unchanged **not implemented**.
         """
@@ -735,7 +736,7 @@ class Screen(object):
             # b) erase from the beginning of the display to the cursor,
             #    including it,
             interval = range(self.cursor.y)
-        elif how == 2:
+        elif how == 2 or how == 3:
             # c) erase the whole display.
             interval = range(self.lines)
 
@@ -1192,16 +1193,25 @@ class HistoryScreen(DiffScreen):
             mo.DECTCEM in self.mode
         )
 
+    def _reset_history(self):
+        self.history.top.clear()
+        self.history.bottom.clear()
+        self.history = self.history._replace(position=self.history.size)
+
     def reset(self):
         """Overloaded to reset screen history state: history position
         is reset to bottom of both queues;  queues themselves are
         emptied.
         """
         super(HistoryScreen, self).reset()
+        self._reset_history()
 
-        self.history.top.clear()
-        self.history.bottom.clear()
-        self.history = self.history._replace(position=self.history.size)
+    def erase_in_display(self, how=0):
+        """Overloaded to reset history state."""
+        super(HistoryScreen, self).erase_in_display(how)
+
+        if how == 3:
+            self._reset_history()
 
     def index(self):
         """Overloaded to update top history with the removed lines."""
