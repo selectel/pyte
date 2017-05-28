@@ -39,6 +39,11 @@ from collections import deque, namedtuple, defaultdict
 
 from wcwidth import wcwidth
 
+# There is no standard 2.X backport for ``lru_cache``.
+if sys.version_info >= (3, 2):
+    from functools import lru_cache
+    wcwidth = lru_cache(maxsize=4096)(wcwidth)
+
 from . import (
     charsets as cs,
     control as ctrl,
