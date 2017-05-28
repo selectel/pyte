@@ -1,0 +1,28 @@
+bash-3.2$ ls -Alh
+total 144
+drwxr-xr-x   3 superbobry  staff   102B  7 Jan  2016 .benchmarks
+drwxr-xr-x   3 superbobry  staff   102B  1 Aug  2016 .cache
+drwxr-xr-x  16 superbobry  staff   544B 28 May 03:00 .git
+-rw-r--r--   1 superbobry  staff    31B  5 Jan  2016 .gitignore
+-rw-r--r--   1 superbobry  staff   151B 26 Mar 22:12 .travis.yml
+-rw-r--r--   1 superbobry  staff   205B 26 Mar 22:07 AUTHORS
+-rw-r--r--   1 superbobry  staff   8.5K 28 May 02:11 CHANGES
+-rw-r--r--   1 superbobry  staff   7.5K 26 Mar  2014 LICENSE
+-rw-r--r--   1 superbobry  staff   196B 14 Mar  2016 MANIFEST.in
+-rw-r--r--   1 superbobry  staff   572B 28 May 02:22 PLANS
+-rw-r--r--   1 superbobry  staff   1.9K 30 Jun  2016 README
+lrwxr-xr-x   1 superbobry  staff     6B 26 Mar  2014 README.rst -> README
+drwxr-xr-x   4 superbobry  staff   136B  3 Jul  2016 __pycache__
+-rw-r--r--   1 superbobry  staff   1.1K 28 May 02:49 benchmark.py
+-rw-r--r--   1 superbobry  staff   208B 28 May 03:03 capture.py
+drwxr-xr-x   5 superbobry  staff   170B 14 Mar  2016 dist
+drwxr-xr-x   8 superbobry  staff   272B 27 Mar 00:17 docs
+drwxr-xr-x  10 superbobry  staff   340B 28 May 02:57 examples
+drwxr-xr-x  13 superbobry  staff   442B 28 May 03:00 pyte
+drwxr-xr-x   7 superbobry  staff   238B 10 Jan  2016 pyte.egg-info
+-rw-r--r--   1 superbobry  staff   406B 20 Mar 04:04 replay.py
+-rw-r--r--   1 superbobry  staff    29B 26 May 21:54 requirements_dev.txt
+-rw-r--r--   1 superbobry  staff    22B 14 Mar  2016 setup.cfg
+-rwxr-xr-x   1 superbobry  staff   1.3K 26 Mar 22:12 setup.py
+drwxr-xr-x  13 superbobry  staff   442B 28 May 01:40 tests
+bash-3.2$ 

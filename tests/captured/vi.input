@@ -1,0 +1,64 @@
+bash-3.2$ vi README.rst
+[2;1H▽[6n[2;1H  [1;1H[1;24r[?25h[?8c[?25h[?0c[27m[24m[0m[H[J[?25l[?1c[24;1H"README.rst" 59L, 1939C[1;1H.. -*- mode: rst -*-
+
+::[5;24H_[6;23H| |[7;10H_ __   _   _ | |_  ___[8;9H| '_ \ | | | || __|/ _ \[9;9H| |_) || |_| || |_|  __/[10;9H| .__/  \__, | \__|\___|[11;9H| |      __/ |[12;9H|_|     |___/      0.6.0
+
+
+What is ``pyte``?
+-----------------
+
+It's an in memory VTXXX-compatible terminal emulator.
+*XXX* stands for a series of video terminals, developed by
+`DEC <http://en.wikipedia.org/wiki/Digital_Equipment_Corporation>`_ between
+1970 and 1995. The first, and probably the most famous one, was VT100
+terminal, which is now a de-facto standard for all virtual terminal
+emulators. ``pyte`` follows the suit.[1;1H[?25h[?0c[?25l[?1c[24;1H[1m-- REPLACE --[0m[24;14H[K[1;1H[?25h[?0c
+
+
+
+
+
+[?25l[?1cd[?25h[?0c[?25l[?1cd[?25h[?0c[?25l[?1c [?25h[?0c[?25l[?1c [?25h[?0c[24;1H[K[7;1H[?25l[?1c[?25h[?0c[?25l[?1c[7;23r[23;1H
+[1;24r[7;9H[?25h[?0c[?25l[?1c[7;23r[23;1H
+[1;24r[23;1HSo, why would one need a terminal emulator library?[7;9H[?25h[?0c[8;9H[?25l[?1c[8;23r[23;1H
+[1;24r[8;9H[?25h[?0c[9;9H
+
+[12;9H[13;9H
+[15;9H[16;9H[17;9H[?25l[?1c[17;23r[23;1H
+[1;24r[23;1H* To screen scrape terminal apps, for example ``htop`` or ``aptitude``.[17;1H[?25h[?0c[?25l[?1c[24;1H[1m-- INSERT --[17;1H[?25h[?0c
+
+
+[?25l[?1c[21;23r[0m[21;1H[L[1;24r[21;1H[?25h[?0c[?25l[?1c[22;1H[K[23;1HSo, why would one need a terminal emulator library?[22;1H[?25h[?0c[21;1H[?25l[?1ca[?25h[?0c[?25l[?1cs[?25h[?0c[?25l[?1cd[?25h[?0c[?25l[?1ca[?25h[?0c[?25l[?1cs[?25h[?0c[?25l[?1cd[?25h[?0c[?25l[?1c[23;1H[K[22;1H[?25h[?0c[?25l[?1ca[?25h[?0c[?25l[?1cs[?25h[?0c[?25l[?1cd[?25h[?0c[?25l[?1ca[?25h[?0c[?25l[?1cs[?25h[?0c
+[?25l[?1c[1;23r[23;1H
+[1;24r[23;1HSo, why would one need a terminal emulator library?So, w[?25h[?0c[?25l[?1c[1;23r[23;1H
+[1;24r[23;1H[?25h[?0c[?25l[?1c[1;23r[23;1H
+[1;24r[23;1H* To screen scrape terminal apps, for example ``htop`` or ``aptitude``.* To [?25h[?0c[24;1H[K[23;5H[?25l[?1c[?25h[?0c[?25l[?1c[1;23r[23;1H
+[1;24r[23;1H* To write cross platform terminal emulators; either with a graphical* To[?25h[?0c[?25l[?1c[1;23r[23;1H
+[1;24r[23;3H(`xterm <http://invisible-island.net/xterm/>`_,  (`[?25h[?0c[?25l[?1c[1;23r[23;1H
+[1;24r[23;3H`rxvt <http://www.rxvt.org/>`_) or a web interface, like  `r[?25h[?0c[?25l[?1c[1;23r[23;1H
+[1;24r[23;3H`AjaxTerm <http://antony.lesuisse.org/software/ajaxterm/>`_.  `A[?25h[?0c[?25l[?1c[1;23r[23;1H
+[1;24r[23;1H* To have fun, hacking on the ancient, poorly documented technologies.* To[?25h[?0c[?25l[?1c[1;23r[23;1H
+[1;24r[23;1H[?25h[?0c[?25l[?1c[1;23r[1;1H[2M[1;24r[22;1H**Note**: ``pyte`` started as a fork of `vt102 <http://github.com/samfoo/vt102>`[23;1H_,[22;5H[?25h[?0c[?25l[?1c[1;23r[23;1H
+[1;24r[23;1Hwhich is an incomplete pure Python implementation of VT100 terminal.whic[?25h[?0c[21;5H[?25l[?1c
+
+
+/[?25h[?0cfoo[?25l[?1c[21;70H[?25h[?0c[?25l[?1c[24;1H[K[24;1H/[?25h[?0c[?25l[?1c/foo[27m[24m[0m[H[J[2;1HInstallation
+------------
+
+If you have `pip <https://pip.pypa.io/en/stable>`_ you can do the usual::[7;5Hpip install pyte
+
+Otherwise, download the source from `GitHub <https://github.com/selectel/pyte>`_[10;1Hand run::[12;5Hpython setup.py install
+
+Similar projects
+----------------
+
+``pyte`` is not alone in the weird world of terminal emulator libraries,
+here's a few other options worth checking out:
+`Termemulator <http://sourceforge.net/projects/termemulator/>`_,
+`pyqonsole <http://hg.logilab.org/pyqonsole/>`_,
+`webtty <http://code.google.com/p/webtty/>`_,
+`AjaxTerm <http://antony.lesuisse.org/software/ajaxterm/>`_ and of course
+`vt102 <http://github.com/samfoo/vt102>`_.[23;30H[?25h[?0c[?25l[?1c
+:[?25h[?0cq![?25l[?1c[1m[37m[41mE138: Can't write viminfo file $HOME/.viminfo![0m
+[1m[32mPress ENTER or type command to continue[?25h[?0c[0m
+bash-3.2$ 

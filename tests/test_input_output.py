@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import unicode_literals
-
 import json
 import os.path
 
@@ -14,8 +12,7 @@ captured_dir = os.path.join(os.path.dirname(__file__), "captured")
 
 
 @pytest.mark.parametrize("name", [
-    "cat-gpl3", "emacs-tetris", "find-etc", "htop-10s", "ls",
-    "man-man", "mc", "top", "vi"
+    "cat-gpl3", "find-etc", "htop", "ls", "mc", "top", "vi"
 ])
 def test_input_output(name):
     with open(os.path.join(captured_dir, name + ".input"), "rb") as handle:
