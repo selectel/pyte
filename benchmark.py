@@ -25,14 +25,14 @@ try:
 except ImportError:
     sys.exit("``perf`` not found. Try installing it via ``pip install perf``.")
 
-from pyte import Screen, Stream
+import pyte
 
 
-def make_benchmark(path):
+def make_benchmark(path, screen_cls):
     with io.open(path, "rt", encoding="utf-8") as handle:
         data = handle.read()
 
-    stream = Stream(Screen(80, 24))
+    stream = pyte.Stream(screen_cls(80, 24))
     return partial(stream.feed, data)
 
 
@@ -41,4 +41,7 @@ if __name__ == "__main__":
     sys.argv.extend(["--inherit-environ", "BENCHMARK"])
 
     runner = Runner()
-    runner.bench_func(os.path.basename(benchmark), make_benchmark(benchmark))
+
+    for screen_cls in [pyte.Screen, pyte.DiffScreen, pyte.HistoryScreen]:
+        name = os.path.basename(benchmark) + "->" + screen_cls.__name__
+        runner.bench_func(name, make_benchmark(benchmark, screen_cls))
