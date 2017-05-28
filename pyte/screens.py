@@ -1241,15 +1241,15 @@ class HistoryScreen(DiffScreen):
                       int(math.ceil(self.lines * self.history.ratio)))
 
             self.history.bottom.extendleft(
-                self.buffer[line]
-                for line in range(self.lines - 1, self.lines - mid - 1, -1))
+                self.buffer[y]
+                for y in range(self.lines - 1, self.lines - mid - 1, -1))
             self.history = self.history \
                 ._replace(position=self.history.position - self.lines)
 
-            for line in range(self.lines - 1, mid - 1, -1):
-                self.buffer[line] = self.buffer[line - mid]
-            for line in range(mid - 1, -1, -1):
-                self.buffer[line] = self.history.top.pop()
+            for y in range(self.lines - 1, mid - 1, -1):
+                self.buffer[y] = self.buffer[y - mid]
+            for y in range(mid - 1, -1, -1):
+                self.buffer[y] = self.history.top.pop()
 
             self.dirty = set(range(self.lines))
 
@@ -1259,14 +1259,14 @@ class HistoryScreen(DiffScreen):
             mid = min(len(self.history.bottom),
                       int(math.ceil(self.lines * self.history.ratio)))
 
-            self.history.top.extend(self.buffer[line] for line in range(mid))
+            self.history.top.extend(self.buffer[y] for y in range(mid))
             self.history = self.history \
                 ._replace(position=self.history.position + self.lines)
 
-            for line in range(self.lines - mid):
-                self.buffer[line] = self.buffer[line + mid]
-            for line in range(self.lines - mid, self.lines):
-                self.buffer[line] = self.history.bottom.popleft()
+            for y in range(self.lines - mid):
+                self.buffer[y] = self.buffer[y + mid]
+            for y in range(self.lines - mid, self.lines):
+                self.buffer[y] = self.history.bottom.popleft()
 
             self.dirty = set(range(self.lines))
 
