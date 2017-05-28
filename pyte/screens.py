@@ -108,6 +108,25 @@ class Cursor(object):
         self.hidden = False
 
 
+class StaticDefaultDict(dict):
+    """A :func:`dict` with a static default value.
+
+    Unlike :func:`collections.defaultdict` this implementation does not
+    implicitly update the mapping when queried with a missing key.
+
+    >>> d = StaticDefaultDict(42)
+    >>> d["foo"]
+    42
+    >>> d
+    {}
+    """
+    def __init__(self, default):
+        self.default = default
+
+    def __missing__(self, key):
+        return self.default
+
+
 class Screen(object):
     """
     A screen is an in-memory matrix of characters that represents the
@@ -169,7 +188,7 @@ class Screen(object):
         self.savepoints = []
         self.columns = columns
         self.lines = lines
-        self.buffer = defaultdict(lambda: defaultdict(lambda: self.default_char))
+        self.buffer = defaultdict(lambda: StaticDefaultDict(self.default_char))
         self.reset()
 
     def __repr__(self):
@@ -185,7 +204,7 @@ class Screen(object):
                 if is_wide_char:  # Skip stub
                     is_wide_char = False
                     continue
-                char = line.get(x, self.default_char).data
+                char = line[x].data
                 assert sum(map(wcwidth, char[1:])) == 0
                 is_wide_char = wcwidth(char[0]) == 2
                 yield char
