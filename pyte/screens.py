@@ -148,6 +148,18 @@ class Screen(object):
        Reference to the :class:`~pyte.screens.Cursor` object, holding
        cursor position and attributes.
 
+
+   .. attribute:: dirty
+
+      A set of line numbers, which should be re-drawn. The user is responsible
+      for clearing this set when changes have been applied.
+
+      >>> screen = Screen(80, 24)
+      >>> screen.dirty.clear()
+      >>> screen.draw("!")
+      >>> list(screen.dirty)
+      [0]
+
     .. attribute:: margins
 
        Top and bottom screen margins, defining the scrolling region;
@@ -194,6 +206,7 @@ class Screen(object):
         self.columns = columns
         self.lines = lines
         self.buffer = defaultdict(lambda: StaticDefaultDict(self.default_char))
+        self.dirty = set()
         self.reset()
 
     def __repr__(self):
@@ -232,6 +245,8 @@ class Screen(object):
            and tabstops should be reset as well, thanks to
            :manpage:`xterm` -- we now know that.
         """
+        self.dirty.update(range(self.lines))
+
         self.buffer.clear()
         self.mode = set([mo.DECAWM, mo.DECTCEM])
         self.margins = Margins(0, self.lines - 1)
@@ -269,6 +284,7 @@ class Screen(object):
         :param int lines: number of lines in the new screen.
         :param int columns: number of columns in the new screen.
         """
+        self.dirty.update(range(self.lines))
         lines = lines or self.lines
         columns = columns or self.columns
 
@@ -332,9 +348,12 @@ class Screen(object):
         :param list modes: modes to set, where each mode is a constant
                            from :mod:`pyte.modes`.
         """
+
         # Private mode codes are shifted, to be distingiushed from non
         # private ones.
         if kwargs.get("private"):
+            if mo.DECSCNM >> 5 in modes:
+                self.dirty.update(range(self.lines))
             modes = [mode << 5 for mode in modes]
 
         self.mode.update(modes)
@@ -372,6 +391,8 @@ class Screen(object):
         # Private mode codes are shifted, to be distinguished from non
         # private ones.
         if kwargs.get("private"):
+            if mo.DECSCNM >> 5 in modes:
+                self.dirty.update(range(self.lines))
             modes = [mode << 5 for mode in modes]
 
         self.mode.difference_update(modes)
@@ -483,6 +504,8 @@ class Screen(object):
             if char_width > 0:
                 self.cursor.x = min(self.cursor.x + char_width, self.columns)
 
+        self.dirty.add(self.cursor.y)
+
     def set_title(self, param):
         """Set terminal title.
 
@@ -505,6 +528,9 @@ class Screen(object):
         """Move the cursor down one line in the same column. If the
         cursor is at the last line, create a new line at the bottom.
         """
+        if self.cursor.y == self.margins.bottom:
+            self.dirty.update(range(self.lines))
+
         top, bottom = self.margins
 
         if self.cursor.y == bottom:
@@ -518,6 +544,8 @@ class Screen(object):
         """Move the cursor up one line in the same column. If the cursor
         is at the first line, create a new line at the top.
         """
+        if self.cursor.y == self.margins.top:
+            self.dirty.update(range(self.lines))
         top, bottom = self.margins
 
         if self.cursor.y == top:
@@ -598,6 +626,7 @@ class Screen(object):
 
         :param count: number of lines to insert.
         """
+        self.dirty.update(range(self.cursor.y, self.lines))
         count = count or 1
         top, bottom = self.margins
 
@@ -618,6 +647,8 @@ class Screen(object):
 
         :param int count: number of lines to delete.
         """
+        self.dirty.update(range(self.cursor.y, self.lines))
+
         count = count or 1
         top, bottom = self.margins
 
@@ -640,6 +671,8 @@ class Screen(object):
 
         :param int count: number of characters to insert.
         """
+        self.dirty.add(self.cursor.y)
+
         count = count or 1
         line = self.buffer[self.cursor.y]
         for x in range(self.columns, self.cursor.x - 1, -1):
@@ -655,6 +688,7 @@ class Screen(object):
 
         :param int count: number of characters to delete.
         """
+        self.dirty.add(self.cursor.y)
         count = count or 1
         line = self.buffer[self.cursor.y]
         for x in range(self.cursor.x, self.columns):
@@ -677,6 +711,7 @@ class Screen(object):
            ``xterm`` and ``ROTE`` completely ignore this. Same applies
            too all ``erase_*()`` and ``delete_*()`` methods.
         """
+        self.dirty.add(self.cursor.y)
         count = count or 1
 
         for x in range(self.cursor.x,
@@ -696,6 +731,7 @@ class Screen(object):
         :param bool private: when ``True`` character attributes are left
                              unchanged **not implemented**.
         """
+        self.dirty.add(self.cursor.y)
         if how == 0:
             # a) erase from the cursor to the end of line, including
             #    the cursor,
@@ -727,18 +763,21 @@ class Screen(object):
         :param bool private: when ``True`` character attributes are left
                              unchanged **not implemented**.
         """
+
         if how == 0:
             # a) erase from cursor to the end of the display, including
             #    the cursor,
+            self.dirty.update(range(self.cursor.y + 1, self.lines))
             interval = range(self.cursor.y + 1, self.lines)
         elif how == 1:
             # b) erase from the beginning of the display to the cursor,
             #    including it,
+            self.dirty.update(range(self.cursor.y))
             interval = range(self.cursor.y)
         elif how == 2 or how == 3:
             # c) erase the whole display.
             interval = range(self.lines)
-
+            self.dirty.update(range(self.lines))
         for y in interval:
             line = self.buffer[y]
             for x in line:
@@ -903,6 +942,7 @@ class Screen(object):
 
     def alignment_display(self):
         """Fills screen with uppercase E's for screen focus and alignment."""
+        self.dirty.update(range(self.lines))
         for y in range(self.lines):
             for x in range(self.columns):
                 self.buffer[y][x] = self.buffer[y][x]._replace(data="E")
@@ -999,105 +1039,23 @@ class Screen(object):
 
 
 class DiffScreen(Screen):
-    """A screen subclass, which maintains a set of dirty lines in its
+    """
+    ..deprecated:: The functionality contained in this class has been merged
+    into the base :class: Screen class. New code should use :class: Screen
+    instead.
+
+    A screen subclass, which maintains a set of dirty lines in its
     :attr:`dirty` attribute. The end user is responsible for emptying
     a set, when a diff is applied.
 
-    .. attribute:: dirty
-
-       A set of line numbers, which should be re-drawn.
-
-       >>> screen = DiffScreen(80, 24)
-       >>> screen.dirty.clear()
-       >>> screen.draw("!")
-       >>> list(screen.dirty)
-       [0]
     """
-    def __init__(self, *args):
-        self.dirty = set()
-        super(DiffScreen, self).__init__(*args)
-
-    def set_mode(self, *modes, **kwargs):
-        if mo.DECSCNM >> 5 in modes and kwargs.get("private"):
-            self.dirty.update(range(self.lines))
-        super(DiffScreen, self).set_mode(*modes, **kwargs)
-
-    def reset_mode(self, *modes, **kwargs):
-        if mo.DECSCNM >> 5 in modes and kwargs.get("private"):
-            self.dirty.update(range(self.lines))
-        super(DiffScreen, self).reset_mode(*modes, **kwargs)
-
-    def reset(self):
-        self.dirty.update(range(self.lines))
-        super(DiffScreen, self).reset()
-
-    def resize(self, *args, **kwargs):
-        self.dirty.update(range(self.lines))
-        super(DiffScreen, self).resize(*args, **kwargs)
-
-    def draw(self, *args):
-        # Call the superclass's method before marking the row as
-        # dirty, as when wrapping is enabled, draw() might change
-        # self.cursor.y.
-        super(DiffScreen, self).draw(*args)
-        self.dirty.add(self.cursor.y)
-
-    def index(self):
-        if self.cursor.y == self.margins.bottom:
-            self.dirty.update(range(self.lines))
-
-        super(DiffScreen, self).index()
-
-    def reverse_index(self):
-        if self.cursor.y == self.margins.top:
-            self.dirty.update(range(self.lines))
-
-        super(DiffScreen, self).reverse_index()
-
-    def insert_lines(self, *args):
-        self.dirty.update(range(self.cursor.y, self.lines))
-        super(DiffScreen, self).insert_lines(*args)
-
-    def delete_lines(self, *args):
-        self.dirty.update(range(self.cursor.y, self.lines))
-        super(DiffScreen, self).delete_lines(*args)
-
-    def insert_characters(self, *args):
-        self.dirty.add(self.cursor.y)
-        super(DiffScreen, self).insert_characters(*args)
-
-    def delete_characters(self, *args):
-        self.dirty.add(self.cursor.y)
-        super(DiffScreen, self).delete_characters(*args)
-
-    def erase_characters(self, *args):
-        self.dirty.add(self.cursor.y)
-        super(DiffScreen, self).erase_characters(*args)
-
-    def erase_in_line(self, *args):
-        self.dirty.add(self.cursor.y)
-        super(DiffScreen, self).erase_in_line(*args)
-
-    def erase_in_display(self, how=0):
-        if how == 0:
-            self.dirty.update(range(self.cursor.y + 1, self.lines))
-        elif how == 1:
-            self.dirty.update(range(self.cursor.y))
-        elif how == 2 or how == 3:
-            self.dirty.update(range(self.lines))
-
-        super(DiffScreen, self).erase_in_display(how)
-
-    def alignment_display(self):
-        self.dirty.update(range(self.lines))
-        super(DiffScreen, self).alignment_display()
-
+    pass
 
 History = namedtuple("History", "top bottom ratio size position")
 
 
-class HistoryScreen(DiffScreen):
-    """A :class:~`pyte.screens.DiffScreen` subclass, which keeps track
+class HistoryScreen(Screen):
+    """A :class:~`pyte.screens.Screen` subclass, which keeps track
     of screen history and allows pagination. This is not linux-specific,
     but still useful; see page 462 of VT520 User's Manual.
 
