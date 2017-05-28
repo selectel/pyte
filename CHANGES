@@ -3,6 +3,11 @@ pyte Changelog
 
 Here you can see the full list of changes between each pyte release.
 
+Version 0.7.0-dev
+-------------
+
+- Removed deprecated ``only`` parameter of ``Stream.attach``.
+
 Version 0.6.0
 -------------
 

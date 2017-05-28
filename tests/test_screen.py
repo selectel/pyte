@@ -209,7 +209,6 @@ def test_resize():
     #    new columns should be added to the right.
     screen = update(pyte.Screen(2, 2), ["bo", "sh"], [None, None])
     screen.resize(2, 3)
-    dsp = screen.display
     assert screen.display == ["bo ", "sh "]
 
     # b) if the current display is wider than the requested size,

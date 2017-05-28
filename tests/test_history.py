@@ -2,17 +2,16 @@
 
 from __future__ import unicode_literals
 
-import operator
 import os
 
 import pyte
 from pyte import control as ctrl, modes as mo
-from pyte.compat import map, str
+from pyte.compat import str
 
 
 def chars(history_lines, columns):
-    return ["".join(history_lines[line][col].data for col in range(columns))
-            for line in range(len(history_lines))]
+    return ["".join(history_lines[y][x].data for x in range(columns))
+            for y in range(len(history_lines))]
 
 
 def test_index():

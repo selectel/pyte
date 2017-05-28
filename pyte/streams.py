@@ -143,13 +143,10 @@ class Stream(object):
         if screen is not None:
             self.attach(screen)
 
-    def attach(self, screen, only=()):
+    def attach(self, screen):
         """Adds a given screen to the listener queue.
 
         :param pyte.screens.Screen screen: a screen to attach to.
-        :param list only: a list of events you want to dispatch to a
-                          given screen (empty by default, which means
-                          -- dispatch all events).
         """
         if self.listener is not None:
             warnings.warn("As of version 0.6.0 the listener queue is "
@@ -157,12 +154,7 @@ class Stream(object):
                           "listener {0} will be replaced."
                           .format(self.listener), DeprecationWarning)
 
-        if only:
-            warnings.warn(
-                "Passing ``only`` to ``Stream.attach`` is deprecated "
-                "and will be removed in 0.7.0", DeprecationWarning)
-            screen = _RestrictedListener(screen, only)
-        elif self.strict:
+        if self.strict:
             for event in self.events:
                 if not hasattr(screen, event):
                     raise TypeError("{0} is missing {1}".format(screen, event))
@@ -404,20 +396,3 @@ class ByteStream(Stream):
             self.utf8_decoder.reset()
         elif code in "G8":
             self.use_utf8 = True
-
-
-class _RestrictedListener(object):
-    def __init__(self, listener, only):
-        if not only:
-            raise ValueError("``only`` must be non-empty")
-
-        self.listener = listener
-        self.only = only
-
-    def __getattribute__(self, attr):
-        if attr not in Stream.events:
-            return super(_RestrictedListener, self).__getattribute__(attr)
-        elif attr in self.only:
-            return getattr(self.listener, attr)
-        else:
-            return lambda *args, **kwargs: None
