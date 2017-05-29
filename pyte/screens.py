@@ -28,13 +28,13 @@
 
 from __future__ import absolute_import, unicode_literals, division
 
-import codecs
 import copy
 import json
 import math
 import os
 import sys
 import unicodedata
+import warnings
 from collections import deque, namedtuple, defaultdict
 
 from wcwidth import wcwidth
@@ -143,12 +143,6 @@ class Screen(object):
 
        A sparse ``lines x columns`` :class:`~pyte.screens.Char` matrix.
 
-    .. attribute:: cursor
-
-       Reference to the :class:`~pyte.screens.Cursor` object, holding
-       cursor position and attributes.
-
-
    .. attribute:: dirty
 
       A set of line numbers, which should be re-drawn. The user is responsible
@@ -159,6 +153,11 @@ class Screen(object):
       >>> screen.draw("!")
       >>> list(screen.dirty)
       [0]
+
+    .. attribute:: cursor
+
+       Reference to the :class:`~pyte.screens.Cursor` object, holding
+       cursor position and attributes.
 
     .. attribute:: margins
 
@@ -246,7 +245,6 @@ class Screen(object):
            :manpage:`xterm` -- we now know that.
         """
         self.dirty.update(range(self.lines))
-
         self.buffer.clear()
         self.mode = set([mo.DECAWM, mo.DECTCEM])
         self.margins = Margins(0, self.lines - 1)
@@ -348,13 +346,12 @@ class Screen(object):
         :param list modes: modes to set, where each mode is a constant
                            from :mod:`pyte.modes`.
         """
-
         # Private mode codes are shifted, to be distingiushed from non
         # private ones.
         if kwargs.get("private"):
-            if mo.DECSCNM >> 5 in modes:
-                self.dirty.update(range(self.lines))
             modes = [mode << 5 for mode in modes]
+            if mo.DECSCNM in modes:
+                self.dirty.update(range(self.lines))
 
         self.mode.update(modes)
 
@@ -391,9 +388,9 @@ class Screen(object):
         # Private mode codes are shifted, to be distinguished from non
         # private ones.
         if kwargs.get("private"):
-            if mo.DECSCNM >> 5 in modes:
-                self.dirty.update(range(self.lines))
             modes = [mode << 5 for mode in modes]
+            if mo.DECSCNM in modes:
+                self.dirty.update(range(self.lines))
 
         self.mode.difference_update(modes)
 
@@ -504,6 +501,7 @@ class Screen(object):
             if char_width > 0:
                 self.cursor.x = min(self.cursor.x + char_width, self.columns)
 
+        # FIXME: if chars is long enough, we could get multiple dirty lines!
         self.dirty.add(self.cursor.y)
 
     def set_title(self, param):
@@ -763,7 +761,6 @@ class Screen(object):
         :param bool private: when ``True`` character attributes are left
                              unchanged **not implemented**.
         """
-
         if how == 0:
             # a) erase from cursor to the end of the display, including
             #    the cursor,
@@ -1040,16 +1037,24 @@ class Screen(object):
 
 class DiffScreen(Screen):
     """
-    ..deprecated:: The functionality contained in this class has been merged
-    into the base :class: Screen class. New code should use :class: Screen
-    instead.
-
     A screen subclass, which maintains a set of dirty lines in its
     :attr:`dirty` attribute. The end user is responsible for emptying
     a set, when a diff is applied.
 
+    .. deprecated:: 0.7.0
+
+       The functionality contained in this class has been merged into
+       :class:`~pyte.screens.Screen` and will be removed in 0.8.0.
+       Please update your code accordingly.
     """
-    pass
+    def __init__(self, *args, **kwargs):
+        warnings.warn(
+            "The functionality of ``DiffScreen` has been merged into "
+            "``Screen`` and will be removed in 0.8.0. Please update "
+            "your code accordingly.", DeprecationWarning)
+
+        super(DiffScreen, self).__init__(*args, **kwargs)
+
 
 History = namedtuple("History", "top bottom ratio size position")
 
