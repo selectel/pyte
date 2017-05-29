@@ -27,7 +27,6 @@ into the :ref:`api`; ``pyte`` also has a couple of examples in the
 
 
 .. toctree::
-   :hidden:
 
    tutorial
    api

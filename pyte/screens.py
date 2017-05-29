@@ -68,9 +68,7 @@ Savepoint = namedtuple("Savepoint", [
     "wrap"
 ])
 
-#: A container for a single character, field names are *hopefully*
-#: self-explanatory.
-_Char = namedtuple("_Char", [
+class Char(namedtuple("_Char", [
     "data",
     "fg",
     "bg",
@@ -79,18 +77,28 @@ _Char = namedtuple("_Char", [
     "underscore",
     "strikethrough",
     "reverse",
-])
+])):
+    """A single styled on-screen character.
 
-
-class Char(_Char):
-    """A wrapper around :class:`_Char`, providing some useful defaults
-    for most of the attributes.
+    :param str data: unicode character. Invariant: ``len(data) == 1``.
+    :param str fg: foreground colour. Defaults to ``"default"``.
+    :param str bg: background colour. Defaults to ``"default"``.
+    :param bool bold: flag for rendering the character using bold font.
+                      Defaults to ``False``.
+    :param bool italics: flag for rendering the character using italic font.
+                         Defaults to ``False``.
+    :param bool underline: flag for rendering the character underlined.
+                           Defaults to ``False``.
+    :param bool strikethrough: flag for rendering the character with a
+                               strike-through line. Defaults to ``False``.
+    :param bool reverse: flag for swapping foreground and background colours
+                         during rendering. Defaults to ``False``.
     """
     __slots__ = ()
 
     def __new__(cls, data, fg="default", bg="default", bold=False,
-                italics=False, underscore=False, reverse=False,
-                strikethrough=False):
+                italics=False, underscore=False,
+                strikethrough=False, reverse=False):
         return super(Char, cls).__new__(cls, data, fg, bg, bold, italics,
                                         underscore, strikethrough, reverse)
 
@@ -143,16 +151,18 @@ class Screen(object):
 
        A sparse ``lines x columns`` :class:`~pyte.screens.Char` matrix.
 
-   .. attribute:: dirty
+    .. attribute:: dirty
 
-      A set of line numbers, which should be re-drawn. The user is responsible
-      for clearing this set when changes have been applied.
+       A set of line numbers, which should be re-drawn. The user is responsible
+       for clearing this set when changes have been applied.
 
-      >>> screen = Screen(80, 24)
-      >>> screen.dirty.clear()
-      >>> screen.draw("!")
-      >>> list(screen.dirty)
-      [0]
+       >>> screen = Screen(80, 24)
+       >>> screen.dirty.clear()
+       >>> screen.draw("!")
+       >>> list(screen.dirty)
+       [0]
+
+       .. versionadded:: 0.7.0
 
     .. attribute:: cursor
 
@@ -179,7 +189,7 @@ class Screen(object):
     .. warning::
 
        :data:`~pyte.modes.LNM` is reset by default, to match VT220
-       specification. Unfortunatelly this makes :mode:`pyte` fail
+       specification. Unfortunatelly this makes :mod:`pyte` fail
        ``vttest`` for cursor movement.
 
     .. versionchanged:: 0.4.8
