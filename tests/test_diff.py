@@ -143,3 +143,11 @@ def test_draw_wrap():
     # regression test issue #36 where the wrong line was marked as
     # dirty
     assert screen.dirty == set([1])
+
+
+def test_draw_multiple_chars_wrap():
+    screen = pyte.Screen(5, 2)
+    screen.dirty.clear()
+    screen.draw("1234567890")
+    assert screen.cursor.y == 1
+    assert screen.dirty == set([0, 1])

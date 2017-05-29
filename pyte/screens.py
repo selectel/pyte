@@ -462,6 +462,7 @@ class Screen(object):
             # entered.
             if self.cursor.x == self.columns:
                 if mo.DECAWM in self.mode:
+                    self.dirty.add(self.cursor.y)
                     self.carriage_return()
                     self.linefeed()
                 elif char_width > 0:
@@ -494,14 +495,13 @@ class Screen(object):
                     self.buffer[self.cursor.y - 1][self.columns - 1] = \
                         last._replace(data=normalized)
             else:
-                pass  # Unprintable character or doesn't advance the cursor.
+                break  # Unprintable character or doesn't advance the cursor.
 
             # .. note:: We can't use :meth:`cursor_forward()`, because that
             #           way, we'll never know when to linefeed.
             if char_width > 0:
                 self.cursor.x = min(self.cursor.x + char_width, self.columns)
 
-        # FIXME: if chars is long enough, we could get multiple dirty lines!
         self.dirty.add(self.cursor.y)
 
     def set_title(self, param):

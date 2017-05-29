@@ -9,6 +9,10 @@ Version 0.7.0-dev
 - Removed deprecated ``only`` parameter of ``Stream.attach``.
 - Removed deprecated ``encoding`` parameter of ``ByteStream``.
 - Fixed ``how == 3`` handling in ``DiffScreen.erase_in_display``.
+- Deprecated ``DiffScreen``. Its functionality has been backported
+  to the base ``Screen`` class.
+- Fixed a bug in ``DiffScreen.draw`` which incorrectly handled the
+  case when the input of ``draw`` required several lines.
 
 Version 0.6.0
 -------------
