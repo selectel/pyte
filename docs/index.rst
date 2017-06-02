@@ -14,6 +14,9 @@ that do:
   multiplexor.
 * `BastionSSH <https://github.com/wcc526/bastion-ssh>`_ -- a tool for
   protecting, monitoring and accessing multiple SSH resources.
+* `Jumpserver <https://github.com/jumpserver/jumpserver>`_ -- an open source
+  springboard machine(fortress machine): authentication, authorization,
+  audit, automated operation and maintenance.
 
 .. note:: Using ``pyte``? Add yourself to this list and submit a pull request.
 
