@@ -491,7 +491,7 @@ class Screen(object):
                 line[self.cursor.x] = self.cursor.attrs._replace(data=char)
                 if self.cursor.x + 1 < self.columns:
                     line[self.cursor.x + 1] = self.cursor.attrs \
-                        ._replace(data=" ")
+                        ._replace(data="")
             elif char_width == 0 and unicodedata.combining(char):
                 # A zero-cell character is combined with the previous
                 # character either on this or preceeding line.
