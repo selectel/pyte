@@ -13,6 +13,11 @@
     .. note:: This example requires at least Python 3.5 and a recent
               version of ``aiohttp`` library.
 
+    .. seealso::
+
+       `The TTY demystified <http://www.linusakesson.net/programming/tty>`_
+       for an introduction to the inner workings of the TTY subsystem.
+
     :copyright: (c) 2017 by pyte authors and contributors,
                 see AUTHORS for details.
     :license: LGPL, see LICENSE for more details.
