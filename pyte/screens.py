@@ -206,8 +206,7 @@ class Screen(object):
        for a description of the presentational component, implemented
        by ``Screen``.
     """
-    #: A plain empty character with default foreground and background
-    #: colors.
+    #: An empty character with default foreground and background colors.
     default_char = Char(data=" ", fg="default", bg="default")
 
     def __init__(self, columns, lines):
@@ -247,6 +246,7 @@ class Screen(object):
         * Screen is cleared -- each character is reset to
           :attr:`default_char`.
         * Tabstops are reset to "every eight columns".
+        * All lines are marked as :attr:`dirty`.
 
         .. note::
 
@@ -781,8 +781,9 @@ class Screen(object):
             interval = range(self.cursor.y)
         elif how == 2 or how == 3:
             # c) erase the whole display.
-            interval = range(self.lines)
             self.dirty.update(range(self.lines))
+            interval = range(self.lines)
+
         for y in interval:
             line = self.buffer[y]
             for x in line:
