@@ -259,10 +259,14 @@ class Stream(object):
                         sharp_dispatch[(yield)]()
                     if char == "%":
                         self.select_other_charset((yield))
-                    elif char in "()" and not self.use_utf8:
+                    elif char in "()":
+                        code = yield
+                        if self.use_utf8:
+                            continue
+
                         # See http://www.cl.cam.ac.uk/~mgk25/unicode.html#term
                         # for the why on the UTF-8 restriction.
-                        listener.define_charset((yield), mode=char)
+                        listener.define_charset(code, mode=char)
                     else:
                         escape_dispatch[char]()
                     continue    # Don't go to CSI.

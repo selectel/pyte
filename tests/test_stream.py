@@ -12,7 +12,7 @@ else:
 import pytest
 
 import pyte
-from pyte import control as ctrl, escape as esc
+from pyte import charsets as cs, control as ctrl, escape as esc
 
 
 class counter(object):
@@ -220,6 +220,14 @@ def test_compatibility_api():
     stream.detach(screen)
 
 
+def test_define_charset():
+    # Should be a noop. All input is UTF8.
+    screen = pyte.Screen(3, 3)
+    stream = pyte.Stream(screen)
+    stream.feed(ctrl.ESC + "(B")
+    assert screen.display[0] == " " * 3
+
+
 @pytest.mark.parametrize("input,expected", [
     (b"foo", [["draw", ["foo"], {}]]),
     (b"\x1b[1;24r\x1b[4l\x1b[24;1H", [
@@ -244,6 +252,28 @@ def test_byte_stream_feed():
     stream.feed("Нерусский текст".encode("utf-8"))
     assert handler.count == 1
     assert handler.args == ("Нерусский текст", )
+
+
+def test_byte_stream_define_charset_unknown():
+    screen = pyte.Screen(3, 3)
+    stream = pyte.ByteStream(screen)
+    stream.select_other_charset("@")
+    default_g0_charset = screen.g0_charset
+    # ``"Z"`` is not supported by Linux terminal, so expect a noop.
+    assert "Z" not in cs.MAPS
+    stream.feed((ctrl.ESC + "(Z").encode())
+    assert screen.display[0] == " " * 3
+    assert screen.g0_charset == default_g0_charset
+
+
+@pytest.mark.parametrize("charset,mapping", cs.MAPS.items())
+def test_byte_stream_define_charset(charset, mapping):
+    screen = pyte.Screen(3, 3)
+    stream = pyte.ByteStream(screen)
+    stream.select_other_charset("@")
+    stream.feed((ctrl.ESC + "(" + charset).encode())
+    assert screen.display[0] == " " * 3
+    assert screen.g0_charset == mapping
 
 
 def test_byte_stream_select_other_charset():

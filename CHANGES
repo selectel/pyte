@@ -13,6 +13,8 @@ Version 0.7.0-dev
   to the base ``Screen`` class.
 - Fixed a bug in ``DiffScreen.draw`` which incorrectly handled the
   case when the input of ``draw`` required several lines.
+- Fixed a bug in ``Screen`` which did not ignore ``ESC (`` argument in
+  UTF8 mode. See issue #88 on GitHub.
 
 Version 0.6.0
 -------------
