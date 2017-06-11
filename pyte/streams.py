@@ -362,7 +362,6 @@ class Stream(object):
         # A noop since all input is Unicode-only.
 
 
-
 class ByteStream(Stream):
     """A stream which takes bytes as input.
 

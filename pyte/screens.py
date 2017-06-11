@@ -67,6 +67,7 @@ Savepoint = namedtuple("Savepoint", [
     "wrap"
 ])
 
+
 class Char(namedtuple("_Char", [
     "data",
     "fg",
@@ -489,7 +490,8 @@ class Screen(object):
                 # A two-cell character has a stub slot after it.
                 line[self.cursor.x] = self.cursor.attrs._replace(data=char)
                 if self.cursor.x + 1 < self.columns:
-                    line[self.cursor.x + 1] = self.cursor.attrs._replace(data=" ")
+                    line[self.cursor.x + 1] = self.cursor.attrs \
+                        ._replace(data=" ")
             elif char_width == 0 and unicodedata.combining(char):
                 # A zero-cell character is combined with the previous
                 # character either on this or preceeding line.

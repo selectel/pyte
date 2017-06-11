@@ -23,7 +23,7 @@ from __future__ import unicode_literals
 #: >>> text[9]
 #: '+strikethrough'
 TEXT = {
-    1: "+bold" ,
+    1: "+bold",
     3: "+italics",
     4: "+underscore",
     7: "+reverse",

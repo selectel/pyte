@@ -27,6 +27,7 @@ def update(screen, lines, colored=[]):
 
     return screen
 
+
 def tolist(screen):
     return [[screen.buffer[y][x] for x in range(screen.columns)]
             for y in range(screen.lines)]
