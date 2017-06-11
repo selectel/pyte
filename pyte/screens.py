@@ -63,7 +63,6 @@ Savepoint = namedtuple("Savepoint", [
     "g0_charset",
     "g1_charset",
     "charset",
-    "use_utf8",
     "origin",
     "wrap"
 ])
@@ -265,7 +264,6 @@ class Screen(object):
         self.charset = 0
         self.g0_charset = cs.LAT1_MAP
         self.g1_charset = cs.VT100_MAP
-        self.use_utf8 = True
 
         # From ``man terminfo`` -- "... hardware tabs are initially
         # set every `n` spaces when the terminal is powered up. Since
@@ -597,7 +595,6 @@ class Screen(object):
                                          self.g0_charset,
                                          self.g1_charset,
                                          self.charset,
-                                         self.use_utf8,
                                          mo.DECOM in self.mode,
                                          mo.DECAWM in self.mode))
 
@@ -611,7 +608,6 @@ class Screen(object):
             self.g0_charset = savepoint.g0_charset
             self.g1_charset = savepoint.g1_charset
             self.charset = savepoint.charset
-            self.use_utf8 = savepoint.use_utf8
 
             if savepoint.origin:
                 self.set_mode(mo.DECOM)
