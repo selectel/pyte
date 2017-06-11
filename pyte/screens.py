@@ -68,7 +68,7 @@ Savepoint = namedtuple("Savepoint", [
 ])
 
 
-class Char(namedtuple("_Char", [
+class Char(namedtuple("Char", [
     "data",
     "fg",
     "bg",
