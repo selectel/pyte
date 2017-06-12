@@ -171,8 +171,12 @@ class Screen(object):
 
     .. attribute:: margins
 
-       Top and bottom screen margins, defining the scrolling region;
-       the actual values are top and bottom line.
+       Margins determine which screen lines move during scrolling
+       (see :meth:`index` and :meth:`reverse_index`). Characters added
+       outside the scrolling region do not make the screen to scroll.
+
+       The value is ``None`` if margins are set to screen boundaries,
+       otherwise -- a pair 0-based top and bottom line indices.
 
     .. attribute:: charset
 
@@ -240,7 +244,7 @@ class Screen(object):
     def reset(self):
         """Reset the terminal to its initial state.
 
-        * Scroll margins are reset to screen boundaries.
+        * Scrolling margins are reset to screen boundaries.
         * Cursor is moved to home location -- ``(0, 0)`` and its
           attributes are set to defaults (see :attr:`default_char`).
         * Screen is cleared -- each character is reset to
@@ -256,8 +260,9 @@ class Screen(object):
         """
         self.dirty.update(range(self.lines))
         self.buffer.clear()
+        self.margins = None
+
         self.mode = set([mo.DECAWM, mo.DECTCEM])
-        self.margins = Margins(0, self.lines - 1)
 
         self.title = ""
         self.icon_name = ""
@@ -323,31 +328,36 @@ class Screen(object):
     def set_margins(self, top=None, bottom=None):
         """Select top and bottom margins for the scrolling region.
 
-        Margins determine which screen lines move during scrolling
-        (see :meth:`index` and :meth:`reverse_index`). Characters added
-        outside the scrolling region do not cause the screen to scroll.
-
         :param int top: the smallest line number that is scrolled.
         :param int bottom: the biggest line number that is scrolled.
         """
-        if top is None or bottom is None:
-            self.margins = Margins(0, self.lines - 1)
+        if top is None and bottom is None:
+            self.margins = None
+            return
+
+        margins = self.margins or Margins(0, self.lines - 1)
+
+        # Arguments are 1-based, while :attr:`margins` are zero
+        # based -- so we have to decrement them by one. We also
+        # make sure that both of them is bounded by [0, lines - 1].
+        if top is None:
+            top = margins.top
         else:
-            # Arguments are 1-based, while :attr:`margins` are zero
-            # based -- so we have to decrement them by one. We also
-            # make sure that both of them is bounded by [0, lines - 1].
             top = max(0, min(top - 1, self.lines - 1))
+        if bottom is None:
+            bottom = margins.bottom
+        else:
             bottom = max(0, min(bottom - 1, self.lines - 1))
 
-            # Even though VT102 and VT220 require DECSTBM to ignore
-            # regions of width less than 2, some programs (like aptitude
-            # for example) rely on it. Practicality beats purity.
-            if bottom - top >= 1:
-                self.margins = Margins(top, bottom)
+        # Even though VT102 and VT220 require DECSTBM to ignore
+        # regions of width less than 2, some programs (like aptitude
+        # for example) rely on it. Practicality beats purity.
+        if bottom - top >= 1:
+            self.margins = Margins(top, bottom)
 
-                # The cursor moves to the home position when the top and
-                # bottom margins of the scrolling region (DECSTBM) changes.
-                self.cursor_position()
+            # The cursor moves to the home position when the top and
+            # bottom margins of the scrolling region (DECSTBM) changes.
+            self.cursor_position()
 
     def set_mode(self, *modes, **kwargs):
         """Set (enable) a given list of modes.
@@ -528,6 +538,9 @@ class Screen(object):
         """
         self.icon_name = param
 
+    def page_up(self):
+        pass
+
     def carriage_return(self):
         """Move the cursor to the beginning of the current line."""
         self.cursor.x = 0
@@ -536,10 +549,13 @@ class Screen(object):
         """Move the cursor down one line in the same column. If the
         cursor is at the last line, create a new line at the bottom.
         """
-        if self.cursor.y == self.margins.bottom:
+        margins = self.margins or Margins(0, self.lines - 1)
+
+        if self.cursor.y == margins.bottom:
+            # TODO: mark only the lines within margins?
             self.dirty.update(range(self.lines))
 
-        top, bottom = self.margins
+        top, bottom = margins
 
         if self.cursor.y == bottom:
             for line in range(top, bottom):
@@ -552,9 +568,11 @@ class Screen(object):
         """Move the cursor up one line in the same column. If the cursor
         is at the first line, create a new line at the top.
         """
-        if self.cursor.y == self.margins.top:
+        margins = self.margins or Margins(0, self.lines - 1)
+        if self.cursor.y == margins.top:
             self.dirty.update(range(self.lines))
-        top, bottom = self.margins
+
+        top, bottom = margins
 
         if self.cursor.y == top:
             for line in range(bottom, top, -1):
@@ -634,7 +652,8 @@ class Screen(object):
         """
         self.dirty.update(range(self.cursor.y, self.lines))
         count = count or 1
-        top, bottom = self.margins
+        margins = self.margins or Margins(0, self.lines - 1)
+        top, bottom = margins
 
         # If cursor is outside scrolling margins it -- do nothin'.
         if top <= self.cursor.y <= bottom:
@@ -656,7 +675,8 @@ class Screen(object):
         self.dirty.update(range(self.cursor.y, self.lines))
 
         count = count or 1
-        top, bottom = self.margins
+        margins = self.margins or Margins(0, self.lines - 1)
+        top, bottom = margins
 
         # If cursor is outside scrolling margins -- do nothin'.
         if top <= self.cursor.y <= bottom:
@@ -720,9 +740,10 @@ class Screen(object):
         self.dirty.add(self.cursor.y)
         count = count or 1
 
+        line = self.buffer[self.cursor.y]
         for x in range(self.cursor.x,
                        min(self.cursor.x + count, self.columns)):
-            self.buffer[self.cursor.y][x] = self.cursor.attrs
+            line[x] = self.cursor.attrs
 
     def erase_in_line(self, how=0, private=False):
         """Erase a line in a specific way.
@@ -825,7 +846,7 @@ class Screen(object):
                                  cursor is bounded by top and and bottom
                                  margins, instead of ``[0; lines - 1]``.
         """
-        if use_margins or mo.DECOM in self.mode:
+        if (use_margins or mo.DECOM in self.mode) and self.margins is not None:
             top, bottom = self.margins
         else:
             top, bottom = 0, self.lines - 1
@@ -838,7 +859,8 @@ class Screen(object):
 
         :param int count: number of lines to skip.
         """
-        self.cursor.y = max(self.cursor.y - (count or 1), self.margins.top)
+        margins = self.margins or Margins(0, self.lines - 1)
+        self.cursor.y = max(self.cursor.y - (count or 1), margins.top)
 
     def cursor_up1(self, count=None):
         """Move cursor up the indicated # of lines to column 1. Cursor
@@ -855,7 +877,8 @@ class Screen(object):
 
         :param int count: number of lines to skip.
         """
-        self.cursor.y = min(self.cursor.y + (count or 1), self.margins.bottom)
+        margins = self.margins or Margins(0, self.lines - 1)
+        self.cursor.y = min(self.cursor.y + (count or 1), margins.bottom)
 
     def cursor_down1(self, count=None):
         """Move cursor down the indicated # of lines to column 1.
@@ -904,7 +927,7 @@ class Screen(object):
 
         # If origin mode (DECOM) is set, line number are relative to
         # the top scrolling margin.
-        if mo.DECOM in self.mode:
+        if self.margins is not None and mo.DECOM in self.mode:
             line += self.margins.top
 
             # Cursor is not allowed to move out of the scrolling region.
@@ -1186,7 +1209,7 @@ class HistoryScreen(Screen):
 
     def index(self):
         """Overloaded to update top history with the removed lines."""
-        top, bottom = self.margins
+        top, bottom = self.margins or Margins(0, self.lines - 1)
 
         if self.cursor.y == bottom:
             self.history.top.append(self.buffer[top])
@@ -1195,7 +1218,7 @@ class HistoryScreen(Screen):
 
     def reverse_index(self):
         """Overloaded to update bottom history with the removed lines."""
-        top, bottom = self.margins
+        top, bottom = self.margins or Margins(0, self.lines - 1)
 
         if self.cursor.y == top:
             self.history.bottom.append(self.buffer[bottom])

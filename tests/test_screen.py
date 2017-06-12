@@ -197,7 +197,7 @@ def test_resize():
         [screen.default_char, screen.default_char, screen.default_char]
     ] * 3
     assert mo.DECOM not in screen.mode
-    assert screen.margins == (0, 2)
+    assert screen.margins is None
 
     screen.resize(2, 2)
     assert screen.columns == screen.lines == 2
@@ -1419,7 +1419,7 @@ def test_alignment_display():
 def test_set_margins():
     screen = pyte.Screen(10, 10)
 
-    assert screen.margins == (0, 9)
+    assert screen.margins is None
 
     # a) ok-case
     screen.set_margins(1, 5)
@@ -1430,9 +1430,9 @@ def test_set_margins():
     assert screen.margins != (99, 9)
     assert screen.margins == (0, 4)
 
-    # c) no margins provided
+    # c) no margins provided -- reset to full screen.
     screen.set_margins()
-    assert screen.margins == (0, screen.lines - 1)
+    assert screen.margins is None
 
 
 def test_hide_cursor():
