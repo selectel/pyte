@@ -1468,18 +1468,6 @@ def test_report_device_attributes():
     assert acc.pop() == ctrl.CSI + "?6c"
 
 
-def test_private_report_device_attributes():
-    # Some console apps (e.g. ADOM) might add ``?`` to the DA request,
-    # even though the VT102/VT220 spec does not allow this.
-    screen = pyte.Screen(10, 10)
-    stream = pyte.Stream(screen)
-
-    acc = []
-    screen.write_process_input = acc.append
-    stream.feed(ctrl.CSI + "?0c")
-    assert acc.pop() == ctrl.CSI + "?6c"
-
-
 def test_report_device_status():
     screen = pyte.Screen(10, 10)
 
