@@ -295,11 +295,19 @@ class Screen(object):
 
         :param int lines: number of lines in the new screen.
         :param int columns: number of columns in the new screen.
+
+        .. versionchanged:: 0.7.0
+
+           If the requested screen size is identical to the current screen
+           size, the method does nothing.
         """
-        # TODO: only mark dirty if the size is different.
-        self.dirty.update(range(self.lines))
         lines = lines or self.lines
         columns = columns or self.columns
+
+        if lines == self.lines and columns == self.columns:
+            return  # No changes.
+
+        self.dirty.update(range(lines))
 
         if lines < self.lines:
             self.save_cursor()

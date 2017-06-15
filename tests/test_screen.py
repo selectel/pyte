@@ -227,6 +227,13 @@ def test_resize():
     assert screen.display == ["sh"]
 
 
+def test_resize_same():
+    screen = pyte.Screen(2, 2)
+    screen.dirty.clear()
+    screen.resize(2, 2)
+    assert not screen.dirty
+
+
 def test_set_mode():
     # Test mo.DECCOLM mode
     screen = update(pyte.Screen(3, 3), ["sam", "is ", "foo"])
