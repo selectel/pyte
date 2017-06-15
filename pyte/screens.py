@@ -296,29 +296,20 @@ class Screen(object):
         :param int lines: number of lines in the new screen.
         :param int columns: number of columns in the new screen.
         """
+        # TODO: only mark dirty if the size is different.
         self.dirty.update(range(self.lines))
         lines = lines or self.lines
         columns = columns or self.columns
 
-        # First resize the lines:
-        diff = self.lines - lines
-
-        # if the current display size is greater than requested
-        #    size, take lines off the top.
-        if diff > 0:
+        if lines < self.lines:
             self.save_cursor()
             self.cursor_position(0, 0)
-            self.delete_lines(diff)
+            self.delete_lines(self.lines - lines)  # Drop from the top.
             self.restore_cursor()
 
-        # Then resize the columns:
-        diff = self.columns - columns
-
-        # if the current display size is greater than requested
-        #    size, trim each line from the right to the new size.
-        if diff > 0:
+        if columns < self.columns:
             for line in self.buffer.values():
-                for x in range(self.columns - diff, self.columns):
+                for x in range(columns, self.columns):
                     line.pop(x, None)
 
         self.lines, self.columns = lines, columns
@@ -716,6 +707,7 @@ class Screen(object):
         """
         self.dirty.add(self.cursor.y)
         count = count or 1
+
         line = self.buffer[self.cursor.y]
         for x in range(self.cursor.x, self.columns):
             if x + count <= self.columns:
