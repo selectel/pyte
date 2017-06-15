@@ -549,10 +549,8 @@ class Screen(object):
         if self.cursor.y == bottom:
             # TODO: mark only the lines within margins?
             self.dirty.update(range(self.lines))
-
-        if self.cursor.y == bottom:
-            for line in range(top, bottom):
-                self.buffer[line] = self.buffer[line + 1]
+            for y in range(top, bottom):
+                self.buffer[y] = self.buffer[y + 1]
             self.buffer.pop(bottom, None)
         else:
             self.cursor_down()
@@ -565,10 +563,8 @@ class Screen(object):
         if self.cursor.y == top:
             # TODO: mark only the lines within margins?
             self.dirty.update(range(self.lines))
-
-        if self.cursor.y == top:
-            for line in range(bottom, top, -1):
-                self.buffer[line] = self.buffer[line - 1]
+            for y in range(bottom, top, -1):
+                self.buffer[y] = self.buffer[y - 1]
             self.buffer.pop(top, None)
         else:
             self.cursor_up()
