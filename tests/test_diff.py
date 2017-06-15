@@ -24,7 +24,7 @@ def test_mark_whole_screen():
 
     # c) resize().
     screen.dirty.clear()
-    screen.resize()
+    screen.resize(130, 24)
     assert screen.dirty == set(range(screen.lines))
 
     # d) alignment_display().
