@@ -1002,10 +1002,15 @@ class Screen(object):
         """Report terminal identity.
 
         .. versionadded:: 0.5.0
+
+        .. versionchanged:: 0.7.0
+
+           If ``private`` keyword argument is set, the method does nothing.
+           This behaviour is consistent with VT220 manual.
         """
         # We only implement "primary" DA which is the only DA request
         # VT102 understood, see ``VT102ID`` in ``linux/drivers/tty/vt.c``.
-        if mode == 0:
+        if mode == 0 and not kwargs.get("private"):
             self.write_process_input(ctrl.CSI + "?6c")
 
     def report_device_status(self, mode):
