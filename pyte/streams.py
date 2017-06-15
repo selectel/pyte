@@ -57,7 +57,7 @@ class Stream(object):
 
         `man console_codes <http://linux.die.net/man/4/console_codes>`_
             For details on console codes listed bellow in :attr:`basic`,
-            :attr:`escape`, :attr:`csi`, :attr:`sharp` and :attr:`percent`.
+            :attr:`escape`, :attr:`csi`, :attr:`sharp`.
     """
 
     #: Control sequences, which don't require any arguments.
