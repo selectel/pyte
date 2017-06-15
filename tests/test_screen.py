@@ -186,13 +186,10 @@ def test_resize():
     screen.set_mode(mo.DECOM)
     screen.set_margins(0, 1)
     assert screen.columns == screen.lines == 2
-    assert len(tolist(screen)[0]) == 2
     assert tolist(screen) == [[screen.default_char, screen.default_char]] * 2
 
     screen.resize(3, 3)
     assert screen.columns == screen.lines == 3
-    assert len(tolist(screen)) == 3
-    assert len(tolist(screen)[0]) == 3
     assert tolist(screen) == [
         [screen.default_char, screen.default_char, screen.default_char]
     ] * 3
@@ -201,12 +198,10 @@ def test_resize():
 
     screen.resize(2, 2)
     assert screen.columns == screen.lines == 2
-    assert len(tolist(screen)) == 2
-    assert len(tolist(screen)[0]) == 2
     assert tolist(screen) == [[screen.default_char, screen.default_char]] * 2
 
     # Quirks:
-    # a) if the current display is thinner than the requested size,
+    # a) if the current display is narrower than the requested size,
     #    new columns should be added to the right.
     screen = update(pyte.Screen(2, 2), ["bo", "sh"], [None, None])
     screen.resize(2, 3)
