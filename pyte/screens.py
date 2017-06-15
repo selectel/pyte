@@ -537,9 +537,6 @@ class Screen(object):
         """
         self.icon_name = param
 
-    def page_up(self):
-        pass
-
     def carriage_return(self):
         """Move the cursor to the beginning of the current line."""
         self.cursor.x = 0
@@ -548,13 +545,10 @@ class Screen(object):
         """Move the cursor down one line in the same column. If the
         cursor is at the last line, create a new line at the bottom.
         """
-        margins = self.margins or Margins(0, self.lines - 1)
-
-        if self.cursor.y == margins.bottom:
+        top, bottom = self.margins or Margins(0, self.lines - 1)
+        if self.cursor.y == bottom:
             # TODO: mark only the lines within margins?
             self.dirty.update(range(self.lines))
-
-        top, bottom = margins
 
         if self.cursor.y == bottom:
             for line in range(top, bottom):
@@ -567,11 +561,10 @@ class Screen(object):
         """Move the cursor up one line in the same column. If the cursor
         is at the first line, create a new line at the top.
         """
-        margins = self.margins or Margins(0, self.lines - 1)
-        if self.cursor.y == margins.top:
+        top, bottom = self.margins or Margins(0, self.lines - 1)
+        if self.cursor.y == top:
+            # TODO: mark only the lines within margins?
             self.dirty.update(range(self.lines))
-
-        top, bottom = margins
 
         if self.cursor.y == top:
             for line in range(bottom, top, -1):
@@ -649,13 +642,12 @@ class Screen(object):
 
         :param count: number of lines to insert.
         """
-        self.dirty.update(range(self.cursor.y, self.lines))
         count = count or 1
-        margins = self.margins or Margins(0, self.lines - 1)
-        top, bottom = margins
+        top, bottom = self.margins or Margins(0, self.lines - 1)
 
         # If cursor is outside scrolling margins it -- do nothin'.
         if top <= self.cursor.y <= bottom:
+            self.dirty.update(range(self.cursor.y, self.lines))
             for y in range(bottom, self.cursor.y - 1, -1):
                 if y + count <= bottom and y in self.buffer:
                     self.buffer[y + count] = self.buffer[y]
@@ -671,14 +663,12 @@ class Screen(object):
 
         :param int count: number of lines to delete.
         """
-        self.dirty.update(range(self.cursor.y, self.lines))
-
         count = count or 1
-        margins = self.margins or Margins(0, self.lines - 1)
-        top, bottom = margins
+        top, bottom = self.margins or Margins(0, self.lines - 1)
 
         # If cursor is outside scrolling margins -- do nothin'.
         if top <= self.cursor.y <= bottom:
+            self.dirty.update(range(self.cursor.y, self.lines))
             for y in range(self.cursor.y, bottom + 1):
                 if y + count <= bottom:
                     if y + count in self.buffer:
@@ -730,12 +720,12 @@ class Screen(object):
 
         :param int count: number of characters to erase.
 
-        .. warning::
+        .. note::
 
-           Even though *ALL* of the VTXXX manuals state that character
-           attributes **should be reset to defaults**, ``libvte``,
-           ``xterm`` and ``ROTE`` completely ignore this. Same applies
-           too all ``erase_*()`` and ``delete_*()`` methods.
+           Using cursor attributes for character attributes may seem
+           illogical, but if recall that a terminal emulator emulates
+           a type writer, it starts to make sense. The only way a type
+           writer could erase a character is by typing over it.
         """
         self.dirty.add(self.cursor.y)
         count = count or 1
@@ -748,6 +738,8 @@ class Screen(object):
     def erase_in_line(self, how=0, private=False):
         """Erase a line in a specific way.
 
+        Character attributes are set to cursor attributes.
+
         :param int how: defines the way the line should be erased in:
 
             * ``0`` -- Erases from cursor to end of line, including cursor
@@ -755,20 +747,15 @@ class Screen(object):
             * ``1`` -- Erases from beginning of line to cursor,
               including cursor position.
             * ``2`` -- Erases complete line.
-        :param bool private: when ``True`` character attributes are left
-                             unchanged **not implemented**.
+        :param bool private: when ``True`` only characters marked as
+                             eraseable are affected **not implemented**.
         """
         self.dirty.add(self.cursor.y)
         if how == 0:
-            # a) erase from the cursor to the end of line, including
-            #    the cursor,
             interval = range(self.cursor.x, self.columns)
         elif how == 1:
-            # b) erase from the beginning of the line to the cursor,
-            #    including it,
             interval = range(self.cursor.x + 1)
         elif how == 2:
-            # c) erase the entire line.
             interval = range(self.columns)
 
         line = self.buffer[self.cursor.y]
@@ -777,6 +764,8 @@ class Screen(object):
 
     def erase_in_display(self, how=0, private=False):
         """Erases display in a specific way.
+
+        Character attributes are set to cursor attributes.
 
         :param int how: defines the way the line should be erased in:
 
@@ -787,30 +776,22 @@ class Screen(object):
             * ``2`` and ``3`` -- Erases complete display. All lines
               are erased and changed to single-width. Cursor does not
               move.
-        :param bool private: when ``True`` character attributes are left
-                             unchanged **not implemented**.
+        :param bool private: when ``True`` only characters marked as
+                             eraseable are affected **not implemented**.
         """
         if how == 0:
-            # a) erase from cursor to the end of the display, including
-            #    the cursor,
-            self.dirty.update(range(self.cursor.y + 1, self.lines))
             interval = range(self.cursor.y + 1, self.lines)
         elif how == 1:
-            # b) erase from the beginning of the display to the cursor,
-            #    including it,
-            self.dirty.update(range(self.cursor.y))
             interval = range(self.cursor.y)
         elif how == 2 or how == 3:
-            # c) erase the whole display.
-            self.dirty.update(range(self.lines))
             interval = range(self.lines)
 
+        self.dirty.update(interval)
         for y in interval:
             line = self.buffer[y]
             for x in line:
                 line[x] = self.cursor.attrs
 
-        # In case of 0 or 1 we have to erase the line with the cursor.
         if how == 0 or how == 1:
             self.erase_in_line(how)
 
@@ -859,8 +840,8 @@ class Screen(object):
 
         :param int count: number of lines to skip.
         """
-        margins = self.margins or Margins(0, self.lines - 1)
-        self.cursor.y = max(self.cursor.y - (count or 1), margins.top)
+        top, _bottom = self.margins or Margins(0, self.lines - 1)
+        self.cursor.y = max(self.cursor.y - (count or 1), top)
 
     def cursor_up1(self, count=None):
         """Move cursor up the indicated # of lines to column 1. Cursor
@@ -877,8 +858,8 @@ class Screen(object):
 
         :param int count: number of lines to skip.
         """
-        margins = self.margins or Margins(0, self.lines - 1)
-        self.cursor.y = min(self.cursor.y + (count or 1), margins.bottom)
+        _top, bottom = self.margins or Margins(0, self.lines - 1)
+        self.cursor.y = min(self.cursor.y + (count or 1), bottom)
 
     def cursor_down1(self, count=None):
         """Move cursor down the indicated # of lines to column 1.
