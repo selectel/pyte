@@ -326,6 +326,11 @@ class Stream(object):
                             break  # CSI is finished.
             elif char == OSC:
                 code = yield
+                if code == "R":
+                    continue  # Reset palette. Not implemented.
+                elif code == "P":
+                    continue  # Set palette. Not implemented.
+
                 param = ""
                 while True:
                     char = yield

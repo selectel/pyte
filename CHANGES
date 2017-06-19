@@ -19,6 +19,8 @@ Version 0.7.0-dev
   the current one.
 - Disallowed private mode for ``Screen.report_device_attributes``. This
   was causing an infinite loop in Emacs and Vim. See issue #81 on GitHub.
+- Fixed a bug in `OSC` parsing, which caused ``Stream`` to hang upon
+  receiving a palette reset request ``ESC ] R``.
 
 Version 0.6.0
 -------------
