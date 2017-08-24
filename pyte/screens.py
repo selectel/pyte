@@ -1216,7 +1216,7 @@ class HistoryScreen(Screen):
                 self.buffer[y]
                 for y in range(self.lines - 1, self.lines - mid - 1, -1))
             self.history = self.history \
-                ._replace(position=self.history.position - self.lines)
+                ._replace(position=self.history.position - mid)
 
             for y in range(self.lines - 1, mid - 1, -1):
                 self.buffer[y] = self.buffer[y - mid]
@@ -1233,7 +1233,7 @@ class HistoryScreen(Screen):
 
             self.history.top.extend(self.buffer[y] for y in range(mid))
             self.history = self.history \
-                ._replace(position=self.history.position + self.lines)
+                ._replace(position=self.history.position + mid)
 
             for y in range(self.lines - mid):
                 self.buffer[y] = self.buffer[y + mid]
