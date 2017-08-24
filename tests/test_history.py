@@ -249,11 +249,11 @@ def test_prev_page():
     assert screen.history.position == screen.lines
     assert len(screen.buffer) == screen.lines
     assert screen.display == [
-        "21   ",
-        "22   ",
-        "23   ",
-        "24   ",
-        "25   "
+        "1    ",
+        "2    ",
+        "3    ",
+        "4    ",
+        "5    "
     ]
 
     while screen.history.position < screen.history.size:
@@ -296,11 +296,11 @@ def test_prev_page():
     assert screen.history.position == screen.lines
     assert len(screen.buffer) == screen.lines
     assert screen.display == [
-        "21   ",
-        "22   ",
-        "23   ",
-        "24   ",
-        "25   "
+        "1    ",
+        "2    ",
+        "3    ",
+        "4    ",
+        "5    "
     ]
 
     while screen.history.position < screen.history.size:
