@@ -188,7 +188,41 @@ def test_prev_page():
         "     ",
     ]
 
-    # d) same with cursor in the middle of the screen.
+    # d) with a ratio other than 0.5
+    screen = pyte.HistoryScreen(4, 4, history=40, ratio=0.75)
+    screen.set_mode(mo.LNM)
+
+    for idx in range(screen.lines * 10):
+        screen.draw(str(idx))
+        screen.linefeed()
+
+    assert screen.history.top
+    assert not screen.history.bottom
+    assert screen.history.position == 40
+    assert screen.display == [
+        "37  ",
+        "38  ",
+        "39  ",
+        "    "
+    ]
+
+    screen.prev_page()
+    assert screen.history.position == 37
+    assert screen.display == [
+        "34  ",
+        "35  ",
+        "36  ",
+        "37  "
+    ]
+
+    assert len(screen.history.bottom) == 3
+    assert chars(screen.history.bottom, screen.columns) == [
+        "38  ",
+        "39  ",
+        "    "
+    ]
+
+    # e) same with cursor in the middle of the screen.
     screen = pyte.HistoryScreen(5, 5, history=50)
     screen.set_mode(mo.LNM)
 
