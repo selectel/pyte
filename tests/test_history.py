@@ -40,10 +40,10 @@ def test_index():
     assert screen.history.top[-1] == line
 
     # c) rotation.
-    for _ in range(screen.lines * screen.lines):
+    for _ in range(screen.history.size * 2):
         screen.index()
 
-    assert len(screen.history.top) == 25
+    assert len(screen.history.top) == 50
 
 
 def test_reverse_index():
