@@ -1160,7 +1160,7 @@ class HistoryScreen(Screen):
         # If we're at the bottom of the history buffer and `DECTCEM`
         # mode is set -- show the cursor.
         self.cursor.hidden = not (
-            abs(self.history.position - self.history.size) < self.lines and
+            self.history.position == self.history.size and
             mo.DECTCEM in self.mode
         )
 
