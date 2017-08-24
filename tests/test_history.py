@@ -43,7 +43,7 @@ def test_index():
     for _ in range(screen.lines * screen.lines):
         screen.index()
 
-    assert len(screen.history.top) == 25  # pages // 2 * lines
+    assert len(screen.history.top) == 25
 
 
 def test_reverse_index():
@@ -111,7 +111,7 @@ def test_prev_page():
 
     # a) first page up.
     screen.prev_page()
-    assert screen.history.position == 36
+    assert screen.history.position == 38
     assert len(screen.buffer) == screen.lines
     assert screen.display == [
         "35  ",
@@ -135,7 +135,7 @@ def test_prev_page():
 
     # b) second page up.
     screen.prev_page()
-    assert screen.history.position == 32
+    assert screen.history.position == 36
     assert len(screen.buffer) == screen.lines
     assert screen.display == [
         "33  ",
@@ -172,7 +172,7 @@ def test_prev_page():
     ]
 
     screen.prev_page()
-    assert screen.history.position == 45
+    assert screen.history.position == 47
     assert screen.display == [
         "43   ",
         "44   ",
@@ -356,7 +356,7 @@ def test_next_page():
     screen.prev_page()
     screen.prev_page()
     screen.next_page()
-    assert screen.history.position == 45
+    assert screen.history.position == 47
     assert screen.history.top
     assert chars(screen.history.bottom, screen.columns) == [
         "23   ",
@@ -377,7 +377,7 @@ def test_next_page():
     screen.prev_page()
     screen.next_page()
     screen.next_page()
-    assert screen.history.position == 45
+    assert screen.history.position == 47
     assert len(screen.buffer) == screen.lines
     assert screen.display == [
         "18   ",
