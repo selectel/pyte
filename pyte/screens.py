@@ -1111,7 +1111,7 @@ class HistoryScreen(Screen):
     _wrapped.update(["next_page", "prev_page"])
 
     def __init__(self, columns, lines, history=100, ratio=.5):
-        self.history = History(deque(maxlen=history // 2),
+        self.history = History(deque(maxlen=history),
                                deque(maxlen=history),
                                float(ratio),
                                history,
