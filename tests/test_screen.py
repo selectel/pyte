@@ -193,7 +193,7 @@ def test_resize():
     assert tolist(screen) == [
         [screen.default_char, screen.default_char, screen.default_char]
     ] * 3
-    assert mo.DECOM not in screen.mode
+    assert mo.DECOM in screen.mode
     assert screen.margins is None
 
     screen.resize(2, 2)

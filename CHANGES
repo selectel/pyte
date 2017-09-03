@@ -21,6 +21,8 @@ Version 0.7.0-dev
   was causing an infinite loop in Emacs and Vim. See issue #81 on GitHub.
 - Fixed a bug in `OSC` parsing, which caused ``Stream`` to hang upon
   receiving a palette reset request ``ESC ] R``.
+- Changed ``Screen.reset`` not to reset `DECOM`. See discussion in issue
+  #95 on Github.
 
 Version 0.6.0
 -------------

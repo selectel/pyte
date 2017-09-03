@@ -290,9 +290,6 @@ class Screen(object):
         be added at the right, and if it has more -- columns will be
         clipped at the right.
 
-        .. note:: According to `xterm`, we should also reset origin
-                  mode and screen margins, see ``xterm/screen.c:1761``.
-
         :param int lines: number of lines in the new screen.
         :param int columns: number of columns in the new screen.
 
@@ -322,7 +319,6 @@ class Screen(object):
 
         self.lines, self.columns = lines, columns
         self.set_margins()
-        self.reset_mode(mo.DECOM)
 
     def set_margins(self, top=None, bottom=None):
         """Select top and bottom margins for the scrolling region.
@@ -380,8 +376,7 @@ class Screen(object):
             self.erase_in_display(2)
             self.cursor_position()
 
-        # According to `vttest`, DECOM should also home the cursor, see
-        # vttest/main.c:303.
+        # According to VT520 manual, DECOM should also home the cursor.
         if mo.DECOM in modes:
             self.cursor_position()
 
