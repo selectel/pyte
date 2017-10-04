@@ -637,7 +637,7 @@ def test_tabstops():
     screen = pyte.Screen(10, 10)
 
     # Making sure initial tabstops are in place ...
-    assert screen.tabstops == set([7])
+    assert screen.tabstops == set([8])
 
     # ... and clearing them.
     screen.clear_tab_stop(3)

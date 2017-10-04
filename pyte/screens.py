@@ -274,7 +274,7 @@ class Screen(object):
         # From ``man terminfo`` -- "... hardware tabs are initially
         # set every `n` spaces when the terminal is powered up. Since
         # we aim to support VT102 / VT220 and linux -- we use n = 8.
-        self.tabstops = set(range(7, self.columns, 8))
+        self.tabstops = set(range(8, self.columns, 8))
 
         self.cursor = Cursor(0, 0)
         self.cursor_position()
