@@ -23,6 +23,8 @@ Version 0.7.0-dev
   receiving a palette reset request ``ESC ] R``.
 - Changed ``Screen.reset`` not to reset `DECOM`. See discussion in issue
   #95 on Github.
+- Changed the first tabstop to be at the 9-th column. See PR #98 on
+  GitHub. Thanks to @gordon-quad!
 
 Version 0.6.0
 -------------
