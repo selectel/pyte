@@ -3,8 +3,12 @@ pyte Changelog
 
 Here you can see the full list of changes between each pyte release.
 
-Version 0.7.0-dev
+Version 0.7.0
 -------------
+
+Released on October 7th 2017.
+
+This release is NOT backward compatible with 0.6.X branch!
 
 - Removed deprecated ``only`` parameter of ``Stream.attach``.
 - Removed deprecated ``encoding`` parameter of ``ByteStream``.
