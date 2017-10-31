@@ -6,6 +6,9 @@ Here you can see the full list of changes between each pyte release.
 Version 0.8.0-dev
 -------------
 
+- Modify logic around tracking position in the ``HistoryScreen``, allowing the
+  full history to be access. See PR #96 on GitHub.
+
 Version 0.7.0
 -------------
 
