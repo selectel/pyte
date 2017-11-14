@@ -61,8 +61,8 @@ ESC = "\x1b"
 #: *Delete*: Is ignored.
 DEL = "\x7f"
 
-#: *Control sequence introducer*: An equivalent for ``ESC [``.
-CSI = "\x9b"
+#: *Control sequence introducer*.
+CSI = ESC + "["
 
 #: *String terminator*.
 ST = "\x9c"
