@@ -129,7 +129,7 @@ class Stream(object):
 
     #: A regular expression pattern matching everything what can be
     #: considered plain text.
-    _special = set([ctrl.ESC, ctrl.CSI, ctrl.NUL, ctrl.DEL, ctrl.OSC])
+    _special = set([ctrl.ESC, ctrl.CSI_C1, ctrl.NUL, ctrl.DEL, ctrl.OSC])
     _special.update(basic)
     _text_pattern = re.compile(
         "[^" + "".join(map(re.escape, _special)) + "]+")
@@ -213,7 +213,7 @@ class Stream(object):
         draw = listener.draw
         debug = listener.debug
 
-        ESC, CSI = ctrl.ESC, ctrl.CSI
+        ESC, CSI_C1 = ctrl.ESC, ctrl.CSI_C1
         OSC, ST = ctrl.OSC, ctrl.ST
         SP_OR_GT = ctrl.SP + ">"
         NUL_OR_DEL = ctrl.NUL + ctrl.DEL
@@ -251,7 +251,7 @@ class Stream(object):
                 #    are noop.
                 char = yield
                 if char == "[":
-                    char = CSI  # Go to CSI.
+                    char = CSI_C1  # Go to CSI.
                 elif char == "]":
                     char = OSC  # Go to OSC.
                 else:
@@ -279,7 +279,7 @@ class Stream(object):
                     continue
 
                 basic_dispatch[char]()
-            elif char == CSI:
+            elif char == CSI_C1:
                 # All parameters are unsigned, positive decimal integers, with
                 # the most significant digit sent first. Any parameter greater
                 # than 9999 is set to 9999. If you do not specify a value, a 0
