@@ -38,6 +38,10 @@ class argstore(object):
         self.seen.extend(args)
 
 
+class IntentionalException(Exception):
+    pass
+
+
 def test_basic_sequences():
     for cmd, event in pyte.Stream.escape.items():
         screen = pyte.Screen(80, 24)
@@ -258,6 +262,26 @@ def test_debug_stream(input, expected):
 
     output.seek(0)
     assert [eval(line) for line in output] == expected
+
+
+def test_handler_failure():
+    """When an error occurs in a handler, the stream should continue to work.
+    """
+
+    def failing_handler(*args, **kwargs):
+        raise IntentionalException()
+
+    handler = argcheck()
+    screen = pyte.Screen(80, 24)
+    screen.set_mode = failing_handler
+    screen.reset_mode = handler
+
+    stream = pyte.Stream(screen)
+    with pytest.raises(IntentionalException):
+        stream.feed(ctrl.CSI + "?9;2h")
+
+    stream.feed(ctrl.CSI + "?9;2l")
+    assert handler.count == 1
 
 
 def test_byte_stream_feed():
