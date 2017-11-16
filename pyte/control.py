@@ -62,7 +62,9 @@ ESC = "\x1b"
 DEL = "\x7f"
 
 #: *Control sequence introducer*.
-CSI = ESC + "["
+CSI_C0 = ESC + "["
+CSI_C1 = "\x9b"
+CSI = CSI_C0
 
 #: *String terminator*.
 ST = "\x9c"
