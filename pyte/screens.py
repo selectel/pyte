@@ -210,8 +210,11 @@ class Screen(object):
        for a description of the presentational component, implemented
        by ``Screen``.
     """
-    #: An empty character with default foreground and background colors.
-    default_char = Char(data=" ", fg="default", bg="default")
+    @property
+    def default_char(self):
+        """An empty character with default foreground and background colors."""
+        reverse = mo.DECSCNM in self.mode
+        return Char(data=" ", fg="default", bg="default", reverse=reverse)
 
     def __init__(self, columns, lines):
         self.savepoints = []
@@ -383,6 +386,7 @@ class Screen(object):
         # Mark all displayed characters as reverse.
         if mo.DECSCNM in modes:
             for line in self.buffer.values():
+                line.default = self.default_char
                 for x in line:
                     line[x] = line[x]._replace(reverse=True)
 
@@ -418,6 +422,7 @@ class Screen(object):
 
         if mo.DECSCNM in modes:
             for line in self.buffer.values():
+                line.default = self.default_char
                 for x in line:
                     line[x] = line[x]._replace(reverse=False)
 
