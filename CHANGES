@@ -8,6 +8,8 @@ Version 0.8.0-dev
 
 - Modify logic around tracking position in the ``HistoryScreen``, allowing the
   full history to be access. See PR #96 on GitHub.
+- Send C0 encoded CSI instead of C1, avoiding compatibility issues with
+  unicode. See issue #99 on GitHub.
 
 Version 0.7.0
 -------------
