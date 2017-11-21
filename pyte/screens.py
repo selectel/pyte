@@ -139,6 +139,11 @@ class StaticDefaultDict(dict):
     def __missing__(self, key):
         return self.default
 
+    def copy(self):
+        new_static_default_dict = type(self)(self.default)
+        new_static_default_dict.update(self)
+        return new_static_default_dict
+
 
 class Screen(object):
     """
