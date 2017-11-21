@@ -261,10 +261,12 @@ def test_set_mode():
     for line in range(3):
         for char in tolist(screen)[line]:
             assert char.reverse
+    assert screen.default_char.reverse
     screen.reset_mode(mo.DECSCNM)
     for line in range(3):
         for char in tolist(screen)[line]:
             assert not char.reverse
+    assert not screen.default_char.reverse
 
     # Test mo.DECTCEM mode
     screen = update(pyte.Screen(3, 3), ["sam", "is ", "foo"])
