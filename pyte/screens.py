@@ -87,8 +87,8 @@ class Char(namedtuple("Char", [
                       Defaults to ``False``.
     :param bool italics: flag for rendering the character using italic font.
                          Defaults to ``False``.
-    :param bool underline: flag for rendering the character underlined.
-                           Defaults to ``False``.
+    :param bool underscore: flag for rendering the character underlined.
+                            Defaults to ``False``.
     :param bool strikethrough: flag for rendering the character with a
                                strike-through line. Defaults to ``False``.
     :param bool reverse: flag for swapping foreground and background colours
