@@ -275,7 +275,7 @@ class Stream(object):
                 # Ignore shifts in UTF-8 mode. See
                 # http://www.cl.cam.ac.uk/~mgk25/unicode.html#term for
                 # the why on UTF-8 restriction.
-                if char == ctrl.SI or char == ctrl.SO and self.use_utf8:
+                if (char == ctrl.SI or char == ctrl.SO) and self.use_utf8:
                     continue
 
                 basic_dispatch[char]()
