@@ -129,7 +129,7 @@ class Stream(object):
 
     #: A regular expression pattern matching everything what can be
     #: considered plain text.
-    _special = set([ctrl.ESC, ctrl.CSI_C1, ctrl.NUL, ctrl.DEL, ctrl.OSC])
+    _special = set([ctrl.ESC, ctrl.CSI_C1, ctrl.NUL, ctrl.DEL, ctrl.OSC_C1])
     _special.update(basic)
     _text_pattern = re.compile(
         "[^" + "".join(map(re.escape, _special)) + "]+")
@@ -214,7 +214,7 @@ class Stream(object):
         debug = listener.debug
 
         ESC, CSI_C1 = ctrl.ESC, ctrl.CSI_C1
-        OSC, ST = ctrl.OSC, ctrl.ST
+        OSC_C1, ST_C1 = ctrl.OSC_C1, ctrl.ST_C1
         SP_OR_GT = ctrl.SP + ">"
         NUL_OR_DEL = ctrl.NUL + ctrl.DEL
         CAN_OR_SUB = ctrl.CAN + ctrl.SUB
@@ -253,7 +253,7 @@ class Stream(object):
                 if char == "[":
                     char = CSI_C1  # Go to CSI.
                 elif char == "]":
-                    char = OSC  # Go to OSC.
+                    char = OSC_C1  # Go to OSC.
                 else:
                     if char == "#":
                         sharp_dispatch[(yield)]()
@@ -324,7 +324,7 @@ class Stream(object):
                             else:
                                 csi_dispatch[char](*params)
                             break  # CSI is finished.
-            elif char == OSC:
+            elif char == OSC_C1:
                 code = yield
                 if code == "R":
                     continue  # Reset palette. Not implemented.
@@ -334,7 +334,7 @@ class Stream(object):
                 param = ""
                 while True:
                     char = yield
-                    if char == ST or char == ctrl.BEL:
+                    if char == ST_C1 or char == ctrl.BEL:
                         break
                     else:
                         param += char

@@ -184,19 +184,19 @@ def test_set_title_icon_name():
     stream = pyte.Stream(screen)
 
     # a) set only icon name
-    stream.feed(ctrl.OSC + "1;foo" + ctrl.ST)
+    stream.feed(ctrl.OSC_C1 + "1;foo" + ctrl.ST_C1)
     assert screen.icon_name == "foo"
 
     # b) set only title
-    stream.feed(ctrl.OSC + "2;foo" + ctrl.ST)
+    stream.feed(ctrl.OSC_C1 + "2;foo" + ctrl.ST_C1)
     assert screen.title == "foo"
 
     # c) set both icon name and title
-    stream.feed(ctrl.OSC + "0;bar" + ctrl.ST)
+    stream.feed(ctrl.OSC_C1 + "0;bar" + ctrl.ST_C1)
     assert screen.title == screen.icon_name == "bar"
 
     # d) set both icon name and title then terminate with BEL
-    stream.feed(ctrl.OSC + "0;bar" + ctrl.BEL)
+    stream.feed(ctrl.OSC_C1 + "0;bar" + ctrl.BEL)
     assert screen.title == screen.icon_name == "bar"
 
     # e) test ➜ ('\xe2\x9e\x9c') symbol, that contains string terminator \x9c
