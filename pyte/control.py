@@ -67,7 +67,11 @@ CSI_C1 = "\x9b"
 CSI = CSI_C0
 
 #: *String terminator*.
-ST = "\x9c"
+ST_C0 = ESC + "\\"
+ST_C1 = "\x9c"
+ST = ST_C0
 
 #: *Operating system command*.
-OSC = "\x9d"
+OSC_C0 = ESC + "]"
+OSC_C1 = "\x9d"
+OSC = OSC_C0
