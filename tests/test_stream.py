@@ -179,24 +179,30 @@ def test_control_characters():
     assert handler.args == (10, 10)
 
 
-def test_set_title_icon_name():
+@pytest.mark.parametrize('osc,st', [
+    (ctrl.OSC_C0, ctrl.ST_C0),
+    (ctrl.OSC_C0, ctrl.ST_C1),
+    (ctrl.OSC_C1, ctrl.ST_C0),
+    (ctrl.OSC_C1, ctrl.ST_C1)
+])
+def test_set_title_icon_name(osc, st):
     screen = pyte.Screen(80, 24)
     stream = pyte.Stream(screen)
 
     # a) set only icon name
-    stream.feed(ctrl.OSC_C1 + "1;foo" + ctrl.ST_C1)
+    stream.feed(osc + "1;foo" + st)
     assert screen.icon_name == "foo"
 
     # b) set only title
-    stream.feed(ctrl.OSC_C1 + "2;foo" + ctrl.ST_C1)
+    stream.feed(osc + "2;foo" + st)
     assert screen.title == "foo"
 
     # c) set both icon name and title
-    stream.feed(ctrl.OSC_C1 + "0;bar" + ctrl.ST_C1)
+    stream.feed(osc + "0;bar" + st)
     assert screen.title == screen.icon_name == "bar"
 
     # d) set both icon name and title then terminate with BEL
-    stream.feed(ctrl.OSC_C1 + "0;bar" + ctrl.BEL)
+    stream.feed(osc + "0;bar" + st)
     assert screen.title == screen.icon_name == "bar"
 
     # e) test ➜ ('\xe2\x9e\x9c') symbol, that contains string terminator \x9c
