@@ -334,7 +334,9 @@ class Stream(object):
                 param = ""
                 while True:
                     char = yield
-                    if char == ST_C1 or char == ctrl.BEL:
+                    if char == ESC:
+                        char += yield
+                    if char in {ctrl.ST_C0, ctrl.ST_C1, ctrl.BEL}:
                         break
                     else:
                         param += char
