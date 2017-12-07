@@ -336,7 +336,7 @@ class Stream(object):
                     char = yield
                     if char == ESC:
                         char += yield
-                    if char in {ctrl.ST_C0, ctrl.ST_C1, ctrl.BEL}:
+                    if char in [ctrl.ST_C0, ctrl.ST_C1, ctrl.BEL]:
                         break
                     else:
                         param += char
