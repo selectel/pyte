@@ -228,6 +228,16 @@ def test_define_charset():
     assert screen.display[0] == " " * 3
 
 
+def test_non_utf8_shifts():
+    screen = pyte.Screen(3, 3)
+    handler = screen.shift_in = screen.shift_out = argcheck()
+    stream = pyte.Stream(screen)
+    stream.use_utf8 = False
+    stream.feed(ctrl.SI)
+    stream.feed(ctrl.SO)
+    assert handler.count == 2
+
+
 @pytest.mark.parametrize("input,expected", [
     (b"foo", [["draw", ["foo"], {}]]),
     (b"\x1b[1;24r\x1b[4l\x1b[24;1H", [
