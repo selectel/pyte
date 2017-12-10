@@ -15,6 +15,8 @@ Version 0.8.0-dev
 - Fixed `DECSCNM` handling bug. The attributes of ``Screen.default_char``
   were not reversed leaving all blank characters as-is. See PR #102 on
   GitHub. Thanks to @zblz!
+- Correctly terminate OSC mode in ``Stream`` on receipt of a C0 encoded ``ST``
+  character.
 
 Version 0.7.0
 -------------
