@@ -214,12 +214,13 @@ class Stream(object):
         debug = listener.debug
 
         ESC, CSI_C1 = ctrl.ESC, ctrl.CSI_C1
-        OSC_C1, ST_C1 = ctrl.OSC_C1, ctrl.ST_C1
+        OSC_C1 = ctrl.OSC_C1
         SP_OR_GT = ctrl.SP + ">"
         NUL_OR_DEL = ctrl.NUL + ctrl.DEL
         CAN_OR_SUB = ctrl.CAN + ctrl.SUB
         ALLOWED_IN_CSI = "".join([ctrl.BEL, ctrl.BS, ctrl.HT, ctrl.LF,
                                   ctrl.VT, ctrl.FF, ctrl.CR])
+        OSC_TERMINATORS = set([ctrl.ST_C0, ctrl.ST_C1, ctrl.BEL])
 
         def create_dispatcher(mapping):
             return defaultdict(lambda: debug, dict(
@@ -336,7 +337,7 @@ class Stream(object):
                     char = yield
                     if char == ESC:
                         char += yield
-                    if char in [ctrl.ST_C0, ctrl.ST_C1, ctrl.BEL]:
+                    if char in OSC_TERMINATORS:
                         break
                     else:
                         param += char
