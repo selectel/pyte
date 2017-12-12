@@ -8,7 +8,9 @@ Version 0.8.1-dev
 
 - Yet another fix of ``Screen.set_margins`` for the case of CSI
   with no arguments. See issue #61 on GitHub.
-
+- Accept additional positional arguments to ``Screen.erase_in_display``, as
+  some clear implementations include a ``;`` after the first parameter causing
+  pyte to assme a ``0`` second parameter.
 
 Version 0.8.0
 -------------
