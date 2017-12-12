@@ -1286,6 +1286,49 @@ def test_erase_in_display():
                               "     "]
     assert tolist(screen) == [[screen.default_char] * 5] * 5
 
+    # d) erase with private mode
+    screen = update(pyte.Screen(5, 5),
+                    ["sam i",
+                     "s foo",
+                     "but a",
+                     "re yo",
+                     "u?   "], colored=[2, 3])
+    screen.erase_in_display(3, private=True)
+    assert screen.display == ["     ",
+                              "     ",
+                              "     ",
+                              "     ",
+                              "     "]
+
+    # e) erase with extra args
+    screen = update(pyte.Screen(5, 5),
+                    ["sam i",
+                     "s foo",
+                     "but a",
+                     "re yo",
+                     "u?   "], colored=[2, 3])
+    args = [3, 0]
+    screen.erase_in_display(*args)
+    assert screen.display == ["     ",
+                              "     ",
+                              "     ",
+                              "     ",
+                              "     "]
+
+    # f) erase with extra args and private
+    screen = update(pyte.Screen(5, 5),
+                    ["sam i",
+                     "s foo",
+                     "but a",
+                     "re yo",
+                     "u?   "], colored=[2, 3])
+    screen.erase_in_display(*args, private=True)
+    assert screen.display == ["     ",
+                              "     ",
+                              "     ",
+                              "     ",
+                              "     "]
+
 
 def test_cursor_up():
     screen = pyte.Screen(10, 10)
