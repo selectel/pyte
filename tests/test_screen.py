@@ -149,6 +149,16 @@ def test_reset_resets_colors():
     assert screen.cursor.attrs == screen.default_char
 
 
+def test_reset_works_between_attributes():
+    screen = pyte.Screen(2, 2)
+    assert tolist(screen) == [[screen.default_char, screen.default_char]] * 2
+
+    # Red fg, reset, red bg
+    screen.select_graphic_rendition(31, 0, 41)
+    assert screen.cursor.attrs.fg == "default"
+    assert screen.cursor.attrs.bg == "red"
+
+
 def test_multi_attribs():
     screen = pyte.Screen(2, 2)
     assert tolist(screen) == [[screen.default_char, screen.default_char]] * 2
