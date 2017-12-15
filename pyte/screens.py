@@ -969,7 +969,10 @@ class Screen(object):
 
         while attrs:
             attr = attrs.pop()
-            if attr in g.FG_ANSI:
+            if attr == 0:
+                # Reset all attributes.
+                replace.update(self.default_char._asdict())
+            elif attr in g.FG_ANSI:
                 replace["fg"] = g.FG_ANSI[attr]
             elif attr in g.BG:
                 replace["bg"] = g.BG_ANSI[attr]
