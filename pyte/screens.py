@@ -282,6 +282,8 @@ class Screen(object):
         self.cursor = Cursor(0, 0)
         self.cursor_position()
 
+        self.saved_columns = None
+
     def resize(self, lines=None, columns=None):
         """Resize the screen to the given size.
 
@@ -375,6 +377,7 @@ class Screen(object):
         # When DECOLM mode is set, the screen is erased and the cursor
         # moves to the home position.
         if mo.DECCOLM in modes:
+            self.saved_columns = self.columns
             self.resize(columns=132)
             self.erase_in_display(2)
             self.cursor_position()
@@ -413,7 +416,9 @@ class Screen(object):
 
         # Lines below follow the logic in :meth:`set_mode`.
         if mo.DECCOLM in modes:
-            self.resize(columns=80)
+            if self.columns == 132 and self.saved_columns is not None:
+                self.resize(columns=self.saved_columns)
+                self.saved_columns = None
             self.erase_in_display(2)
             self.cursor_position()
 
