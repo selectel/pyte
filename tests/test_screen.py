@@ -256,7 +256,7 @@ def test_set_mode():
     assert screen.cursor.x == 0
     assert screen.cursor.y == 0
     screen.reset_mode(mo.DECCOLM)
-    assert screen.columns == 80
+    assert screen.columns == 3
 
     # Test mo.DECOM mode
     screen = update(pyte.Screen(3, 3), ["sam", "is ", "foo"])
