@@ -19,6 +19,8 @@ Version 0.8.0-dev
   character.
 - Allowed resetting cursor attributes in the middle of the SGR sequence.
   See PR#109 on GiHub. Thanks @andreivasiliu!
+- On exit from `DECCOLM` mode, restore the terminal width from before entering
+  `DECCOLM` mode.
 
 Version 0.7.0
 -------------
