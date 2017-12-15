@@ -17,6 +17,8 @@ Version 0.8.0-dev
   GitHub. Thanks to @zblz!
 - Correctly terminate OSC mode in ``Stream`` on receipt of a C0 encoded ``ST``
   character.
+- Allowed resetting cursor attributes in the middle of the SGR sequence.
+  See PR#109 on GiHub. Thanks @andreivasiliu!
 
 Version 0.7.0
 -------------
