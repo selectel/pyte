@@ -8,7 +8,8 @@ Version 0.8.1-dev
 
 - Yet another fix of ``Screen.set_margins`` for the case of CSI
   with no arguments. See issue #61 on GitHub.
-
+- Restart ``Stream`` finite state machine on error when parsing control
+  sequence.
 
 Version 0.8.0
 -------------
