@@ -132,17 +132,17 @@ FG_BG_256 = [
     (0xff, 0xff, 0xff),  # 15
 ]
 
-# colors 16..232: the 6x6x6 color cube
+# colors 16..231: the 6x6x6 color cube
 valuerange = (0x00, 0x5f, 0x87, 0xaf, 0xd7, 0xff)
 
-for i in range(217):
+for i in range(216):
     r = valuerange[(i // 36) % 6]
     g = valuerange[(i // 6) % 6]
     b = valuerange[i % 6]
     FG_BG_256.append((r, g, b))
 
-# colors 233..253: grayscale
-for i in range(1, 22):
+# colors 232..255: grayscale
+for i in range(24):
     v = 8 + i * 10
     FG_BG_256.append((v, v, v))
 
