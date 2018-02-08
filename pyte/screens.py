@@ -239,7 +239,12 @@ class Screen(object):
                     continue
                 char = line[x].data
                 assert sum(map(wcwidth, char[1:])) == 0
-                is_wide_char = wcwidth(char[0]) == 2
+
+                if len(char) == 0:
+                    is_wide_char = False
+                else:
+                    is_wide_char = wcwidth(char[0]) == 2
+
                 yield char
 
         return ["".join(render(self.buffer[y])) for y in range(self.lines)]
