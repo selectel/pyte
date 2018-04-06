@@ -18,16 +18,12 @@ import signal
 import select
 import sys
 
-import pyte
-
 
 if __name__ == "__main__":
     try:
         output_path, *argv = sys.argv[1:]
     except ValueError:
         sys.exit("usage: %prog% output command [args]")
-
-    stream = pyte.Stream(pyte.Screen(80, 24))
 
     p_pid, master_fd = pty.fork()
     if p_pid == 0:  # Child.
