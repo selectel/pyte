@@ -9,3 +9,4 @@ include docs/conf.py
 
 recursive-include examples *.py
 recursive-include tests *.py
+recursive-include tests/captured
