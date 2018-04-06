@@ -31,7 +31,7 @@ CLASSIFIERS = [
 
 
 setup(name="pyte",
-      version="0.8.0",
+      version="0.8.1-dev",
       packages=["pyte"],
       install_requires=["wcwidth"],
       setup_requires=["pytest-runner"],
