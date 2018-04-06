@@ -3,11 +3,15 @@ pyte Changelog
 
 Here you can see the full list of changes between each pyte release.
 
-Version 0.8.0-dev
+Version 0.8.0
 -------------
 
-- Modify logic around tracking position in the ``HistoryScreen``, allowing the
-  full history to be access. See PR #96 on GitHub.
+Released on April 6th, 2018.
+
+This release is NOT backward compatible with 0.7.X branch!
+
+- Modified the logic around tracking position in the ``HistoryScreen``,
+  allowing the full history to be accessed. See PR #96 on GitHub.
 - Send C0 encoded CSI instead of C1, avoiding compatibility issues with
   unicode. See issue #99 on GitHub.
 - Changed ``Stream`` to really ignore ``SI`` in UTF-8 mode. See PR #106
