@@ -990,8 +990,8 @@ class Screen(object):
                 replace.update(bg=g.BG_AIXTERM[attr], bold=True)
             elif attr in (g.FG_256, g.BG_256):
                 key = "fg" if attr == g.FG_256 else "bg"
-                n = attrs.pop()
                 try:
+                    n = attrs.pop()
                     if n == 5:    # 256.
                         m = attrs.pop()
                         replace[key] = g.FG_BG_256[m]

@@ -7,7 +7,7 @@ import copy
 import pytest
 
 import pyte
-from pyte import modes as mo, control as ctrl
+from pyte import modes as mo, control as ctrl, graphics as g
 from pyte.screens import Char
 
 
@@ -85,13 +85,21 @@ def test_colors256():
     screen = pyte.Screen(2, 2)
 
     # a) OK-case.
-    screen.select_graphic_rendition(38, 5, 0)
-    screen.select_graphic_rendition(48, 5, 15)
+    screen.select_graphic_rendition(g.FG_256, 5, 0)
+    screen.select_graphic_rendition(g.BG_256, 5, 15)
     assert screen.cursor.attrs.fg == "000000"
     assert screen.cursor.attrs.bg == "ffffff"
 
     # b) invalid color.
     screen.select_graphic_rendition(48, 5, 100500)
+
+
+def test_colors256_missing_attrs():
+    # Test from https://github.com/selectel/pyte/issues/115
+    screen = pyte.Screen(2, 2)
+    screen.select_graphic_rendition(g.FG_256)
+    screen.select_graphic_rendition(g.BG_256)
+    assert screen.cursor.attrs == screen.default_char
 
 
 def test_colors24bit():

@@ -21,6 +21,8 @@ Version 0.8.0-dev
   See PR#109 on GiHub. Thanks @andreivasiliu!
 - On exit from `DECCOLM` mode, restore the terminal width from before entering
   `DECCOLM` mode.
+- Changed ``Screen.select_graphic_rendition`` to ignore malformed
+  256/24bit colours. See issue #115 on GitHub.
 
 Version 0.7.0
 -------------
