@@ -331,7 +331,8 @@ class Screen(object):
         :param int top: the smallest line number that is scrolled.
         :param int bottom: the biggest line number that is scrolled.
         """
-        if top is None and bottom is None:
+        # XXX 0 corresponds to the CSI with no parameters.
+        if (top is None or top == 0) and bottom is None:
             self.margins = None
             return
 

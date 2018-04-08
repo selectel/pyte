@@ -1457,6 +1457,15 @@ def test_set_margins():
     assert screen.margins is None
 
 
+def test_set_margins_zero():
+    # See https://github.com/selectel/pyte/issues/61
+    screen = pyte.Screen(80, 24)
+    screen.set_margins(1, 5)
+    assert screen.margins == (0, 4)
+    screen.set_margins(0)
+    assert screen.margins is None
+
+
 def test_hide_cursor():
     screen = pyte.Screen(10, 10)
 
