@@ -77,6 +77,7 @@ class Char(namedtuple("Char", [
     "underscore",
     "strikethrough",
     "reverse",
+    "blink",
 ])):
     """A single styled on-screen character.
 
@@ -93,14 +94,17 @@ class Char(namedtuple("Char", [
                                strike-through line. Defaults to ``False``.
     :param bool reverse: flag for swapping foreground and background colours
                          during rendering. Defaults to ``False``.
+    :param bool blink: flag for redering the character blinked. Defaults to
+                       ``False``.
     """
     __slots__ = ()
 
     def __new__(cls, data, fg="default", bg="default", bold=False,
                 italics=False, underscore=False,
-                strikethrough=False, reverse=False):
+                strikethrough=False, reverse=False, blink=False):
         return super(Char, cls).__new__(cls, data, fg, bg, bold, italics,
-                                        underscore, strikethrough, reverse)
+                                        underscore, strikethrough, reverse,
+                                        blink)
 
 
 class Cursor(object):
