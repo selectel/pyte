@@ -94,7 +94,7 @@ class Char(namedtuple("Char", [
                                strike-through line. Defaults to ``False``.
     :param bool reverse: flag for swapping foreground and background colours
                          during rendering. Defaults to ``False``.
-    :param bool blink: flag for redering the character blinked. Defaults to
+    :param bool blink: flag for rendering the character blinked. Defaults to
                        ``False``.
     """
     __slots__ = ()
