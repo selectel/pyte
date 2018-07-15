@@ -264,9 +264,9 @@ def test_debug_stream(input, expected):
     assert [eval(line) for line in output] == expected
 
 
-def test_handler_failure():
-    """When an error occurs in a handler, the stream should continue to work.
-    """
+def test_handler_exception():
+    # When an error occurs in a handler, the stream should continue to
+    # work. See PR #101 for details.
 
     def failing_handler(*args, **kwargs):
         raise IntentionalException()

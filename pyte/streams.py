@@ -200,11 +200,12 @@ class Stream(object):
 
     def _send_to_parser(self, data):
         try:
-            taking_plain_text = self._parser.send(data)
-        except Exception as e:
+            return self._parser.send(data)
+        except Exception:
+            # Reset the parser state to make sure it is usable even
+            # after receiving an exception. See PR #101 for details.
             self._initialize_parser()
             raise
-        return taking_plain_text
 
     def _initialize_parser(self):
         self._parser = self._parser_fsm()
