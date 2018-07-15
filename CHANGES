@@ -11,8 +11,9 @@ Version 0.8.1-dev
 - Changed ``Screen.erase_in_display`` to accept additional positional
   arguments as some some ``clear`` implementations include a ``;`` after
   the first parameter causing ``pyte`` to assume a ``0`` second parameter.
-- Restart ``Stream`` finite state machine on error when parsing control
-  sequence.
+- Changed ``Stream`` FSM to reinit on error when parsing control sequence.
+- Added support for blink to the SGR handler. See PR #120 on GitHub.
+  Thanks to @eight04!
 
 Version 0.8.0
 -------------

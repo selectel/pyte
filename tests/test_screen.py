@@ -68,6 +68,18 @@ def test_attributes():
     ]
 
 
+def test_blink():
+    screen = pyte.Screen(2, 2)
+    assert tolist(screen) == [[screen.default_char, screen.default_char]] * 2
+    screen.select_graphic_rendition(5)  # blink.
+
+    screen.draw("f")
+    assert tolist(screen) == [
+        [Char("f", "default", "default", blink=True), screen.default_char],
+        [screen.default_char, screen.default_char]
+    ]
+
+
 def test_colors():
     screen = pyte.Screen(2, 2)
 
