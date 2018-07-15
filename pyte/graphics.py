@@ -27,7 +27,6 @@ TEXT = {
     3: "+italics",
     4: "+underscore",
     5: "+blink",
-    6: "+blink",
     7: "+reverse",
     9: "+strikethrough",
     22: "-bold",
