@@ -271,7 +271,7 @@ class Stream(object):
                 else:
                     if char == "#":
                         sharp_dispatch[(yield)]()
-                    if char == "%":
+                    elif char == "%":
                         self.select_other_charset((yield))
                     elif char in "()":
                         code = yield
@@ -327,6 +327,11 @@ class Stream(object):
                         break
                     elif char.isdigit():
                         current += char
+                    elif char == "$":
+                        # XTerm-specific ESC]...$[a-z] sequences are not
+                        # currently supported.
+                        yield
+                        break
                     else:
                         params.append(min(int(current or 0), 9999))
 

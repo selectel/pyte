@@ -248,6 +248,16 @@ def test_non_utf8_shifts():
     assert handler.count == 2
 
 
+def test_dollar_skip():
+    screen = pyte.Screen(3, 3)
+    handler = screen.draw = argcheck()
+    stream = pyte.Stream(screen)
+    stream.feed(ctrl.CSI + "12$p")
+    assert handler.count == 0
+    stream.feed(ctrl.CSI + "1;2;3;4$x")
+    assert handler.count == 0
+
+
 @pytest.mark.parametrize("input,expected", [
     (b"foo", [["draw", ["foo"], {}]]),
     (b"\x1b[1;24r\x1b[4l\x1b[24;1H", [

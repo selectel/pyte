@@ -14,6 +14,8 @@ Version 0.8.1-dev
 - Changed ``Stream`` FSM to reinit on error when parsing control sequence.
 - Added support for blink to the SGR handler. See PR #120 on GitHub.
   Thanks to @eight04!
+- Changed ``Stream`` to skip XTerm-specific ``ESC]...$[a-z]`` sequences.
+  See issue #117 on GitHub.
 
 Version 0.8.0
 -------------
