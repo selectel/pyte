@@ -764,7 +764,7 @@ class Screen(object):
         for x in interval:
             line[x] = self.cursor.attrs
 
-    def erase_in_display(self, how=0, private=False):
+    def erase_in_display(self, how=0, *args, **kwargs):
         """Erases display in a specific way.
 
         Character attributes are set to cursor attributes.
@@ -780,6 +780,12 @@ class Screen(object):
               move.
         :param bool private: when ``True`` only characters marked as
                              eraseable are affected **not implemented**.
+
+        .. versionchanged:: 0.8.1
+
+           The method accepts any number of positional arguments as some
+           ``clear`` implementations include a ``;`` after the first
+           parameter causing the stream to assume a ``0`` second parameter.
         """
         if how == 0:
             interval = range(self.cursor.y + 1, self.lines)
@@ -1191,9 +1197,9 @@ class HistoryScreen(Screen):
         super(HistoryScreen, self).reset()
         self._reset_history()
 
-    def erase_in_display(self, how=0):
+    def erase_in_display(self, how=0, *args, **kwargs):
         """Overloaded to reset history state."""
-        super(HistoryScreen, self).erase_in_display(how)
+        super(HistoryScreen, self).erase_in_display(how, *args, **kwargs)
 
         if how == 3:
             self._reset_history()
