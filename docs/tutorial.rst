@@ -55,4 +55,4 @@ that:
 * it doesn't use `TERM` value and expects it to be `"linux"` and only `"linux"`.
 
 And that's it for Hello World! Head over to the `examples
-<https://github.com/selectel/pyte/examples>`_ for  more.
+<https://github.com/selectel/pyte/tree/master/examples>`_ for  more.
