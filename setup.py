@@ -11,7 +11,8 @@ here = os.path.abspath(os.path.dirname(__file__))
 DESCRIPTION = "Simple VTXXX-compatible terminal emulator."
 
 try:
-    LONG_DESCRIPTION = open(os.path.join(here, "README")).read()
+    with open(os.path.join(here, "README")) as f:
+        LONG_DESCRIPTION = f.read()
 except IOError:
     LONG_DESCRIPTION = ""
 
