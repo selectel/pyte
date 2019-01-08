@@ -5,7 +5,7 @@
 
     Command-line tool for "disassembling" escape and CSI sequences::
 
-        $ echo -e "\e[Jfoo" | python -m pyte
+        $ echo -e "\\e[Jfoo" | python -m pyte
         ERASE_IN_DISPLAY 0
         DRAW f
         DRAW o
