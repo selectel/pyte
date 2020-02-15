@@ -133,12 +133,12 @@ def test_colors_aixterm():
 
     # a) foreground color.
     screen.select_graphic_rendition(94)
-    assert screen.cursor.attrs.fg == "blue"
+    assert screen.cursor.attrs.fg == "brightblue"
     assert screen.cursor.attrs.bold
 
     # b) background color.
     screen.select_graphic_rendition(104)
-    assert screen.cursor.attrs.bg == "blue"
+    assert screen.cursor.attrs.bg == "brightblue"
     assert screen.cursor.attrs.bold
 
 

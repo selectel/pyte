@@ -59,17 +59,16 @@ FG_ANSI = {
 FG = FG_ANSI
 
 #: A mapping of non-standard ``aixterm`` foreground color codes to
-#: color names. These are high intensity colors and thus should be
-#: complemented by ``+bold``.
+#: color names. These are high intensity colors.
 FG_AIXTERM = {
-    90: "black",
-    91: "red",
-    92: "green",
-    93: "brown",
-    94: "blue",
-    95: "magenta",
-    96: "cyan",
-    97: "white"
+    90: "brightblack",
+    91: "brightred",
+    92: "brightgreen",
+    93: "brightbrown",
+    94: "brightblue",
+    95: "brightmagenta",
+    96: "brightcyan",
+    97: "brightwhite"
 }
 
 #: A mapping of ANSI background color codes to color names.
@@ -94,17 +93,16 @@ BG_ANSI = {
 BG = BG_ANSI
 
 #: A mapping of non-standard ``aixterm`` background color codes to
-#: color names. These are high intensity colors and thus should be
-#: complemented by ``+bold``.
+#: color names. These are high intensity colors.
 BG_AIXTERM = {
-    100: "black",
-    101: "red",
-    102: "green",
-    103: "brown",
-    104: "blue",
-    105: "magenta",
-    106: "cyan",
-    107: "white"
+    100: "brightblack",
+    101: "brightred",
+    102: "brightgreen",
+    103: "brightbrown",
+    104: "brightblue",
+    105: "bfightmagenta",
+    106: "brightcyan",
+    107: "brightwhite"
 }
 
 #: SGR code for foreground in 256 or True color mode.

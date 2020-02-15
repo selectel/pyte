@@ -996,9 +996,9 @@ class Screen(object):
                 attr = g.TEXT[attr]
                 replace[attr[1:]] = attr.startswith("+")
             elif attr in g.FG_AIXTERM:
-                replace.update(fg=g.FG_AIXTERM[attr], bold=True)
+                replace.update(fg=g.FG_AIXTERM[attr])
             elif attr in g.BG_AIXTERM:
-                replace.update(bg=g.BG_AIXTERM[attr], bold=True)
+                replace.update(bg=g.BG_AIXTERM[attr])
             elif attr in (g.FG_256, g.BG_256):
                 key = "fg" if attr == g.FG_256 else "bg"
                 try:
