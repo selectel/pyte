@@ -14,11 +14,10 @@ details.
 In general, if you just want to know what's being displayed on screen you
 can do something like the following:
 
-    >>> from __future__ import unicode_literals
     >>> import pyte
     >>> screen = pyte.Screen(80, 24)
     >>> stream = pyte.Stream(screen)
-    >>> stream.feed(b"Hello World!")
+    >>> stream.feed("Hello World!")
     >>> screen.display
         ['Hello World!                                                                    ',
          '                                                                                ',
