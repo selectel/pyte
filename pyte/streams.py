@@ -135,10 +135,10 @@ class Stream(object):
         "[^" + "".join(map(re.escape, _special)) + "]+")
     del _special
 
-    def __init__(self, screen=None, strict=True):
+    def __init__(self, screen=None, strict=True, start_utf8=True):
         self.listener = None
         self.strict = strict
-        self.use_utf8 = True
+        self.use_utf8 = start_utf8
 
         if screen is not None:
             self.attach(screen)
