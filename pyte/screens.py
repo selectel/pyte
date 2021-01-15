@@ -607,6 +607,12 @@ class Screen(object):
         """
         self.cursor_back()
 
+    def set_alternate_keypad(self):
+        pass
+
+    def set_numeric_keypad(self):
+        pass
+
     def save_cursor(self):
         """Push the current cursor position onto the stack."""
         self.savepoints.append(Savepoint(copy.copy(self.cursor),

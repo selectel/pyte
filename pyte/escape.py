@@ -152,3 +152,9 @@ DECSTBM = "r"
 
 #: *Horizontal position adjust*: Same as :data:`CHA`.
 HPA = "'"
+
+#: *Set Alternate keypad mode*: Not sure what this is. Maybe what it says on the tin?
+DECKPAM = "="
+
+#: * Set numeric keypad mode*: Undocumented for now.
+DECKPNM = ">"

@@ -82,6 +82,8 @@ class Stream(object):
         esc.HTS: "set_tab_stop",
         esc.DECSC: "save_cursor",
         esc.DECRC: "restore_cursor",
+        esc.DECKPAM: "set_alternate_keypad",
+        esc.DECKPNM: "set_numeric_keypad",
     }
 
     #: "sharp" escape sequences -- ``ESC # <N>``.
