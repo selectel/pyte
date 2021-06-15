@@ -10,7 +10,7 @@
         .....................
         ls.input: Mean +- std dev: 644 ns +- 23 ns
 
-    :copyright: (c) 2016-2017 by pyte authors and contributors,
+    :copyright: (c) 2016-2021 by pyte authors and contributors,
                     see AUTHORS for details.
     :license: LGPL, see LICENSE for more details.
 """
@@ -21,7 +21,7 @@ import sys
 from functools import partial
 
 try:
-    from perf import Runner
+    from pyperf import Runner
 except ImportError:
     sys.exit("``perf`` not found. Try installing it via ``pip install perf``.")
 
