@@ -17,6 +17,10 @@ that do:
 * `Jumpserver <https://github.com/jumpserver/jumpserver>`_ -- an open source
   springboard machine(fortress machine): authentication, authorization,
   audit, automated operation and maintenance.
+* `Byexample <https://byexamples.github.io>`_ -- a literate programming engine
+  where you mix ordinary text and snippets of code in the same file and then
+  you execute them as regression test similar to
+  `doctest <https://byexamples.github.io/byexample/recipes/python-doctest>`_.
 
 .. note:: Using ``pyte``? Add yourself to this list and submit a pull request.
 
