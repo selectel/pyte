@@ -112,7 +112,7 @@ def test_erase_in_display():
     screen.erase_in_display()
     assert screen.dirty == set(range(screen.cursor.y, screen.lines))
 
-    # b) from the begining of the screen to cursor.
+    # b) from the beginning of the screen to cursor.
     screen.dirty.clear()
     screen.erase_in_display(1)
     assert screen.dirty == set(range(0, screen.cursor.y + 1))

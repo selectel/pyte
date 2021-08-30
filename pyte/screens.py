@@ -370,7 +370,7 @@ class Screen(object):
         :param list modes: modes to set, where each mode is a constant
                            from :mod:`pyte.modes`.
         """
-        # Private mode codes are shifted, to be distingiushed from non
+        # Private mode codes are shifted, to be distinguished from non
         # private ones.
         if kwargs.get("private"):
             modes = [mode << 5 for mode in modes]
@@ -754,7 +754,7 @@ class Screen(object):
               including cursor position.
             * ``2`` -- Erases complete line.
         :param bool private: when ``True`` only characters marked as
-                             eraseable are affected **not implemented**.
+                             erasable are affected **not implemented**.
         """
         self.dirty.add(self.cursor.y)
         if how == 0:
@@ -783,7 +783,7 @@ class Screen(object):
               are erased and changed to single-width. Cursor does not
               move.
         :param bool private: when ``True`` only characters marked as
-                             eraseable are affected **not implemented**.
+                             erasable are affected **not implemented**.
 
         .. versionchanged:: 0.8.1
 
