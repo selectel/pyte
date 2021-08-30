@@ -693,7 +693,7 @@ def test_clear_tabstops():
     screen = pyte.Screen(10, 10)
     screen.clear_tab_stop(3)
 
-    # a) clear a tabstop at current cusor location
+    # a) clear a tabstop at current cursor location
     screen.cursor.x = 1
     screen.set_tab_stop()
     screen.cursor.x = 5
