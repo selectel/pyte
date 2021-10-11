@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
     pyte.screens
     ~~~~~~~~~~~~
@@ -26,8 +25,6 @@
     :license: LGPL, see LICENSE for more details.
 """
 
-from __future__ import absolute_import, unicode_literals, division
-
 import copy
 import json
 import math
@@ -36,13 +33,9 @@ import sys
 import unicodedata
 import warnings
 from collections import deque, namedtuple, defaultdict
+from functools import lru_cache
 
 from wcwidth import wcwidth
-
-# There is no standard 2.X backport for ``lru_cache``.
-if sys.version_info >= (3, 2):
-    from functools import lru_cache
-    wcwidth = lru_cache(maxsize=4096)(wcwidth)
 
 from . import (
     charsets as cs,
@@ -50,9 +43,9 @@ from . import (
     graphics as g,
     modes as mo
 )
-from .compat import map, range, str
 from .streams import Stream
 
+wcwidth = lru_cache(maxsize=4096)(wcwidth)
 
 #: A container for screen's scroll margins.
 Margins = namedtuple("Margins", "top bottom")
@@ -107,7 +100,7 @@ class Char(namedtuple("Char", [
                                         blink)
 
 
-class Cursor(object):
+class Cursor:
     """Screen cursor.
 
     :param int x: 0-based horizontal cursor position.
@@ -144,7 +137,7 @@ class StaticDefaultDict(dict):
         return self.default
 
 
-class Screen(object):
+class Screen:
     """
     A screen is an in-memory matrix of characters that represents the
     screen display of the terminal. It can be instantiated on its own
@@ -1287,7 +1280,7 @@ class DebugEvent(namedtuple("Event", "name args kwargs")):
         return getattr(screen, self.name)(*self.args, **self.kwargs)
 
 
-class DebugScreen(object):
+class DebugScreen:
     r"""A screen which dumps a subset of the received events to a file.
 
     >>> import io

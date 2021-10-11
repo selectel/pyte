@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-#
 # pyte documentation build configuration file, created by
 # sphinx-quickstart on Fri Apr  8 12:49:51 2011.
 #

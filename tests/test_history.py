@@ -1,12 +1,7 @@
-# -*- coding: utf-8 -*-
-
-from __future__ import unicode_literals
-
 import os
 
 import pyte
 from pyte import control as ctrl, modes as mo
-from pyte.compat import str
 
 
 def chars(history_lines, columns):

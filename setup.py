@@ -1,5 +1,4 @@
 #! /usr/bin/env python
-# -*- coding: utf-8 -*-
 
 import os
 
@@ -23,9 +22,10 @@ CLASSIFIERS = [
     "Intended Audience :: Developers",
     "Operating System :: OS Independent",
     "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
-    "Programming Language :: Python :: 2.7",
-    "Programming Language :: Python :: 3.5",
-    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: PyPy",
     "Topic :: Terminals :: Terminal Emulators/X Terminals",
 ]
 

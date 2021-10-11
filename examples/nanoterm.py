@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
     nanoterm
     ~~~~~~~~
@@ -10,8 +9,6 @@
                 see AUTHORS for details.
     :license: LGPL, see LICENSE for more details.
 """
-
-from __future__ import print_function, unicode_literals
 
 import os
 import pty

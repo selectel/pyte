@@ -16,6 +16,8 @@ Version 0.8.1-dev
   Thanks to @eight04!
 - Changed ``Stream`` to skip XTerm-specific ``ESC]...$[a-z]`` sequences.
   See issue #117 on GitHub.
+- Dropped Python 2.X support. The minimal required version of Python is
+  now 3.7.
 
 Version 0.8.0
 -------------

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
     pyte.streams
     ~~~~~~~~~~~~
@@ -20,8 +19,6 @@
     :license: LGPL, see LICENSE for more details.
 """
 
-from __future__ import absolute_import, unicode_literals
-
 import codecs
 import itertools
 import re
@@ -29,10 +26,9 @@ import warnings
 from collections import defaultdict
 
 from . import control as ctrl, escape as esc
-from .compat import pass_through_str
 
 
-class Stream(object):
+class Stream:
     """A stream is a state machine that parses a stream of bytes and
     dispatches events based on what it sees.
 
@@ -408,7 +404,7 @@ class ByteStream(Stream):
         if self.use_utf8:
             data = self.utf8_decoder.decode(data)
         else:
-            data = pass_through_str(data)
+            data = "".join(map(chr, data))
 
         super(ByteStream, self).feed(data)
 

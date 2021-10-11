@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
     history
     ~~~~~~~
@@ -9,15 +8,10 @@
     :license: LGPL, see LICENSE for more details.
 """
 
-from __future__ import print_function, unicode_literals
-
 import os
 import random
 import string
 import sys
-
-if sys.version_info[0] == 2:
-    input = raw_input
 
 import pyte
 from pyte import modes as mo

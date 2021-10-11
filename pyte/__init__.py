@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
     pyte
     ~~~~
@@ -23,8 +22,6 @@
     :license: LGPL, see LICENSE for more details.
 """
 
-from __future__ import absolute_import
-
 __all__ = ("Screen", "DiffScreen", "HistoryScreen", "DebugScreen",
            "Stream", "ByteStream")
 
@@ -35,8 +32,6 @@ from .streams import Stream, ByteStream
 
 
 if __debug__:
-    from .compat import str
-
     def dis(chars):
         """A :func:`dis.dis` for terminals.
 

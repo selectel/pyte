@@ -1,13 +1,4 @@
-# -*- coding: utf-8 -*-
-
-from __future__ import unicode_literals
-
-import sys
-
-if sys.version_info[0] == 2:
-    from cStringIO import StringIO
-else:
-    from io import StringIO
+import io
 
 import pytest
 
@@ -15,7 +6,7 @@ import pyte
 from pyte import charsets as cs, control as ctrl, escape as esc
 
 
-class counter(object):
+class counter:
     def __init__(self):
         self.count = 0
 
@@ -30,7 +21,7 @@ class argcheck(counter):
         super(argcheck, self).__call__()
 
 
-class argstore(object):
+class argstore:
     def __init__(self):
         self.seen = []
 
@@ -266,7 +257,7 @@ def test_dollar_skip():
         ["cursor_position", [24, 1], {}]])
 ])
 def test_debug_stream(input, expected):
-    output = StringIO()
+    output = io.StringIO()
     stream = pyte.ByteStream(pyte.DebugScreen(to=output))
     stream.feed(input)
 

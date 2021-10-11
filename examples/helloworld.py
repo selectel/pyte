@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
     helloworld
     ~~~~~~~~~~
@@ -8,8 +7,6 @@
     :copyright: (c) 2011-2013 by Selectel, see AUTHORS for details.
     :license: LGPL, see LICENSE for more details.
 """
-
-from __future__ import print_function, unicode_literals
 
 import pyte
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
     pyte.charsets
     ~~~~~~~~~~~~~
@@ -16,11 +15,6 @@
                     see AUTHORS for details.
     :license: LGPL, see LICENSE for more details.
 """
-
-from __future__ import absolute_import, unicode_literals
-
-from .compat import chr, map
-
 
 #: Latin1.
 LAT1_MAP = "".join(map(chr, range(256)))

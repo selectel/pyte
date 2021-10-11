@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
     pyte.graphics
     ~~~~~~~~~~~~~
@@ -12,8 +11,6 @@
                     see AUTHORS for details.
     :license: LGPL, see LICENSE for more details.
 """
-
-from __future__ import unicode_literals
 
 #: A mapping of ANSI text style codes to style names, "+" means the:
 #: attribute is set, "-" -- reset; example:
