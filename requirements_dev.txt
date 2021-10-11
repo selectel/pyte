@@ -1,3 +1,4 @@
 pytest
 pyperf == 1.7.1
 wcwidth
+wheel
