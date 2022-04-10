@@ -3,8 +3,10 @@ pyte Changelog
 
 Here you can see the full list of changes between each pyte release.
 
-Version 0.8.1-dev
------------------
+Version 0.8.1
+-------------
+
+Released on April 10th 2022.
 
 - Yet another fix of ``Screen.set_margins`` for the case of CSI
   with no arguments. See issue #61 on GitHub.

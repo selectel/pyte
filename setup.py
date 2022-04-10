@@ -25,13 +25,14 @@ CLASSIFIERS = [
     "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: PyPy",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
     "Topic :: Terminals :: Terminal Emulators/X Terminals",
 ]
 
 
 setup(name="pyte",
-      version="0.8.1-dev",
+      version="0.8.1",
       packages=["pyte"],
       install_requires=["wcwidth"],
       setup_requires=["pytest-runner"],
