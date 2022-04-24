@@ -1086,7 +1086,7 @@ History = namedtuple("History", "top bottom ratio size position")
 
 
 class HistoryScreen(Screen):
-    """A :class:~`pyte.screens.Screen` subclass, which keeps track
+    """A :class:`~pyte.screens.Screen` subclass, which keeps track
     of screen history and allows pagination. This is not linux-specific,
     but still useful; see page 462 of VT520 User's Manual.
 
