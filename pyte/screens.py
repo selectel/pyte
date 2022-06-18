@@ -230,18 +230,25 @@ class Screen:
         """A :func:`list` of screen lines as unicode strings."""
         padding = self.default_char.data
 
-        def render(line):
+        prev_y = -1
+        output = []
+        columns = self.columns
+        for y, line in sorted(self.buffer.items()):
+            empty_lines = y - (prev_y + 1)
+            if empty_lines:
+                output.extend([padding * columns] * empty_lines)
+            prev_y = y
+
             is_wide_char = False
             prev_x = -1
+            display_line = []
             for x, cell in sorted(line.items()):
-                # TODO apparently a line can hold more items (chars) than
-                # suppose to (outside of the range of 0-cols).
-                if x >= self.columns:
+                if x >= columns:
                     break
 
                 gap = x - (prev_x + 1)
                 if gap:
-                    yield padding * gap
+                    display_line.append(padding * gap)
 
                 prev_x = x
 
@@ -251,23 +258,17 @@ class Screen:
                 char = cell.data
                 assert sum(map(wcwidth, char[1:])) == 0
                 is_wide_char = wcwidth(char[0]) == 2
-                yield char
+                display_line.append(char)
 
-            gap = self.columns - (prev_x + 1)
+            gap = columns - (prev_x + 1)
             if gap:
-                yield padding * gap
+                display_line.append(padding * gap)
 
-        prev_y = -1
-        output = []
-        for y, line in sorted(self.buffer.items()):
-            empty_lines = y - (prev_y + 1)
-            output.extend([padding * self.columns] * empty_lines)
-            prev_y = y
-
-            output.append("".join(render(line)))
+            output.append("".join(display_line))
 
         empty_lines = self.lines - (prev_y + 1)
-        output.extend([padding * self.columns] * empty_lines)
+        if empty_lines:
+            output.extend([padding * columns] * empty_lines)
 
         return output
 
