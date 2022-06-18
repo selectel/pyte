@@ -228,18 +228,48 @@ class Screen:
     @property
     def display(self):
         """A :func:`list` of screen lines as unicode strings."""
+        padding = self.default_char.data
+
         def render(line):
             is_wide_char = False
-            for x in range(self.columns):
+            prev_x = -1
+            for x, cell in sorted(line.items()):
+                # TODO apparently a line can hold more items (chars) than
+                # suppose to (outside of the range of 0-cols).
+                if x >= self.columns:
+                    break
+
+                gap = x - (prev_x + 1)
+                if gap:
+                    yield padding * gap
+
+                prev_x = x
+
                 if is_wide_char:  # Skip stub
                     is_wide_char = False
                     continue
-                char = line[x].data
+                char = cell.data
                 assert sum(map(wcwidth, char[1:])) == 0
                 is_wide_char = wcwidth(char[0]) == 2
                 yield char
 
-        return ["".join(render(self.buffer[y])) for y in range(self.lines)]
+            gap = self.columns - (prev_x + 1)
+            if gap:
+                yield padding * gap
+
+        prev_y = -1
+        output = []
+        for y, line in sorted(self.buffer.items()):
+            empty_lines = y - (prev_y + 1)
+            output.extend([padding * self.columns] * empty_lines)
+            prev_y = y
+
+            output.append("".join(render(line)))
+
+        empty_lines = self.lines - (prev_y + 1)
+        output.extend([padding * self.columns] * empty_lines)
+
+        return output
 
     def reset(self):
         """Reset the terminal to its initial state.
