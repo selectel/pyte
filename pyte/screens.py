@@ -256,7 +256,6 @@ class Screen:
                     is_wide_char = False
                     continue
                 char = cell.data
-                assert sum(map(wcwidth, char[1:])) == 0
                 is_wide_char = wcwidth(char[0]) == 2
                 display_line.append(char)
 

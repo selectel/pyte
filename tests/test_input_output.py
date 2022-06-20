@@ -1,5 +1,5 @@
 import json
-import os.path
+import os.path, sys
 
 import pytest
 
@@ -8,6 +8,8 @@ import pyte
 
 captured_dir = os.path.join(os.path.dirname(__file__), "captured")
 
+sys.path.append(os.path.join(os.path.dirname(__file__), "helpers"))
+from asserts import consistency_asserts
 
 @pytest.mark.parametrize("name", [
     "cat-gpl3", "find-etc", "htop", "ls", "mc", "top", "vi"
@@ -23,3 +25,4 @@ def test_input_output(name):
     stream = pyte.ByteStream(screen)
     stream.feed(input)
     assert screen.display == output
+    consistency_asserts(screen)

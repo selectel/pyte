@@ -1,4 +1,4 @@
-import copy
+import copy, sys, os
 
 import pytest
 
@@ -6,6 +6,8 @@ import pyte
 from pyte import modes as mo, control as ctrl, graphics as g
 from pyte.screens import Char
 
+sys.path.append(os.path.join(os.path.dirname(__file__), "helpers"))
+from asserts import consistency_asserts
 
 # Test helpers.
 
@@ -230,12 +232,14 @@ def test_resize():
     screen = update(pyte.Screen(2, 2), ["bo", "sh"], [None, None])
     screen.resize(2, 3)
     assert screen.display == ["bo ", "sh "]
+    consistency_asserts(screen)
 
     # b) if the current display is wider than the requested size,
     #    columns should be removed from the right...
     screen = update(pyte.Screen(2, 2), ["bo", "sh"], [None, None])
     screen.resize(2, 1)
     assert screen.display == ["b", "s"]
+    consistency_asserts(screen)
 
     # c) if the current display is shorter than the requested
     #    size, new rows should be added on the bottom.
@@ -243,12 +247,14 @@ def test_resize():
     screen.resize(3, 2)
 
     assert screen.display == ["bo", "sh", "  "]
+    consistency_asserts(screen)
 
     # d) if the current display is taller than the requested
     #    size, rows should be removed from the top.
     screen = update(pyte.Screen(2, 2), ["bo", "sh"], [None, None])
     screen.resize(1, 2)
     assert screen.display == ["sh"]
+    consistency_asserts(screen)
 
 
 def test_resize_same():
@@ -312,6 +318,7 @@ def test_draw():
 
     assert screen.display == ["abc", "   ", "   "]
     assert (screen.cursor.y, screen.cursor.x) == (0, 3)
+    consistency_asserts(screen)
 
     # ... one` more character -- now we got a linefeed!
     screen.draw("a")
@@ -326,11 +333,13 @@ def test_draw():
 
     assert screen.display == ["abc", "   ", "   "]
     assert (screen.cursor.y, screen.cursor.x) == (0, 3)
+    consistency_asserts(screen)
 
     # No linefeed is issued on the end of the line ...
     screen.draw("a")
     assert screen.display == ["aba", "   ", "   "]
     assert (screen.cursor.y, screen.cursor.x) == (0, 3)
+    consistency_asserts(screen)
 
     # ``IRM`` mode is on, expecting new characters to move the old ones
     # instead of replacing them.
@@ -338,10 +347,12 @@ def test_draw():
     screen.cursor_position()
     screen.draw("x")
     assert screen.display == ["xab", "   ", "   "]
+    consistency_asserts(screen)
 
     screen.cursor_position()
     screen.draw("y")
     assert screen.display == ["yxa", "   ", "   "]
+    consistency_asserts(screen)
 
 
 def test_draw_russian():
@@ -350,6 +361,7 @@ def test_draw_russian():
     stream = pyte.Stream(screen)
     stream.feed("Нерусский текст")
     assert screen.display == ["Нерусский текст     "]
+    consistency_asserts(screen)
 
 
 def test_draw_multiple_chars():
@@ -357,6 +369,7 @@ def test_draw_multiple_chars():
     screen.draw("foobar")
     assert screen.cursor.x == 6
     assert screen.display == ["foobar    "]
+    consistency_asserts(screen)
 
 
 def test_draw_utf8():
@@ -365,6 +378,7 @@ def test_draw_utf8():
     stream = pyte.ByteStream(screen)
     stream.feed(b"\xE2\x80\x9D")
     assert screen.display == ["”"]
+    consistency_asserts(screen)
 
 
 def test_draw_width2():
@@ -387,12 +401,14 @@ def test_draw_width2_irm():
     screen.draw("コ")
     assert screen.display == ["コ"]
     assert tolist(screen) == [[Char("コ"), Char(" ")]]
+    consistency_asserts(screen)
 
     # Overwrite the stub part of a width 2 character.
     screen.set_mode(mo.IRM)
     screen.cursor_to_column(screen.columns)
     screen.draw("x")
     assert screen.display == [" x"]
+    consistency_asserts(screen)
 
 
 def test_draw_width0_combining():
@@ -401,17 +417,20 @@ def test_draw_width0_combining():
     # a) no prev. character
     screen.draw("\N{COMBINING DIAERESIS}")
     assert screen.display == ["    ", "    "]
+    consistency_asserts(screen)
 
     screen.draw("bad")
 
     # b) prev. character is on the same line
     screen.draw("\N{COMBINING DIAERESIS}")
     assert screen.display == ["bad̈ ", "    "]
+    consistency_asserts(screen)
 
     # c) prev. character is on the prev. line
     screen.draw("!")
     screen.draw("\N{COMBINING DIAERESIS}")
     assert screen.display == ["bad̈!̈", "    "]
+    consistency_asserts(screen)
 
 
 def test_draw_width0_irm():
@@ -422,6 +441,7 @@ def test_draw_width0_irm():
     screen.draw("\N{ZERO WIDTH SPACE}")
     screen.draw("\u0007")  # DELETE.
     assert screen.display == [" " * screen.columns]
+    consistency_asserts(screen)
 
 
 def test_draw_width0_decawm_off():
@@ -446,6 +466,7 @@ def test_draw_cp437():
     stream.feed("α ± ε".encode("cp437"))
 
     assert screen.display == ["α ± ε"]
+    consistency_asserts(screen)
 
 
 def test_draw_with_carriage_return():
@@ -465,12 +486,14 @@ tpd startssl"""
         "pcrm sem ;ps aux|grep -P 'httpd|fcgi'|grep -v grep",
         "}'|xargs kill -9;/etc/init.d/httpd startssl       "
     ]
+    consistency_asserts(screen)
 
 
 def test_display_wcwidth():
     screen = pyte.Screen(10, 1)
     screen.draw("コンニチハ")
     assert screen.display == ["コンニチハ"]
+    consistency_asserts(screen)
 
 
 def test_carriage_return():
@@ -519,6 +542,7 @@ def test_index():
         [screen.default_char, screen.default_char],
         [Char("o"), Char("h")],
     ]
+    consistency_asserts(screen)
 
     # ... and again ...
     screen.index()
@@ -531,6 +555,7 @@ def test_index():
         [screen.default_char, screen.default_char],
         [Char("o"), Char("h")],
     ]
+    consistency_asserts(screen)
 
     # ... and again ...
     screen.index()
@@ -543,6 +568,7 @@ def test_index():
         [screen.default_char, screen.default_char],
         [Char("o"), Char("h")],
     ]
+    consistency_asserts(screen)
 
     # look, nothing changes!
     screen.index()
@@ -555,6 +581,7 @@ def test_index():
         [screen.default_char, screen.default_char],
         [Char("o"), Char("h")],
     ]
+    consistency_asserts(screen)
 
 
 def test_reverse_index():
@@ -594,6 +621,7 @@ def test_reverse_index():
         [Char("t", fg="red"), Char("h", fg="red")],
         [Char("o"), Char("h")],
     ]
+    consistency_asserts(screen)
 
     # ... and again ...
     screen.reverse_index()
@@ -606,6 +634,7 @@ def test_reverse_index():
         [Char("s"), Char("h")],
         [Char("o"), Char("h")],
     ]
+    consistency_asserts(screen)
 
     # ... and again ...
     screen.reverse_index()
@@ -618,6 +647,7 @@ def test_reverse_index():
         [screen.default_char, screen.default_char],
         [Char("o"), Char("h")],
     ]
+    consistency_asserts(screen)
 
     # look, nothing changes!
     screen.reverse_index()
@@ -630,6 +660,7 @@ def test_reverse_index():
         [screen.default_char, screen.default_char],
         [Char("o"), Char("h")],
     ]
+    consistency_asserts(screen)
 
 
 def test_linefeed():
@@ -810,6 +841,7 @@ def test_insert_lines():
         [Char("s"), Char("a"), Char("m")],
         [Char("i", fg="red"), Char("s", fg="red"), Char(" ", fg="red")],
     ]
+    consistency_asserts(screen)
 
     screen = update(pyte.Screen(3, 3), ["sam", "is ", "foo"], colored=[1])
     screen.insert_lines(2)
@@ -821,6 +853,7 @@ def test_insert_lines():
         [screen.default_char] * 3,
         [Char("s"), Char("a"), Char("m")]
     ]
+    consistency_asserts(screen)
 
     # b) with margins
     screen = update(pyte.Screen(3, 5), ["sam", "is ", "foo", "bar", "baz"],
@@ -838,6 +871,7 @@ def test_insert_lines():
         [Char("f", fg="red"), Char("o", fg="red"), Char("o", fg="red")],
         [Char("b"), Char("a"), Char("z")],
     ]
+    consistency_asserts(screen)
 
     screen = update(pyte.Screen(3, 5), ["sam", "is ", "foo", "bar", "baz"],
                     colored=[2, 3])
@@ -854,6 +888,7 @@ def test_insert_lines():
         [Char("b", fg="red"), Char("a", fg="red"), Char("r", fg="red")],
         [Char("b"), Char("a"), Char("z")],
     ]
+    consistency_asserts(screen)
 
     screen.insert_lines(2)
     assert (screen.cursor.y, screen.cursor.x) == (1, 0)
@@ -865,6 +900,7 @@ def test_insert_lines():
         [Char("b", fg="red"), Char("a", fg="red"), Char("r", fg="red")],
         [Char("b"), Char("a"), Char("z")],
     ]
+    consistency_asserts(screen)
 
     # c) with margins -- trying to insert more than we have available
     screen = update(pyte.Screen(3, 5), ["sam", "is ", "foo", "bar", "baz"],
@@ -882,6 +918,7 @@ def test_insert_lines():
         [screen.default_char] * 3,
         [Char("b"), Char("a"), Char("z")],
     ]
+    consistency_asserts(screen)
 
     # d) with margins -- trying to insert outside scroll boundaries;
     #    expecting nothing to change
@@ -899,6 +936,7 @@ def test_insert_lines():
         [Char("b", fg="red"), Char("a", fg="red"), Char("r", fg="red")],
         [Char("b"), Char("a"), Char("z")],
     ]
+    consistency_asserts(screen)
 
 
 def test_delete_lines():
@@ -913,6 +951,7 @@ def test_delete_lines():
         [Char("f"), Char("o"), Char("o")],
         [screen.default_char] * 3,
     ]
+    consistency_asserts(screen)
 
     screen.delete_lines(0)
 
@@ -923,6 +962,7 @@ def test_delete_lines():
         [screen.default_char] * 3,
         [screen.default_char] * 3,
     ]
+    consistency_asserts(screen)
 
     # b) with margins
     screen = update(pyte.Screen(3, 5), ["sam", "is ", "foo", "bar", "baz"],
@@ -940,6 +980,7 @@ def test_delete_lines():
         [screen.default_char] * 3,
         [Char("b"), Char("a"), Char("z")],
     ]
+    consistency_asserts(screen)
 
     screen = update(pyte.Screen(3, 5), ["sam", "is ", "foo", "bar", "baz"],
                     colored=[2, 3])
@@ -956,6 +997,7 @@ def test_delete_lines():
         [screen.default_char] * 3,
         [Char("b"), Char("a"), Char("z")],
     ]
+    consistency_asserts(screen)
 
     # c) with margins -- trying to delete  more than we have available
     screen = update(pyte.Screen(3, 5),
@@ -978,6 +1020,7 @@ def test_delete_lines():
         [screen.default_char] * 3,
         [Char("b"), Char("a"), Char("z")],
     ]
+    consistency_asserts(screen)
 
     # d) with margins -- trying to delete outside scroll boundaries;
     #    expecting nothing to change
@@ -996,6 +1039,7 @@ def test_delete_lines():
         [Char("b", fg="red"), Char("a", fg="red"), Char("r", fg="red")],
         [Char("b"), Char("a"), Char("z")],
     ]
+    consistency_asserts(screen)
 
 
 def test_insert_characters():
@@ -1052,16 +1096,19 @@ def test_delete_characters():
         Char("m", fg="red"),
         screen.default_char, screen.default_char
     ]
+    consistency_asserts(screen)
 
     screen.cursor.y, screen.cursor.x = 2, 2
     screen.delete_characters()
     assert (screen.cursor.y, screen.cursor.x) == (2, 2)
     assert screen.display == ["m  ", "is ", "fo "]
+    consistency_asserts(screen)
 
     screen.cursor.y, screen.cursor.x = 1, 1
     screen.delete_characters(0)
     assert (screen.cursor.y, screen.cursor.x) == (1, 1)
     assert screen.display == ["m  ", "i  ", "fo "]
+    consistency_asserts(screen)
 
     # ! extreme cases.
     screen = update(pyte.Screen(5, 1), ["12345"], colored=[0])
@@ -1076,6 +1123,7 @@ def test_delete_characters():
         screen.default_char,
         screen.default_char
     ]
+    consistency_asserts(screen)
 
     screen = update(pyte.Screen(5, 1), ["12345"], colored=[0])
     screen.cursor.x = 2
@@ -1089,6 +1137,7 @@ def test_delete_characters():
         screen.default_char,
         screen.default_char
     ]
+    consistency_asserts(screen)
 
     screen = update(pyte.Screen(5, 1), ["12345"], colored=[0])
     screen.delete_characters(4)
@@ -1101,6 +1150,7 @@ def test_delete_characters():
         screen.default_char,
         screen.default_char
     ]
+    consistency_asserts(screen)
 
 
 def test_erase_character():
@@ -1114,16 +1164,19 @@ def test_erase_character():
         screen.default_char,
         Char("m", fg="red")
     ]
+    consistency_asserts(screen)
 
     screen.cursor.y, screen.cursor.x = 2, 2
     screen.erase_characters()
     assert (screen.cursor.y, screen.cursor.x) == (2, 2)
     assert screen.display == ["  m", "is ", "fo "]
+    consistency_asserts(screen)
 
     screen.cursor.y, screen.cursor.x = 1, 1
     screen.erase_characters(0)
     assert (screen.cursor.y, screen.cursor.x) == (1, 1)
     assert screen.display == ["  m", "i  ", "fo "]
+    consistency_asserts(screen)
 
     # ! extreme cases.
     screen = update(pyte.Screen(5, 1), ["12345"], colored=[0])
@@ -1138,6 +1191,7 @@ def test_erase_character():
         screen.default_char,
         Char("5", "red")
     ]
+    consistency_asserts(screen)
 
     screen = update(pyte.Screen(5, 1), ["12345"], colored=[0])
     screen.cursor.x = 2
@@ -1151,6 +1205,7 @@ def test_erase_character():
         screen.default_char,
         screen.default_char
     ]
+    consistency_asserts(screen)
 
     screen = update(pyte.Screen(5, 1), ["12345"], colored=[0])
     screen.erase_characters(4)
@@ -1163,6 +1218,7 @@ def test_erase_character():
         screen.default_char,
         Char("5", fg="red")
     ]
+    consistency_asserts(screen)
 
 
 def test_erase_in_line():
@@ -1189,6 +1245,7 @@ def test_erase_in_line():
         screen.default_char,
         screen.default_char
     ]
+    consistency_asserts(screen)
 
     # b) erase from the beginning of the line to the cursor
     screen = update(screen,
@@ -1211,6 +1268,7 @@ def test_erase_in_line():
         Char(" ", fg="red"),
         Char("i", fg="red")
     ]
+    consistency_asserts(screen)
 
     # c) erase the entire line
     screen = update(screen,
@@ -1227,6 +1285,7 @@ def test_erase_in_line():
                               "re yo",
                               "u?   "]
     assert tolist(screen)[0] == [screen.default_char] * 5
+    consistency_asserts(screen)
 
 
 def test_erase_in_display():
@@ -1256,6 +1315,7 @@ def test_erase_in_display():
         [screen.default_char] * 5,
         [screen.default_char] * 5
     ]
+    consistency_asserts(screen)
 
     # b) erase from the beginning of the display to the cursor,
     #    including it
@@ -1281,6 +1341,7 @@ def test_erase_in_display():
          Char(" ", fg="red"),
          Char("a", fg="red")],
     ]
+    consistency_asserts(screen)
 
     # c) erase the while display
     screen.erase_in_display(2)
@@ -1291,6 +1352,7 @@ def test_erase_in_display():
                               "     ",
                               "     "]
     assert tolist(screen) == [[screen.default_char] * 5] * 5
+    consistency_asserts(screen)
 
     # d) erase with private mode
     screen = update(pyte.Screen(5, 5),
@@ -1305,6 +1367,7 @@ def test_erase_in_display():
                               "     ",
                               "     ",
                               "     "]
+    consistency_asserts(screen)
 
     # e) erase with extra args
     screen = update(pyte.Screen(5, 5),
@@ -1320,6 +1383,7 @@ def test_erase_in_display():
                               "     ",
                               "     ",
                               "     "]
+    consistency_asserts(screen)
 
     # f) erase with extra args and private
     screen = update(pyte.Screen(5, 5),
@@ -1334,6 +1398,7 @@ def test_erase_in_display():
                               "     ",
                               "     ",
                               "     "]
+    consistency_asserts(screen)
 
 
 def test_cursor_up():
@@ -1462,6 +1527,7 @@ def test_unicode():
 
     stream.feed("тест".encode("utf-8"))
     assert screen.display == ["тест", "    "]
+    consistency_asserts(screen)
 
 
 def test_alignment_display():
@@ -1477,6 +1543,7 @@ def test_alignment_display():
                               "b    ",
                               "     ",
                               "     "]
+    consistency_asserts(screen)
 
     screen.alignment_display()
 
@@ -1485,6 +1552,7 @@ def test_alignment_display():
                               "EEEEE",
                               "EEEEE",
                               "EEEEE"]
+    consistency_asserts(screen)
 
 
 def test_set_margins():

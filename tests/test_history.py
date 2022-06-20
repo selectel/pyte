@@ -1,8 +1,10 @@
-import os
+import os, sys
 
 import pyte
 from pyte import control as ctrl, modes as mo
 
+sys.path.append(os.path.join(os.path.dirname(__file__), "helpers"))
+from asserts import consistency_asserts
 
 def chars(history_lines, columns):
     return ["".join(history_lines[y][x].data for x in range(columns))
@@ -96,6 +98,7 @@ def test_prev_page():
         "39  ",
         "    "
     ]
+    consistency_asserts(screen)
 
     assert chars(screen.history.top, screen.columns)[-4:] == [
         "33  ",
@@ -114,6 +117,7 @@ def test_prev_page():
         "37  ",
         "38  "
     ]
+    consistency_asserts(screen)
 
     assert chars(screen.history.top, screen.columns)[-4:] == [
         "31  ",
@@ -138,6 +142,7 @@ def test_prev_page():
         "35  ",
         "36  ",
     ]
+    consistency_asserts(screen)
 
     assert len(screen.history.bottom) == 4
     assert chars(screen.history.bottom, screen.columns) == [
@@ -165,6 +170,7 @@ def test_prev_page():
         "49   ",
         "     "
     ]
+    consistency_asserts(screen)
 
     screen.prev_page()
     assert screen.history.position == 47
@@ -175,6 +181,7 @@ def test_prev_page():
         "46   ",
         "47   "
     ]
+    consistency_asserts(screen)
 
     assert len(screen.history.bottom) == 3
     assert chars(screen.history.bottom, screen.columns) == [
@@ -200,6 +207,7 @@ def test_prev_page():
         "39  ",
         "    "
     ]
+    consistency_asserts(screen)
 
     screen.prev_page()
     assert screen.history.position == 37
@@ -209,6 +217,7 @@ def test_prev_page():
         "36  ",
         "37  "
     ]
+    consistency_asserts(screen)
 
     assert len(screen.history.bottom) == 3
     assert chars(screen.history.bottom, screen.columns) == [
@@ -235,6 +244,7 @@ def test_prev_page():
         "49   ",
         "     "
     ]
+    consistency_asserts(screen)
 
     screen.cursor_to_line(screen.lines // 2)
 
@@ -250,6 +260,7 @@ def test_prev_page():
         "4    ",
         "5    "
     ]
+    consistency_asserts(screen)
 
     while screen.history.position < screen.history.size:
         screen.next_page()
@@ -262,6 +273,7 @@ def test_prev_page():
         "49   ",
         "     "
     ]
+    consistency_asserts(screen)
 
     # e) same with cursor near the middle of the screen.
     screen = pyte.HistoryScreen(5, 5, history=50)
@@ -282,6 +294,7 @@ def test_prev_page():
         "49   ",
         "     "
     ]
+    consistency_asserts(screen)
 
     screen.cursor_to_line(screen.lines // 2 - 2)
 
@@ -297,6 +310,7 @@ def test_prev_page():
         "4    ",
         "5    "
     ]
+    consistency_asserts(screen)
 
     while screen.history.position < screen.history.size:
         screen.next_page()
@@ -310,6 +324,7 @@ def test_prev_page():
         "49   ",
         "     "
     ]
+    consistency_asserts(screen)
 
 
 def test_next_page():
@@ -332,6 +347,7 @@ def test_next_page():
         "24   ",
         "     "
     ]
+    consistency_asserts(screen)
 
     # a) page up -- page down.
     screen.prev_page()
@@ -346,6 +362,7 @@ def test_next_page():
         "24   ",
         "     "
     ]
+    consistency_asserts(screen)
 
     # b) double page up -- page down.
     screen.prev_page()
@@ -366,6 +383,7 @@ def test_next_page():
         "21   ",
         "22   "
     ]
+    consistency_asserts(screen)
 
     # c) double page up -- double page down
     screen.prev_page()
@@ -381,6 +399,7 @@ def test_next_page():
         "21   ",
         "22   "
     ]
+    consistency_asserts(screen)
 
 
 def test_ensure_width(monkeypatch):
@@ -402,6 +421,7 @@ def test_ensure_width(monkeypatch):
         "0024 ",
         "     "
     ]
+    consistency_asserts(screen)
 
     # Shrinking the screen should truncate the displayed lines following lines.
     screen.resize(5, 3)
@@ -416,6 +436,7 @@ def test_ensure_width(monkeypatch):
         "002",  # 21
         "002"   # 22
     ]
+    consistency_asserts(screen)
 
 
 def test_not_enough_lines():
@@ -436,6 +457,7 @@ def test_not_enough_lines():
         "4    ",
         "     "
     ]
+    consistency_asserts(screen)
 
     screen.prev_page()
     assert not screen.history.top
@@ -448,6 +470,7 @@ def test_not_enough_lines():
         "3    ",
         "4    ",
     ]
+    consistency_asserts(screen)
 
     screen.next_page()
     assert screen.history.top
@@ -459,6 +482,7 @@ def test_not_enough_lines():
         "4    ",
         "     "
     ]
+    consistency_asserts(screen)
 
 
 def test_draw(monkeypatch):
@@ -479,6 +503,7 @@ def test_draw(monkeypatch):
         "24   ",
         "     "
     ]
+    consistency_asserts(screen)
 
     # a) doing a pageup and then a draw -- expecting the screen
     #    to scroll to the bottom before drawing anything.
@@ -494,6 +519,7 @@ def test_draw(monkeypatch):
         "24   ",
         "x    "
     ]
+    consistency_asserts(screen)
 
 
 def test_cursor_is_hidden(monkeypatch):
