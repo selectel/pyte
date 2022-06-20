@@ -6,7 +6,17 @@ def consistency_asserts(screen):
     # width of the first code point.
     for y in range(screen.lines):
         for x in range(screen.columns):
-            char = screen.buffer[y][x].data
-            assert sum(map(wcwidth, char[1:])) == 0
+            data = screen.buffer[y][x].data
+            assert sum(map(wcwidth, data[1:])) == 0
 
 
+    # Ensure consistency between the real width (computed here
+    # with wcwidth(...)) and the char.width attribute
+    for y in range(screen.lines):
+        for x in range(screen.columns):
+            char = screen.buffer[y][x]
+            if char.data:
+                assert wcwidth(char.data[0]) == char.width
+            else:
+                assert char.data == ""
+                assert char.width == 0

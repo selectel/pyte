@@ -71,6 +71,7 @@ class Char(namedtuple("Char", [
     "strikethrough",
     "reverse",
     "blink",
+    "width",
 ])):
     """A single styled on-screen character.
 
@@ -89,15 +90,16 @@ class Char(namedtuple("Char", [
                          during rendering. Defaults to ``False``.
     :param bool blink: flag for rendering the character blinked. Defaults to
                        ``False``.
+    :param bool width: the width in terms of cells to display this char.
     """
     __slots__ = ()
 
-    def __new__(cls, data, fg="default", bg="default", bold=False,
+    def __new__(cls, data=" ", fg="default", bg="default", bold=False,
                 italics=False, underscore=False,
-                strikethrough=False, reverse=False, blink=False):
+                strikethrough=False, reverse=False, blink=False, width=wcwidth(" ")):
         return super(Char, cls).__new__(cls, data, fg, bg, bold, italics,
                                         underscore, strikethrough, reverse,
-                                        blink)
+                                        blink, width)
 
 
 class Cursor:
@@ -111,7 +113,7 @@ class Cursor:
     """
     __slots__ = ("x", "y", "attrs", "hidden")
 
-    def __init__(self, x, y, attrs=Char(" ")):
+    def __init__(self, x, y, attrs=Char(" ", width=wcwidth(" "))):
         self.x = x
         self.y = y
         self.attrs = attrs
@@ -211,7 +213,7 @@ class Screen:
     def default_char(self):
         """An empty character with default foreground and background colors."""
         reverse = mo.DECSCNM in self.mode
-        return Char(data=" ", fg="default", bg="default", reverse=reverse)
+        return Char(data=" ", fg="default", bg="default", reverse=reverse, width=wcwidth(" "))
 
     def __init__(self, columns, lines):
         self.savepoints = []
@@ -256,7 +258,7 @@ class Screen:
                     is_wide_char = False
                     continue
                 char = cell.data
-                is_wide_char = wcwidth(char[0]) == 2
+                is_wide_char = cell.width == 2
                 display_line.append(char)
 
             gap = columns - (prev_x + 1)
@@ -527,16 +529,18 @@ class Screen:
 
             line = self.buffer[self.cursor.y]
             if char_width == 1:
-                line[self.cursor.x] = self.cursor.attrs._replace(data=char)
+                line[self.cursor.x] = self.cursor.attrs._replace(data=char, width=char_width)
             elif char_width == 2:
                 # A two-cell character has a stub slot after it.
-                line[self.cursor.x] = self.cursor.attrs._replace(data=char)
+                line[self.cursor.x] = self.cursor.attrs._replace(data=char, width=char_width)
                 if self.cursor.x + 1 < self.columns:
                     line[self.cursor.x + 1] = self.cursor.attrs \
-                        ._replace(data="")
+                        ._replace(data="", width=0)
             elif char_width == 0 and unicodedata.combining(char):
                 # A zero-cell character is combined with the previous
                 # character either on this or preceding line.
+                # Because char's width is zero, this will not change the width
+                # of the previous character.
                 if self.cursor.x:
                     last = line[self.cursor.x - 1]
                     normalized = unicodedata.normalize("NFC", last.data + char)
