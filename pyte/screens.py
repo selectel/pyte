@@ -535,26 +535,42 @@ class Screen:
             # enabled, move the cursor to the beginning of the next line,
             # otherwise replace characters already displayed with newly
             # entered.
-            if cursor_x == columns:
+            if cursor_x >= columns:
                 if DECAWM in mode:
                     self.dirty.add(cursor_y)
                     self.carriage_return()
                     self.linefeed()
 
                     # carriage_return implies cursor.x = 0 so we update cursor_x
+                    # This also puts the cursor_x back into the screen if before
+                    # cursor_x was outside (cursor_x > columns). See the comments
+                    # at the end of the for-loop
                     cursor_x = 0
 
-                    # linefeed may update cursor_y so we update cursor_y too
+                    # linefeed may update cursor.y so we update cursor_y and
+                    # the current line accordingly.
                     cursor_y = cursor.y
                     line = buffer[cursor_y]
                 elif char_width > 0:
-                    cursor_x -= char_width
-                    cursor.x = cursor_x
+                    # Move the cursor_x back enough to make room for
+                    # the new char.
+                    # This indirectly fixes the case of cursor_x > columns putting
+                    # the cursor_x back to the screen.
+                    cursor_x = columns - char_width
+                else:
+                    # Ensure that cursor_x = min(cursor_x, columns) in the case
+                    # that wcwidth returned 0 or negative and the flow didn't enter
+                    # in any of the branches above.
+                    # See the comments at the end of the for-loop
+                    cursor_x = columns
 
             # If Insert mode is set, new characters move old characters to
             # the right, otherwise terminal is in Replace mode and new
             # characters replace old characters at cursor position.
             if is_IRM_set and char_width > 0:
+                # update the real cursor so insert_characters() can use
+                # an updated (and correct) value of it
+                cursor.x = cursor_x
                 self.insert_characters(char_width)
 
             if char_width == 1:
@@ -580,17 +596,25 @@ class Screen:
                     buffer[cursor_y - 1][columns - 1] = \
                         last._replace(data=normalized)
             else:
-                cursor.x = cursor_x
-                cursor.y = cursor_y
                 break  # Unprintable character or doesn't advance the cursor.
 
             # .. note:: We can't use :meth:`cursor_forward()`, because that
             #           way, we'll never know when to linefeed.
-            if char_width > 0:
-                cursor_x = min(cursor_x + char_width, columns)
-                cursor.x = cursor_x
+            #
+            # Note: cursor_x may leave outside the screen if cursor_x > columns
+            # but this is going to be fixed in the next iteration or at the end
+            # of the draw() method
+            cursor_x += char_width
 
         self.dirty.add(cursor_y)
+
+        # Update the real cursor fixing the cursor_x to be
+        # within the limits of the screen
+        if cursor_x > columns:
+            cursor.x = columns
+        else:
+            cursor.x = cursor_x
+        cursor.y = cursor_y
 
     def set_title(self, param):
         """Set terminal title.
