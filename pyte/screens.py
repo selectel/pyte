@@ -61,18 +61,7 @@ Savepoint = namedtuple("Savepoint", [
 ])
 
 
-class Char(namedtuple("Char", [
-    "data",
-    "fg",
-    "bg",
-    "bold",
-    "italics",
-    "underscore",
-    "strikethrough",
-    "reverse",
-    "blink",
-    "width",
-])):
+class Char:
     """A single styled on-screen character.
 
     :param str data: unicode character. Invariant: ``len(data) == 1``.
@@ -92,15 +81,54 @@ class Char(namedtuple("Char", [
                        ``False``.
     :param bool width: the width in terms of cells to display this char.
     """
-    __slots__ = ()
+    __slots__ = (
+        "data",
+        "fg",
+        "bg",
+        "bold",
+        "italics",
+        "underscore",
+        "strikethrough",
+        "reverse",
+        "blink",
+        "width",
+        )
 
-    def __new__(cls, data=" ", fg="default", bg="default", bold=False,
+    def __init__(self, data=" ", fg="default", bg="default", bold=False,
                 italics=False, underscore=False,
                 strikethrough=False, reverse=False, blink=False, width=wcwidth(" ")):
-        return super(Char, cls).__new__(cls, data, fg, bg, bold, italics,
-                                        underscore, strikethrough, reverse,
-                                        blink, width)
+        self.data = data
+        self.fg = fg
+        self.bg = bg
+        self.bold = bold
+        self.italics = italics
+        self.underscore = underscore
+        self.strikethrough = strikethrough
+        self.reverse = reverse
+        self.blink = blink
+        self.width = width
 
+    def _replace(self, **kargs):
+        fields = self._asdict()
+        fields.update(kargs)
+        return Char(**fields)
+
+    def _asdict(self):
+        return {name: getattr(self, name) for name in self.__slots__}
+
+    def __eq__(self, other):
+        if not isinstance(other, Char):
+            raise TypeError()
+
+        return all(getattr(self, name) == getattr(other, name) for name in self.__slots__)
+
+    def __ne__(self, other):
+        if not isinstance(other, Char):
+            raise TypeError()
+
+        return any(getattr(self, name) != getattr(other, name) for name in self.__slots__)
+
+    _fields = __slots__
 
 class Cursor:
     """Screen cursor.
