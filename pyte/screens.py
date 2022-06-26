@@ -104,10 +104,13 @@ class Char:
 
     def __init__(self, data=" ", fg="default", bg="default", bold=False,
                 italics=False, underscore=False,
-                strikethrough=False, reverse=False, blink=False, width=wcwidth(" ")):
+                strikethrough=False, reverse=False, blink=False, width=wcwidth(" "), style=None):
         self.data = data
         self.width = width
-        self.style = CharStyle(fg, bg, bold, italics, underscore, strikethrough, reverse, blink)
+        if style:
+            self.style = style
+        else:
+            self.style = CharStyle(fg, bg, bold, italics, underscore, strikethrough, reverse, blink)
 
     @property
     def fg(self):
@@ -145,6 +148,9 @@ class Char:
         fields = self._asdict()
         fields.update(kargs)
         return Char(**fields)
+
+    def _replace_data(self, data, width):
+        return Char(data=data, width=width, style=self.style)
 
     def _asdict(self):
         return {name: getattr(self, name) for name in self._fields}
@@ -271,8 +277,9 @@ class Screen:
     @property
     def default_char(self):
         """An empty character with default foreground and background colors."""
-        reverse = mo.DECSCNM in self.mode
-        return Char(data=" ", fg="default", bg="default", reverse=reverse, width=wcwidth(" "))
+        style = self._default_style_reversed if mo.DECSCNM in self.mode else self._default_style
+        return Char(data=" ", width=wcwidth(" "), style=style)
+
 
     def __init__(self, columns, lines):
         self.savepoints = []
@@ -281,6 +288,12 @@ class Screen:
         self.buffer = defaultdict(lambda: StaticDefaultDict(self.default_char))
         self.dirty = set()
         self.reset()
+
+        self._default_style = CharStyle(
+                fg="default", bg="default", bold=False,
+                italics=False, underscore=False,
+                strikethrough=False, reverse=False, blink=False)
+        self._default_style_reversed = self._default_style._replace(reverse=True)
 
     def __repr__(self):
         return ("{0}({1}, {2})".format(self.__class__.__name__,
@@ -633,13 +646,13 @@ class Screen:
                 self.insert_characters(char_width)
 
             if char_width == 1:
-                line[cursor_x] = attrs._replace(data=char, width=char_width)
+                line[cursor_x] = attrs._replace_data(data=char, width=char_width)
             elif char_width == 2:
                 # A two-cell character has a stub slot after it.
-                line[cursor_x] = attrs._replace(data=char, width=char_width)
+                line[cursor_x] = attrs._replace_data(data=char, width=char_width)
                 if cursor_x + 1 < columns:
                     line[cursor_x + 1] = attrs \
-                        ._replace(data="", width=0)
+                        ._replace_data(data="", width=0)
             elif char_width == 0 and unicodedata.combining(char):
                 # A zero-cell character is combined with the previous
                 # character either on this or preceding line.
@@ -648,12 +661,12 @@ class Screen:
                 if cursor_x:
                     last = line[cursor_x - 1]
                     normalized = unicodedata.normalize("NFC", last.data + char)
-                    line[cursor_x - 1] = last._replace(data=normalized)
+                    line[cursor_x - 1] = last._replace_data(data=normalized, width=last.width)
                 elif cursor_y:
                     last = buffer[cursor_y - 1][columns - 1]
                     normalized = unicodedata.normalize("NFC", last.data + char)
                     buffer[cursor_y - 1][columns - 1] = \
-                        last._replace(data=normalized)
+                        last._replace_data(data=normalized, width=last.width)
             else:
                 break  # Unprintable character or doesn't advance the cursor.
 
@@ -1109,7 +1122,7 @@ class Screen:
         self.dirty.update(range(self.lines))
         for y in range(self.lines):
             for x in range(self.columns):
-                self.buffer[y][x] = self.buffer[y][x]._replace(data="E")
+                self.buffer[y][x] = self.buffer[y][x]._replace_data(data="E", width=wcwidth("E"))
 
     def select_graphic_rendition(self, *attrs):
         """Set display attributes.
