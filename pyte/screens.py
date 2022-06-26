@@ -60,6 +60,17 @@ Savepoint = namedtuple("Savepoint", [
     "wrap"
 ])
 
+CharStyle = namedtuple("CharStyle", [
+    "fg",
+    "bg",
+    "bold",
+    "italics",
+    "underscore",
+    "strikethrough",
+    "reverse",
+    "blink",
+])
+
 
 class Char:
     """A single styled on-screen character.
@@ -83,30 +94,52 @@ class Char:
     """
     __slots__ = (
         "data",
-        "fg",
-        "bg",
-        "bold",
-        "italics",
-        "underscore",
-        "strikethrough",
-        "reverse",
-        "blink",
         "width",
+        "style",
         )
+
+    # List the properties of this Char instance including its style's properties
+    # The order of this _fields is maintained for backward compatibility
+    _fields = ("data",) + CharStyle._fields + ("width",)
 
     def __init__(self, data=" ", fg="default", bg="default", bold=False,
                 italics=False, underscore=False,
                 strikethrough=False, reverse=False, blink=False, width=wcwidth(" ")):
         self.data = data
-        self.fg = fg
-        self.bg = bg
-        self.bold = bold
-        self.italics = italics
-        self.underscore = underscore
-        self.strikethrough = strikethrough
-        self.reverse = reverse
-        self.blink = blink
         self.width = width
+        self.style = CharStyle(fg, bg, bold, italics, underscore, strikethrough, reverse, blink)
+
+    @property
+    def fg(self):
+        return self.style.fg
+
+    @property
+    def bg(self):
+        return self.style.bg
+
+    @property
+    def bold(self):
+        return self.style.bold
+
+    @property
+    def italics(self):
+        return self.style.italics
+
+    @property
+    def underscore(self):
+        return self.style.underscore
+
+    @property
+    def strikethrough(self):
+        return self.style.strikethrough
+
+    @property
+    def reverse(self):
+        return self.style.reverse
+
+    @property
+    def blink(self):
+        return self.style.blink
 
     def _replace(self, **kargs):
         fields = self._asdict()
@@ -114,21 +147,19 @@ class Char:
         return Char(**fields)
 
     def _asdict(self):
-        return {name: getattr(self, name) for name in self.__slots__}
+        return {name: getattr(self, name) for name in self._fields}
 
     def __eq__(self, other):
         if not isinstance(other, Char):
             raise TypeError()
 
-        return all(getattr(self, name) == getattr(other, name) for name in self.__slots__)
+        return all(getattr(self, name) == getattr(other, name) for name in self._fields)
 
     def __ne__(self, other):
         if not isinstance(other, Char):
             raise TypeError()
 
-        return any(getattr(self, name) != getattr(other, name) for name in self.__slots__)
-
-    _fields = __slots__
+        return any(getattr(self, name) != getattr(other, name) for name in self._fields)
 
 class Cursor:
     """Screen cursor.
