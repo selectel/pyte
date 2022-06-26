@@ -506,6 +506,28 @@ class Screen:
         data = data.translate(
             self.g1_charset if self.charset else self.g0_charset)
 
+        # Fetch these attributes to avoid a lookup on each iteration
+        # of the for-loop.
+        # These attributes are expected to be constant across all the
+        # execution of self.draw()
+        columns = self.columns
+        cursor = self.cursor
+        buffer = self.buffer
+        attrs = cursor.attrs
+        mode = self.mode
+
+        # Note: checking for IRM here makes sense because it would be
+        # checked on every char in data otherwise.
+        # Checking DECAWM, on the other hand, not necessary is a good
+        # idea because it only matters if cursor_x == columns (unlikely)
+        is_IRM_set = mo.IRM in mode
+        DECAWM = mo.DECAWM
+
+        # The following are attributes expected to change infrequently
+        # so we fetch them here and update accordingly if necessary
+        cursor_x = cursor.x
+        cursor_y = cursor.y
+        line = buffer[cursor_y]
         for char in data:
             char_width = wcwidth(char)
 
@@ -513,52 +535,62 @@ class Screen:
             # enabled, move the cursor to the beginning of the next line,
             # otherwise replace characters already displayed with newly
             # entered.
-            if self.cursor.x == self.columns:
-                if mo.DECAWM in self.mode:
-                    self.dirty.add(self.cursor.y)
+            if cursor_x == columns:
+                if DECAWM in mode:
+                    self.dirty.add(cursor_y)
                     self.carriage_return()
                     self.linefeed()
+
+                    # carriage_return implies cursor.x = 0 so we update cursor_x
+                    cursor_x = 0
+
+                    # linefeed may update cursor_y so we update cursor_y too
+                    cursor_y = cursor.y
+                    line = buffer[cursor_y]
                 elif char_width > 0:
-                    self.cursor.x -= char_width
+                    cursor_x -= char_width
+                    cursor.x = cursor_x
 
             # If Insert mode is set, new characters move old characters to
             # the right, otherwise terminal is in Replace mode and new
             # characters replace old characters at cursor position.
-            if mo.IRM in self.mode and char_width > 0:
+            if is_IRM_set and char_width > 0:
                 self.insert_characters(char_width)
 
-            line = self.buffer[self.cursor.y]
             if char_width == 1:
-                line[self.cursor.x] = self.cursor.attrs._replace(data=char, width=char_width)
+                line[cursor_x] = attrs._replace(data=char, width=char_width)
             elif char_width == 2:
                 # A two-cell character has a stub slot after it.
-                line[self.cursor.x] = self.cursor.attrs._replace(data=char, width=char_width)
-                if self.cursor.x + 1 < self.columns:
-                    line[self.cursor.x + 1] = self.cursor.attrs \
+                line[cursor_x] = attrs._replace(data=char, width=char_width)
+                if cursor_x + 1 < columns:
+                    line[cursor_x + 1] = attrs \
                         ._replace(data="", width=0)
             elif char_width == 0 and unicodedata.combining(char):
                 # A zero-cell character is combined with the previous
                 # character either on this or preceding line.
                 # Because char's width is zero, this will not change the width
                 # of the previous character.
-                if self.cursor.x:
-                    last = line[self.cursor.x - 1]
+                if cursor_x:
+                    last = line[cursor_x - 1]
                     normalized = unicodedata.normalize("NFC", last.data + char)
-                    line[self.cursor.x - 1] = last._replace(data=normalized)
-                elif self.cursor.y:
-                    last = self.buffer[self.cursor.y - 1][self.columns - 1]
+                    line[cursor_x - 1] = last._replace(data=normalized)
+                elif cursor_y:
+                    last = buffer[cursor_y - 1][columns - 1]
                     normalized = unicodedata.normalize("NFC", last.data + char)
-                    self.buffer[self.cursor.y - 1][self.columns - 1] = \
+                    buffer[cursor_y - 1][columns - 1] = \
                         last._replace(data=normalized)
             else:
+                cursor.x = cursor_x
+                cursor.y = cursor_y
                 break  # Unprintable character or doesn't advance the cursor.
 
             # .. note:: We can't use :meth:`cursor_forward()`, because that
             #           way, we'll never know when to linefeed.
             if char_width > 0:
-                self.cursor.x = min(self.cursor.x + char_width, self.columns)
+                cursor_x = min(cursor_x + char_width, columns)
+                cursor.x = cursor_x
 
-        self.dirty.add(self.cursor.y)
+        self.dirty.add(cursor_y)
 
     def set_title(self, param):
         """Set terminal title.
