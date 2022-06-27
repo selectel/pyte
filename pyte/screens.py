@@ -102,15 +102,16 @@ class Char:
     # The order of this _fields is maintained for backward compatibility
     _fields = ("data",) + CharStyle._fields + ("width",)
 
-    def __init__(self, data=" ", fg="default", bg="default", bold=False,
-                italics=False, underscore=False,
-                strikethrough=False, reverse=False, blink=False, width=wcwidth(" "), style=None):
+    def __init__(self, data, width, style):
         self.data = data
         self.width = width
-        if style:
-            self.style = style
-        else:
-            self.style = CharStyle(fg, bg, bold, italics, underscore, strikethrough, reverse, blink)
+        self.style = style
+
+    @classmethod
+    def from_attributes(cls, data=" ", fg="default", bg="default", bold=False, italics=False, underscore=False,
+                strikethrough=False, reverse=False, blink=False):
+        style = CharStyle(fg, bg, bold, italics, underscore, strikethrough, reverse, blink)
+        return Char(data, wcwidth(data), style)
 
     @property
     def fg(self):
@@ -144,15 +145,15 @@ class Char:
     def blink(self):
         return self.style.blink
 
-    def _replace(self, **kargs):
+    def copy_and_change(self, **kargs):
         fields = self._asdict()
         fields.update(kargs)
         return Char(**fields)
 
-    def _replace_data(self, data, width):
-        return Char(data=data, width=width, style=self.style)
+    def copy(self):
+        return Char(self.data, self.width, self.style)
 
-    def _asdict(self):
+    def as_dict(self):
         return {name: getattr(self, name) for name in self._fields}
 
     def __eq__(self, other):
@@ -178,20 +179,20 @@ class Cursor:
     """
     __slots__ = ("x", "y", "attrs", "hidden")
 
-    def __init__(self, x, y, attrs=Char(" ", width=wcwidth(" "))):
+    def __init__(self, x, y, attrs):
         self.x = x
         self.y = y
         self.attrs = attrs
         self.hidden = False
 
 
-class StaticDefaultDict(dict):
-    """A :func:`dict` with a static default value.
+class Line(dict):
+    """A :func:`dict` with a static default value representing a line of the screen.
 
     Unlike :func:`collections.defaultdict` this implementation does not
     implicitly update the mapping when queried with a missing key.
 
-    >>> d = StaticDefaultDict(42)
+    >>> d = Line(42)
     >>> d["foo"]
     42
     >>> d
@@ -202,6 +203,28 @@ class StaticDefaultDict(dict):
 
     def __missing__(self, key):
         return self.default
+
+    def write_data(self, x, data, width, style):
+        """
+        Update the char at the position x with the new data, width and style.
+        If no char is at that position, a new char is created.
+        """
+        if x in self:
+            char = self[x]
+            char.data = data
+            char.width = width
+            char.style = style
+        else:
+            self[x] = Char(data, width, style)
+
+    def char_at(self, x):
+        if x in self:
+            return self[x]
+        else:
+            char = self.default.copy()
+            self[x] = char
+            return char
+
 
 
 class Screen:
@@ -278,22 +301,23 @@ class Screen:
     def default_char(self):
         """An empty character with default foreground and background colors."""
         style = self._default_style_reversed if mo.DECSCNM in self.mode else self._default_style
-        return Char(data=" ", width=wcwidth(" "), style=style)
+        return Char(" ", wcwidth(" "), style)
 
 
     def __init__(self, columns, lines):
         self.savepoints = []
         self.columns = columns
         self.lines = lines
-        self.buffer = defaultdict(lambda: StaticDefaultDict(self.default_char))
+        self.buffer = defaultdict(lambda: Line(self.default_char))
         self.dirty = set()
-        self.reset()
 
         self._default_style = CharStyle(
                 fg="default", bg="default", bold=False,
                 italics=False, underscore=False,
                 strikethrough=False, reverse=False, blink=False)
         self._default_style_reversed = self._default_style._replace(reverse=True)
+
+        self.reset()
 
     def __repr__(self):
         return ("{0}({1}, {2})".format(self.__class__.__name__,
@@ -380,7 +404,7 @@ class Screen:
         # we aim to support VT102 / VT220 and linux -- we use n = 8.
         self.tabstops = set(range(8, self.columns, 8))
 
-        self.cursor = Cursor(0, 0)
+        self.cursor = Cursor(0, 0, self.default_char.copy())
         self.cursor_position()
 
         self.saved_columns = None
@@ -493,7 +517,7 @@ class Screen:
             for line in self.buffer.values():
                 line.default = self.default_char
                 for x in line:
-                    line[x] = line[x]._replace(reverse=True)
+                    line[x].style = line[x].style._replace(reverse=True)
 
             self.select_graphic_rendition(7)  # +reverse.
 
@@ -531,7 +555,7 @@ class Screen:
             for line in self.buffer.values():
                 line.default = self.default_char
                 for x in line:
-                    line[x] = line[x]._replace(reverse=False)
+                    line[x].style = line[x].style._replace(reverse=False)
 
             self.select_graphic_rendition(27)  # -reverse.
 
@@ -587,6 +611,7 @@ class Screen:
         buffer = self.buffer
         attrs = cursor.attrs
         mode = self.mode
+        style = attrs.style
 
         # Note: checking for IRM here makes sense because it would be
         # checked on every char in data otherwise.
@@ -646,27 +671,25 @@ class Screen:
                 self.insert_characters(char_width)
 
             if char_width == 1:
-                line[cursor_x] = attrs._replace_data(data=char, width=char_width)
+                line.write_data(cursor_x, char, char_width, style)
             elif char_width == 2:
                 # A two-cell character has a stub slot after it.
-                line[cursor_x] = attrs._replace_data(data=char, width=char_width)
+                line.write_data(cursor_x, char, char_width, style)
                 if cursor_x + 1 < columns:
-                    line[cursor_x + 1] = attrs \
-                        ._replace_data(data="", width=0)
+                    line.write_data(cursor_x+1, "", 0, style)
             elif char_width == 0 and unicodedata.combining(char):
                 # A zero-cell character is combined with the previous
                 # character either on this or preceding line.
                 # Because char's width is zero, this will not change the width
                 # of the previous character.
                 if cursor_x:
-                    last = line[cursor_x - 1]
+                    last = line.char_at(cursor_x - 1)
                     normalized = unicodedata.normalize("NFC", last.data + char)
-                    line[cursor_x - 1] = last._replace_data(data=normalized, width=last.width)
+                    last.data = normalized
                 elif cursor_y:
-                    last = buffer[cursor_y - 1][columns - 1]
+                    last = buffer[cursor_y - 1].char_at(columns - 1)
                     normalized = unicodedata.normalize("NFC", last.data + char)
-                    buffer[cursor_y - 1][columns - 1] = \
-                        last._replace_data(data=normalized, width=last.width)
+                    last.data = normalized
             else:
                 break  # Unprintable character or doesn't advance the cursor.
 
@@ -764,7 +787,7 @@ class Screen:
 
     def save_cursor(self):
         """Push the current cursor position onto the stack."""
-        self.savepoints.append(Savepoint(copy.copy(self.cursor),
+        self.savepoints.append(Savepoint(copy.deepcopy(self.cursor),
                                          self.g0_charset,
                                          self.g1_charset,
                                          self.charset,
@@ -852,9 +875,18 @@ class Screen:
         count = count or 1
         line = self.buffer[self.cursor.y]
         for x in range(self.columns, self.cursor.x - 1, -1):
-            if x + count <= self.columns:
-                line[x + count] = line[x]
-            line.pop(x, None)
+            new_x = x + count
+            if new_x <= self.columns:
+                if x in line:
+                    line[x + count] = line.pop(x)
+                else:
+                    # this is equivalent to:
+                    #   line[new_x] = line[x]
+                    # where line[x] does not exist so line[new_x]
+                    # should not exist either
+                    line.pop(new_x, None)
+            else:
+                line.pop(x, None)
 
     def delete_characters(self, count=None):
         """Delete the indicated # of characters, starting with the
@@ -870,7 +902,7 @@ class Screen:
         line = self.buffer[self.cursor.y]
         for x in range(self.cursor.x, self.columns):
             if x + count <= self.columns:
-                line[x] = line.pop(x + count, self.default_char)
+                line[x] = line.pop(x + count, self.default_char.copy())
             else:
                 line.pop(x, None)
 
@@ -892,9 +924,12 @@ class Screen:
         count = count or 1
 
         line = self.buffer[self.cursor.y]
+        data = self.cursor.attrs.data
+        width = self.cursor.attrs.width
+        style = self.cursor.attrs.style
         for x in range(self.cursor.x,
                        min(self.cursor.x + count, self.columns)):
-            line[x] = self.cursor.attrs
+            line.write_data(x, data, width, style)
 
     def erase_in_line(self, how=0, private=False):
         """Erase a line in a specific way.
@@ -920,8 +955,11 @@ class Screen:
             interval = range(self.columns)
 
         line = self.buffer[self.cursor.y]
+        data = self.cursor.attrs.data
+        width = self.cursor.attrs.width
+        style = self.cursor.attrs.style
         for x in interval:
-            line[x] = self.cursor.attrs
+            line.write_data(x, data, width, style)
 
     def erase_in_display(self, how=0, *args, **kwargs):
         """Erases display in a specific way.
@@ -954,10 +992,13 @@ class Screen:
             interval = range(self.lines)
 
         self.dirty.update(interval)
+        data = self.cursor.attrs.data
+        width = self.cursor.attrs.width
+        style = self.cursor.attrs.style
         for y in interval:
             line = self.buffer[y]
             for x in line:
-                line[x] = self.cursor.attrs
+                line.write_data(x, data, width, style)
 
         if how == 0 or how == 1:
             self.erase_in_line(how)
@@ -1120,9 +1161,10 @@ class Screen:
     def alignment_display(self):
         """Fills screen with uppercase E's for screen focus and alignment."""
         self.dirty.update(range(self.lines))
+        style = self._default_style
         for y in range(self.lines):
             for x in range(self.columns):
-                self.buffer[y][x] = self.buffer[y][x]._replace_data(data="E", width=wcwidth("E"))
+                self.buffer[y].write_data(x, "E", wcwidth("E"), style)
 
     def select_graphic_rendition(self, *attrs):
         """Set display attributes.
@@ -1142,7 +1184,7 @@ class Screen:
             attr = attrs.pop()
             if attr == 0:
                 # Reset all attributes.
-                replace.update(self.default_char._asdict())
+                replace.update(self.default_char.style._asdict())
             elif attr in g.FG_ANSI:
                 replace["fg"] = g.FG_ANSI[attr]
             elif attr in g.BG:
@@ -1170,7 +1212,7 @@ class Screen:
                 except IndexError:
                     pass
 
-        self.cursor.attrs = self.cursor.attrs._replace(**replace)
+        self.cursor.attrs.style = self.cursor.attrs.style._replace(**replace)
 
     def report_device_attributes(self, mode=0, **kwargs):
         """Report terminal identity.

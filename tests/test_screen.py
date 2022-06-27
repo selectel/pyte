@@ -4,10 +4,20 @@ import pytest
 
 import pyte
 from pyte import modes as mo, control as ctrl, graphics as g
-from pyte.screens import Char
+from pyte.screens import Char as _orig_Char, CharStyle
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "helpers"))
 from asserts import consistency_asserts
+
+# Implement the old API of Char so we don't have to change
+# all the tests
+class Char(_orig_Char):
+    def __init__(self, data=" ", fg="default", bg="default", bold=False, italics=False, underscore=False,
+                strikethrough=False, reverse=False, blink=False, width=1):
+        self.data = data
+        self.width = width
+        self.style = CharStyle(fg, bg, bold, italics, underscore, strikethrough, reverse, blink)
+
 
 # Test helpers.
 
@@ -15,13 +25,15 @@ def update(screen, lines, colored=[]):
     """Updates a given screen object with given lines, colors each line
     from ``colored`` in "red" and returns the modified screen.
     """
+    base_style = Char().style
+    red_style = base_style._replace(fg="red")
     for y, line in enumerate(lines):
         for x, char in enumerate(line):
             if y in colored:
-                attrs = {"fg": "red"}
+                style = red_style
             else:
-                attrs = {}
-            screen.buffer[y][x] = Char(data=char, **attrs)
+                style = base_style
+            screen.buffer[y].write_data(x, char, 1, style)
 
     return screen
 
