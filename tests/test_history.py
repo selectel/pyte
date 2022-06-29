@@ -48,9 +48,9 @@ def test_reverse_index():
 
     # Filling the screen with line numbers, so it's easier to
     # track history contents.
-    for idx in range(len(screen.buffer)):
+    for idx in range(screen.lines):
         screen.draw(str(idx))
-        if idx != len(screen.buffer) - 1:
+        if idx != screen.lines - 1:
             screen.linefeed()
 
     assert not screen.history.top
@@ -59,19 +59,19 @@ def test_reverse_index():
     screen.cursor_position()
 
     # a) first index, expecting top history to be updated.
-    line = screen.buffer[-1]
+    line = screen.buffer[screen.lines-1]
     screen.reverse_index()
     assert screen.history.bottom
     assert screen.history.bottom[0] == line
 
     # b) second index.
-    line = screen.buffer[-1]
+    line = screen.buffer[screen.lines-1]
     screen.reverse_index()
     assert len(screen.history.bottom) == 2
     assert screen.history.bottom[1] == line
 
     # c) rotation.
-    for _ in range(len(screen.buffer) ** screen.lines):
+    for _ in range(screen.history.size * 2):
         screen.reverse_index()
 
     assert len(screen.history.bottom) == 50
