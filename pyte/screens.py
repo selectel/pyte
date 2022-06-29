@@ -34,6 +34,7 @@ import unicodedata
 import warnings
 from collections import deque, namedtuple, defaultdict
 from functools import lru_cache
+from bisect import bisect_left, bisect_right
 
 from wcwidth import wcwidth
 
@@ -735,11 +736,20 @@ class Screen:
         """
         top, bottom = self.margins or Margins(0, self.lines - 1)
         if self.cursor.y == bottom:
+            buffer = self.buffer
+            pop = buffer.pop
+
+            non_empty_y = sorted(buffer)
+            begin = bisect_left(non_empty_y, top + 1)
+            end = bisect_right(non_empty_y, bottom, begin)
+
+            to_move = non_empty_y[begin:end]
+            for y in to_move:
+                buffer[y-1] = pop(y)
+
             # TODO: mark only the lines within margins?
+            # we could mark "(y-1, y) for y in to_move"
             self.dirty.update(range(self.lines))
-            for y in range(top, bottom):
-                self.buffer[y] = self.buffer[y + 1]
-            self.buffer.pop(bottom, None)
         else:
             self.cursor_down()
 
@@ -749,11 +759,21 @@ class Screen:
         """
         top, bottom = self.margins or Margins(0, self.lines - 1)
         if self.cursor.y == top:
+            buffer = self.buffer
+            pop = buffer.pop
+
+            non_empty_y = sorted(buffer)
+            begin = bisect_left(non_empty_y, top)
+            end = bisect_right(non_empty_y, bottom - 1, begin)
+
+            to_move = non_empty_y[begin:end]
+            for y in reversed(to_move):
+                buffer[y+1] = pop(y)
+
             # TODO: mark only the lines within margins?
+            # we could mark "(y+1, y) for y in to_move"
             self.dirty.update(range(self.lines))
-            for y in range(bottom, top, -1):
-                self.buffer[y] = self.buffer[y - 1]
-            self.buffer.pop(top, None)
+
         else:
             self.cursor_up()
 
