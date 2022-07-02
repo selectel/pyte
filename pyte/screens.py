@@ -199,6 +199,7 @@ class Line(dict):
     >>> d
     {}
     """
+    __slots__ = ('default', )
     def __init__(self, default):
         self.default = default
 
@@ -225,7 +226,6 @@ class Line(dict):
             char = self.default.copy()
             self[x] = char
             return char
-
 
 
 class Screen:
@@ -626,6 +626,8 @@ class Screen:
         cursor_x = cursor.x
         cursor_y = cursor.y
         line = buffer[cursor_y]
+        write_data = line.write_data
+        char_at = line.char_at
         for char in data:
             char_width = wcwidth(char)
 
@@ -649,6 +651,8 @@ class Screen:
                     # the current line accordingly.
                     cursor_y = cursor.y
                     line = buffer[cursor_y]
+                    write_data = line.write_data
+                    char_at = line.char_at
                 elif char_width > 0:
                     # Move the cursor_x back enough to make room for
                     # the new char.
@@ -672,19 +676,19 @@ class Screen:
                 self.insert_characters(char_width)
 
             if char_width == 1:
-                line.write_data(cursor_x, char, char_width, style)
+                write_data(cursor_x, char, char_width, style)
             elif char_width == 2:
                 # A two-cell character has a stub slot after it.
-                line.write_data(cursor_x, char, char_width, style)
+                write_data(cursor_x, char, char_width, style)
                 if cursor_x + 1 < columns:
-                    line.write_data(cursor_x+1, "", 0, style)
+                    write_data(cursor_x+1, "", 0, style)
             elif char_width == 0 and unicodedata.combining(char):
                 # A zero-cell character is combined with the previous
                 # character either on this or preceding line.
                 # Because char's width is zero, this will not change the width
                 # of the previous character.
                 if cursor_x:
-                    last = line.char_at(cursor_x - 1)
+                    last = char_at(cursor_x - 1)
                     normalized = unicodedata.normalize("NFC", last.data + char)
                     last.data = normalized
                 elif cursor_y:
@@ -943,13 +947,13 @@ class Screen:
         self.dirty.add(self.cursor.y)
         count = count or 1
 
-        line = self.buffer[self.cursor.y]
+        write_data = self.buffer[self.cursor.y].write_data
         data = self.cursor.attrs.data
         width = self.cursor.attrs.width
         style = self.cursor.attrs.style
         for x in range(self.cursor.x,
                        min(self.cursor.x + count, self.columns)):
-            line.write_data(x, data, width, style)
+            write_data(x, data, width, style)
 
     def erase_in_line(self, how=0, private=False):
         """Erase a line in a specific way.
@@ -974,12 +978,12 @@ class Screen:
         elif how == 2:
             interval = range(self.columns)
 
-        line = self.buffer[self.cursor.y]
+        write_data = self.buffer[self.cursor.y].write_data
         data = self.cursor.attrs.data
         width = self.cursor.attrs.width
         style = self.cursor.attrs.style
         for x in interval:
-            line.write_data(x, data, width, style)
+            write_data(x, data, width, style)
 
     def erase_in_display(self, how=0, *args, **kwargs):
         """Erases display in a specific way.
@@ -1017,8 +1021,9 @@ class Screen:
         style = self.cursor.attrs.style
         for y in interval:
             line = self.buffer[y]
+            write_data = line.write_data
             for x in line:
-                line.write_data(x, data, width, style)
+                write_data(x, data, width, style)
 
         if how == 0 or how == 1:
             self.erase_in_line(how)
@@ -1394,9 +1399,10 @@ class HistoryScreen(Screen):
         """
         if event in ["prev_page", "next_page"]:
             for line in self.buffer.values():
+                pop = line.pop
                 for x in line:
                     if x > self.columns:
-                        line.pop(x)
+                        pop(x)
 
         # If we're at the bottom of the history buffer and `DECTCEM`
         # mode is set -- show the cursor.
