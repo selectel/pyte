@@ -37,11 +37,11 @@ except ImportError:
 import pyte
 
 def setup(path, screen_cls, columns, lines):
-    with io.open(path, "rt", encoding="utf-8") as handle:
+    with io.open(path, "rb") as handle:
         data = handle.read()
 
     screen = screen_cls(columns, lines)
-    stream = pyte.Stream(screen)
+    stream = pyte.ByteStream(screen)
 
     return data, screen, stream
 
