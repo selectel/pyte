@@ -72,6 +72,71 @@ CharStyle = namedtuple("CharStyle", [
     "blink",
 ])
 
+class LineStats(namedtuple("_LineStats", [
+    "empty",
+    "chars",
+    "columns",
+    "occupacy",
+    "min",
+    "max",
+    "span",
+    ])):
+    """
+    Note: this is not part of the stable API so it may change
+    between version of pyte.
+    """
+
+    def __repr__(self):
+        if self.empty:
+            return "chars: {0: >3}/{1} ({2:.2f})".format(
+                    self.chars, self.columns, self.occupacy,
+                    )
+        else:
+            return "chars: {0: >3}/{1} ({2:.2f}); range: [{3: >3} - {4: >3}], len: {5: >3} ({6:.2f})".format(
+                    self.chars, self.columns, self.occupacy,
+                    self.min, self.max, self.span, self.span/self.columns
+                    )
+
+class BufferStats(namedtuple("_BufferStats", [
+    "empty",
+    "entries",
+    "columns",
+    "lines",
+    "falses",
+    "occupacy",
+    "min",
+    "max",
+    "span",
+    "line_stats",
+    ])):
+    """
+    Note: this is not part of the stable API so it may change
+    between version of pyte.
+    """
+
+    def __repr__(self):
+        total_chars = sum(stats.chars for _, stats in self.line_stats)
+        bstats = "total chars: {0: >3}/{1} ({2:.2f}%)\n".format(
+                total_chars, self.columns*self.lines,
+                total_chars/(self.columns*self.lines)
+                )
+
+        if self.empty:
+            return bstats + \
+                    "line entries: {0: >3}/{1} ({2:.2f}), falses: {3:> 3} ({4:.2f})\n{5}".format(
+                    self.entries, self.lines, self.occupacy,
+                    self.falses, self.falses/self.entries,
+                    "\n".join("{0: >3}: {1}".format(x, stats) for x, stats in self.line_stats)
+                    )
+        else:
+            return bstats + \
+                    "line entries: {0: >3}/{1} ({2:.2f}), falses: {3:> 3} ({4:.2f}); range: [{5: >3} - {6: >3}], len: {7: >3} ({8:.2f})\n{9}".format(
+                    self.entries, self.lines, self.occupacy,
+                    self.falses, self.falses/self.entries,
+                    self.min, self.max, self.span, self.span/self.lines,
+                    "\n".join("{0: >3}: {1}".format(x, stats) for x, stats in self.line_stats)
+                    )
+
 
 class Char:
     """A single styled on-screen character.
@@ -227,6 +292,20 @@ class Line(dict):
             self[x] = char
             return char
 
+    def stats(self, screen):
+        """
+        Note: this is not part of the stable API so it may change
+        between version of pyte.
+        """
+        return LineStats(
+                empty=not bool(self),
+                chars=len(self),
+                columns=screen.columns,
+                occupacy=len(self)/screen.columns,
+                min=min(self) if self else None,
+                max=max(self) if self else None,
+                span=(max(self) - min(self)) if self else None
+                )
 
 class Screen:
     """
@@ -323,6 +402,24 @@ class Screen:
     def __repr__(self):
         return ("{0}({1}, {2})".format(self.__class__.__name__,
                                        self.columns, self.lines))
+    def stats(self):
+        """
+        Note: this is not part of the stable API so it may change
+        between version of pyte.
+        """
+        buffer = self.buffer
+        return BufferStats(
+                empty=not bool(buffer),
+                entries=len(buffer),
+                columns=self.columns,
+                lines=self.lines,
+                falses=len([line for line in buffer.values() if not line]),
+                occupacy=len(buffer)/self.lines,
+                min=min(buffer) if buffer else None,
+                max=max(buffer) if buffer else None,
+                span=(max(buffer) - min(buffer)) if buffer else None,
+                line_stats=[(x, line.stats(self)) for x, line in sorted(buffer.items())]
+                )
 
     @property
     def display(self):
