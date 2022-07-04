@@ -33,7 +33,9 @@ def update(screen, lines, colored=[]):
                 style = red_style
             else:
                 style = base_style
-            screen.buffer[y].write_data(x, char, 1, style)
+            # Note: this hack is only for testing purposes.
+            # Modifying the screen's buffer is not allowed.
+            screen._buffer[y].write_data(x, char, 1, style)
 
     return screen
 

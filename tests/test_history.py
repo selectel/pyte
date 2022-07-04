@@ -28,13 +28,13 @@ def test_index():
     line = screen.buffer[0]
     screen.index()
     assert screen.history.top
-    assert screen.history.top[-1] == line
+    assert screen.history.top[-1] == line._line
 
     # b) second index.
     line = screen.buffer[0]
     screen.index()
     assert len(screen.history.top) == 2
-    assert screen.history.top[-1] == line
+    assert screen.history.top[-1] == line._line
 
     # c) rotation.
     for _ in range(screen.history.size * 2):
@@ -62,13 +62,13 @@ def test_reverse_index():
     line = screen.buffer[screen.lines-1]
     screen.reverse_index()
     assert screen.history.bottom
-    assert screen.history.bottom[0] == line
+    assert screen.history.bottom[0] == line._line
 
     # b) second index.
     line = screen.buffer[screen.lines-1]
     screen.reverse_index()
     assert len(screen.history.bottom) == 2
-    assert screen.history.bottom[1] == line
+    assert screen.history.bottom[1] == line._line
 
     # c) rotation.
     for _ in range(screen.history.size * 2):

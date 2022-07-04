@@ -307,6 +307,54 @@ class Line(dict):
                 span=(max(self) - min(self)) if self else None
                 )
 
+
+class LineView:
+    """
+    A read-only view of an horizontal line of the screen.
+
+    Modifications to the internals of the screen is still possible through
+    this LineView however any modification will result in an undefined
+    behaviour. Don't do that.
+
+    See BufferView.
+    """
+    __slots__ = ("_line",)
+    def __init__(self, line):
+        self._line = line
+
+    def __getitem__(self, x):
+        try:
+            return self._line[x]
+        except KeyError:
+            return self._line.default
+
+class BufferView:
+    """
+    A read-only view of the screen.
+
+    Modifications to the internals of the screen is still possible through
+    this BufferView however any modification will result in an undefined
+    behaviour. Don't do that.
+
+    Any modification to the screen must be done through its method
+    (principally draw())
+    """
+    __slots__ = ("_buffer", "_screen")
+    def __init__(self, screen):
+        self._screen = screen
+        self._buffer = screen._buffer
+
+    def __getitem__(self, y):
+        try:
+            line = self._buffer[y]
+        except KeyError:
+            line = Line(self._screen.default_char)
+
+        return LineView(line)
+
+    def __len__(self):
+        return self._screen.lines
+
 class Screen:
     """
     A screen is an in-memory matrix of characters that represents the
@@ -388,7 +436,7 @@ class Screen:
         self.savepoints = []
         self.columns = columns
         self.lines = lines
-        self.buffer = defaultdict(lambda: Line(self.default_char))
+        self._buffer = defaultdict(lambda: Line(self.default_char))
         self.dirty = set()
 
         self._default_style = CharStyle(
@@ -402,12 +450,17 @@ class Screen:
     def __repr__(self):
         return ("{0}({1}, {2})".format(self.__class__.__name__,
                                        self.columns, self.lines))
+
+    @property
+    def buffer(self):
+        return BufferView(self)
+
     def stats(self):
         """
         Note: this is not part of the stable API so it may change
         between version of pyte.
         """
-        buffer = self.buffer
+        buffer = self._buffer
         return BufferStats(
                 empty=not bool(buffer),
                 entries=len(buffer),
@@ -429,7 +482,7 @@ class Screen:
         prev_y = -1
         output = []
         columns = self.columns
-        for y, line in sorted(self.buffer.items()):
+        for y, line in sorted(self._buffer.items()):
             empty_lines = y - (prev_y + 1)
             if empty_lines:
                 output.extend([padding * columns] * empty_lines)
@@ -485,7 +538,7 @@ class Screen:
            :manpage:`xterm` -- we now know that.
         """
         self.dirty.update(range(self.lines))
-        self.buffer.clear()
+        self._buffer.clear()
         self.margins = None
 
         self.mode = set([mo.DECAWM, mo.DECTCEM])
@@ -541,7 +594,7 @@ class Screen:
             self.restore_cursor()
 
         if columns < self.columns:
-            for line in self.buffer.values():
+            for line in self._buffer.values():
                 for x in range(columns, self.columns):
                     line.pop(x, None)
 
@@ -612,7 +665,7 @@ class Screen:
 
         # Mark all displayed characters as reverse.
         if mo.DECSCNM in modes:
-            for line in self.buffer.values():
+            for line in self._buffer.values():
                 line.default = self.default_char
                 for x in line:
                     line[x].style = line[x].style._replace(reverse=True)
@@ -650,7 +703,7 @@ class Screen:
             self.cursor_position()
 
         if mo.DECSCNM in modes:
-            for line in self.buffer.values():
+            for line in self._buffer.values():
                 line.default = self.default_char
                 for x in line:
                     line[x].style = line[x].style._replace(reverse=False)
@@ -706,7 +759,7 @@ class Screen:
         # execution of self.draw()
         columns = self.columns
         cursor = self.cursor
-        buffer = self.buffer
+        buffer = self._buffer
         attrs = cursor.attrs
         mode = self.mode
         style = attrs.style
@@ -837,7 +890,7 @@ class Screen:
         """
         top, bottom = self.margins or Margins(0, self.lines - 1)
         if self.cursor.y == bottom:
-            buffer = self.buffer
+            buffer = self._buffer
             pop = buffer.pop
 
             non_empty_y = sorted(buffer)
@@ -860,7 +913,7 @@ class Screen:
         """
         top, bottom = self.margins or Margins(0, self.lines - 1)
         if self.cursor.y == top:
-            buffer = self.buffer
+            buffer = self._buffer
             pop = buffer.pop
 
             non_empty_y = sorted(buffer)
@@ -954,9 +1007,9 @@ class Screen:
         if top <= self.cursor.y <= bottom:
             self.dirty.update(range(self.cursor.y, self.lines))
             for y in range(bottom, self.cursor.y - 1, -1):
-                if y + count <= bottom and y in self.buffer:
-                    self.buffer[y + count] = self.buffer[y]
-                self.buffer.pop(y, None)
+                if y + count <= bottom and y in self._buffer:
+                    self._buffer[y + count] = self._buffer[y]
+                self._buffer.pop(y, None)
 
             self.carriage_return()
 
@@ -976,10 +1029,10 @@ class Screen:
             self.dirty.update(range(self.cursor.y, self.lines))
             for y in range(self.cursor.y, bottom + 1):
                 if y + count <= bottom:
-                    if y + count in self.buffer:
-                        self.buffer[y] = self.buffer.pop(y + count)
+                    if y + count in self._buffer:
+                        self._buffer[y] = self._buffer.pop(y + count)
                 else:
-                    self.buffer.pop(y, None)
+                    self._buffer.pop(y, None)
 
             self.carriage_return()
 
@@ -994,7 +1047,7 @@ class Screen:
         self.dirty.add(self.cursor.y)
 
         count = count or 1
-        line = self.buffer[self.cursor.y]
+        line = self._buffer[self.cursor.y]
         for x in range(self.columns, self.cursor.x - 1, -1):
             new_x = x + count
             if new_x <= self.columns:
@@ -1020,7 +1073,7 @@ class Screen:
         self.dirty.add(self.cursor.y)
         count = count or 1
 
-        line = self.buffer[self.cursor.y]
+        line = self._buffer[self.cursor.y]
         for x in range(self.cursor.x, self.columns):
             if x + count <= self.columns:
                 line[x] = line.pop(x + count, self.default_char.copy())
@@ -1044,7 +1097,7 @@ class Screen:
         self.dirty.add(self.cursor.y)
         count = count or 1
 
-        write_data = self.buffer[self.cursor.y].write_data
+        write_data = self._buffer[self.cursor.y].write_data
         data = self.cursor.attrs.data
         width = self.cursor.attrs.width
         style = self.cursor.attrs.style
@@ -1075,7 +1128,7 @@ class Screen:
         elif how == 2:
             interval = range(self.columns)
 
-        write_data = self.buffer[self.cursor.y].write_data
+        write_data = self._buffer[self.cursor.y].write_data
         data = self.cursor.attrs.data
         width = self.cursor.attrs.width
         style = self.cursor.attrs.style
@@ -1117,7 +1170,7 @@ class Screen:
         width = self.cursor.attrs.width
         style = self.cursor.attrs.style
         for y in interval:
-            line = self.buffer[y]
+            line = self._buffer[y]
             write_data = line.write_data
             for x in line:
                 write_data(x, data, width, style)
@@ -1286,7 +1339,7 @@ class Screen:
         style = self._default_style
         for y in range(self.lines):
             for x in range(self.columns):
-                self.buffer[y].write_data(x, "E", wcwidth("E"), style)
+                self._buffer[y].write_data(x, "E", wcwidth("E"), style)
 
     def select_graphic_rendition(self, *attrs):
         """Set display attributes.
@@ -1495,7 +1548,7 @@ class HistoryScreen(Screen):
         :param str event: event name, for example ``"linefeed"``.
         """
         if event in ["prev_page", "next_page"]:
-            for line in self.buffer.values():
+            for line in self._buffer.values():
                 pop = line.pop
                 for x in line:
                     if x > self.columns:
@@ -1533,7 +1586,7 @@ class HistoryScreen(Screen):
         top, bottom = self.margins or Margins(0, self.lines - 1)
 
         if self.cursor.y == bottom:
-            self.history.top.append(self.buffer[top])
+            self.history.top.append(self._buffer[top])
 
         super(HistoryScreen, self).index()
 
@@ -1542,7 +1595,7 @@ class HistoryScreen(Screen):
         top, bottom = self.margins or Margins(0, self.lines - 1)
 
         if self.cursor.y == top:
-            self.history.bottom.append(self.buffer[bottom])
+            self.history.bottom.append(self._buffer[bottom])
 
         super(HistoryScreen, self).reverse_index()
 
@@ -1557,15 +1610,15 @@ class HistoryScreen(Screen):
                       int(math.ceil(self.lines * self.history.ratio)))
 
             self.history.bottom.extendleft(
-                self.buffer[y]
+                self._buffer[y]
                 for y in range(self.lines - 1, self.lines - mid - 1, -1))
             self.history = self.history \
                 ._replace(position=self.history.position - mid)
 
             for y in range(self.lines - 1, mid - 1, -1):
-                self.buffer[y] = self.buffer[y - mid]
+                self._buffer[y] = self._buffer[y - mid]
             for y in range(mid - 1, -1, -1):
-                self.buffer[y] = self.history.top.pop()
+                self._buffer[y] = self.history.top.pop()
 
             self.dirty = set(range(self.lines))
 
@@ -1575,14 +1628,14 @@ class HistoryScreen(Screen):
             mid = min(len(self.history.bottom),
                       int(math.ceil(self.lines * self.history.ratio)))
 
-            self.history.top.extend(self.buffer[y] for y in range(mid))
+            self.history.top.extend(self._buffer[y] for y in range(mid))
             self.history = self.history \
                 ._replace(position=self.history.position + mid)
 
             for y in range(self.lines - mid):
-                self.buffer[y] = self.buffer[y + mid]
+                self._buffer[y] = self._buffer[y + mid]
             for y in range(self.lines - mid, self.lines):
-                self.buffer[y] = self.history.bottom.popleft()
+                self._buffer[y] = self.history.bottom.popleft()
 
             self.dirty = set(range(self.lines))
 
