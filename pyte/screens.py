@@ -431,6 +431,8 @@ class Screen:
         style = self._default_style_reversed if mo.DECSCNM in self.mode else self._default_style
         return Char(" ", wcwidth(" "), style)
 
+    def default_line(self):
+        return Line(self.default_char)
 
     def __init__(self, columns, lines):
         self.savepoints = []
@@ -776,6 +778,7 @@ class Screen:
         cursor_x = cursor.x
         cursor_y = cursor.y
         line = buffer[cursor_y]
+
         write_data = line.write_data
         char_at = line.char_at
         for char in data:
@@ -1047,7 +1050,14 @@ class Screen:
         self.dirty.add(self.cursor.y)
 
         count = count or 1
-        line = self._buffer[self.cursor.y]
+        line = self._buffer.get(self.cursor.y)
+
+        # if there is no line (aka the line is empty), then don't do
+        # anything as insert_characters only moves the chars within
+        # the line but does not write anything new.
+        if not line:
+            return
+
         for x in range(self.columns, self.cursor.x - 1, -1):
             new_x = x + count
             if new_x <= self.columns:
@@ -1071,9 +1081,16 @@ class Screen:
         :param int count: number of characters to delete.
         """
         self.dirty.add(self.cursor.y)
-        count = count or 1
 
-        line = self._buffer[self.cursor.y]
+        count = count or 1
+        line = self._buffer.get(self.cursor.y)
+
+        # if there is no line (aka the line is empty), then don't do
+        # anything as delete_characters  only moves the chars within
+        # the line but does not write anything new except a default char
+        if not line:
+            return
+
         for x in range(self.cursor.x, self.columns):
             if x + count <= self.columns:
                 line[x] = line.pop(x + count, self.default_char.copy())
@@ -1159,18 +1176,24 @@ class Screen:
            parameter causing the stream to assume a ``0`` second parameter.
         """
         if how == 0:
-            interval = range(self.cursor.y + 1, self.lines)
+            top, bottom = self.cursor.y + 1, self.lines
         elif how == 1:
-            interval = range(self.cursor.y)
+            top, bottom = 0, self.cursor.y
         elif how == 2 or how == 3:
-            interval = range(self.lines)
+            top, bottom = 0, self.lines
 
-        self.dirty.update(interval)
+        buffer = self._buffer
+
+        non_empty_y = sorted(buffer)
+        begin = bisect_left(non_empty_y, top)  # inclusive
+        end = bisect_left(non_empty_y, bottom, begin) # exclusive
+
+        self.dirty.update(range(top, bottom))
         data = self.cursor.attrs.data
         width = self.cursor.attrs.width
         style = self.cursor.attrs.style
-        for y in interval:
-            line = self._buffer[y]
+        for y in non_empty_y[begin:end]:
+            line = buffer[y]
             write_data = line.write_data
             for x in line:
                 write_data(x, data, width, style)
@@ -1587,7 +1610,7 @@ class HistoryScreen(Screen):
         top, bottom = self.margins or Margins(0, self.lines - 1)
 
         if self.cursor.y == bottom:
-            self.history.top.append(self._buffer[top])
+            self.history.top.append(self._buffer.get(top, self.default_line()))
 
         super(HistoryScreen, self).index()
 
@@ -1596,7 +1619,7 @@ class HistoryScreen(Screen):
         top, bottom = self.margins or Margins(0, self.lines - 1)
 
         if self.cursor.y == top:
-            self.history.bottom.append(self._buffer[bottom])
+            self.history.bottom.append(self._buffer.get(bottom, self.default_line()))
 
         super(HistoryScreen, self).reverse_index()
 
@@ -1611,8 +1634,10 @@ class HistoryScreen(Screen):
                       int(math.ceil(self.lines * self.history.ratio)))
 
             self.history.bottom.extendleft(
-                self._buffer[y]
-                for y in range(self.lines - 1, self.lines - mid - 1, -1))
+                self._buffer.get(y, self.default_line())
+                for y in range(self.lines - 1, self.lines - mid - 1, -1)
+                )
+
             self.history = self.history \
                 ._replace(position=self.history.position - mid)
 
@@ -1629,7 +1654,11 @@ class HistoryScreen(Screen):
             mid = min(len(self.history.bottom),
                       int(math.ceil(self.lines * self.history.ratio)))
 
-            self.history.top.extend(self._buffer[y] for y in range(mid))
+            self.history.top.extend(
+                    self._buffer.get(y, self.default_line())
+                    for y in range(mid)
+                    )
+
             self.history = self.history \
                 ._replace(position=self.history.position + mid)
 
