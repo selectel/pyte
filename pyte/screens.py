@@ -667,8 +667,8 @@ class Screen:
         if mo.DECSCNM in modes:
             for line in self._buffer.values():
                 line.default = self.default_char
-                for x in line:
-                    line[x].style = line[x].style._replace(reverse=True)
+                for char in line.values():
+                    char.style = char.style._replace(reverse=True)
 
             self.select_graphic_rendition(7)  # +reverse.
 
@@ -705,8 +705,8 @@ class Screen:
         if mo.DECSCNM in modes:
             for line in self._buffer.values():
                 line.default = self.default_char
-                for x in line:
-                    line[x].style = line[x].style._replace(reverse=False)
+                for char in line.values():
+                    char.style = char.style._replace(reverse=False)
 
             self.select_graphic_rendition(27)  # -reverse.
 
@@ -1338,8 +1338,9 @@ class Screen:
         self.dirty.update(range(self.lines))
         style = self._default_style
         for y in range(self.lines):
+            line = self._buffer[y]
             for x in range(self.columns):
-                self._buffer[y].write_data(x, "E", wcwidth("E"), style)
+                line.write_data(x, "E", wcwidth("E"), style)
 
     def select_graphic_rendition(self, *attrs):
         """Set display attributes.
