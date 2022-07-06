@@ -520,11 +520,14 @@ def test_carriage_return():
 
 def test_index():
     screen = update(pyte.Screen(2, 2), ["wo", "ot"], colored=[1])
+    assert (screen.cursor.y, screen.cursor.x) == (0, 0)
+    assert screen.display == ["wo", "ot"]
 
     # a) indexing on a row that isn't the last should just move
     # the cursor down.
     screen.index()
     assert (screen.cursor.y, screen.cursor.x) == (1, 0)
+    assert screen.display == ["wo", "ot"]
     assert tolist(screen) == [
         [Char("w"), Char("o")],
         [Char("o", fg="red"), Char("t", fg="red")]
@@ -534,6 +537,7 @@ def test_index():
     # create a new row at the bottom.
     screen.index()
     assert screen.cursor.y == 1
+    assert screen.display == ["ot", "  "]
     assert tolist(screen) == [
         [Char("o", fg="red"), Char("t", fg="red")],
         [screen.default_char, screen.default_char]
@@ -542,6 +546,8 @@ def test_index():
     # c) same with margins
     screen = update(pyte.Screen(2, 5), ["bo", "sh", "th", "er", "oh"],
                     colored=[1, 2])
+    # note: margins are 0-based inclusive indexes for top and bottom
+    # however, set_margins are 1-based inclusive indexes
     screen.set_margins(2, 4)
     screen.cursor.y = 3
 

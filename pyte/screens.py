@@ -907,6 +907,13 @@ class Screen:
             begin = bisect_left(non_empty_y, top + 1)
             end = bisect_right(non_empty_y, bottom, begin)
 
+            # the top line must be unconditionally removed
+            # this pop is required because it may happen that
+            # the next line (top + 1) is empty and therefore
+            # the for-loop above didn't overwrite the line before
+            # (top + 1 - 1, aka top)
+            pop(top, None)
+
             to_move = non_empty_y[begin:end]
             for y in to_move:
                 buffer[y-1] = pop(y)
@@ -929,6 +936,13 @@ class Screen:
             non_empty_y = sorted(buffer)
             begin = bisect_left(non_empty_y, top)
             end = bisect_right(non_empty_y, bottom - 1, begin)
+
+            # the bottom line must be unconditionally removed
+            # this pop is required because it may happen that
+            # the previous line (bottom - 1) is empty and therefore
+            # the for-loop above didn't overwrite the line after
+            # (bottom - 1 + 1, aka bottom)
+            pop(bottom, None)
 
             to_move = non_empty_y[begin:end]
             for y in reversed(to_move):
