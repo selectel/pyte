@@ -675,7 +675,7 @@ class Screen:
         # Mark all displayed characters as reverse.
         if mo.DECSCNM in modes:
             for line in self._buffer.values():
-                line.default = self.default_char
+                line.default.style = line.default.style._replace(reverse=True)
                 for char in line.values():
                     char.style = char.style._replace(reverse=True)
 
@@ -713,7 +713,7 @@ class Screen:
 
         if mo.DECSCNM in modes:
             for line in self._buffer.values():
-                line.default = self.default_char
+                line.default.style = line.default.style._replace(reverse=False)
                 for char in line.values():
                     char.style = char.style._replace(reverse=False)
 
