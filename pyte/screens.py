@@ -103,6 +103,7 @@ class BufferStats(namedtuple("_BufferStats", [
     "columns",
     "lines",
     "falses",
+    "blanks",
     "occupacy",
     "min",
     "max",
@@ -123,16 +124,18 @@ class BufferStats(namedtuple("_BufferStats", [
 
         if self.empty:
             return bstats + \
-                    "line entries: {0: >3}/{1} ({2:.2f}), falses: {3:> 3} ({4:.2f})\n{5}".format(
+                    "line entries: {0: >3}/{1} ({2:.2f}), falses: {3:> 3} ({4:.2f}), blanks: {5:> 3} ({6:.2f})\n{7}".format(
                     self.entries, self.lines, self.occupacy,
                     self.falses, self.falses/self.entries,
+                    self.blanks, self.blanks/self.entries,
                     "\n".join("{0: >3}: {1}".format(x, stats) for x, stats in self.line_stats)
                     )
         else:
             return bstats + \
-                    "line entries: {0: >3}/{1} ({2:.2f}), falses: {3:> 3} ({4:.2f}); range: [{5: >3} - {6: >3}], len: {7: >3} ({8:.2f})\n{9}".format(
+                    "line entries: {0: >3}/{1} ({2:.2f}), falses: {3:> 3} ({4:.2f}), blanks: {5:> 3} ({6:.2f}); range: [{7: >3} - {8: >3}], len: {9: >3} ({10:.2f})\n{11}".format(
                     self.entries, self.lines, self.occupacy,
                     self.falses, self.falses/self.entries,
+                    self.blanks, self.blanks/self.entries,
                     self.min, self.max, self.span, self.span/self.lines,
                     "\n".join("{0: >3}: {1}".format(x, stats) for x, stats in self.line_stats)
                     )
@@ -469,6 +472,7 @@ class Screen:
                 columns=self.columns,
                 lines=self.lines,
                 falses=len([line for line in buffer.values() if not line]),
+                blanks=len([line for line in buffer.values() if all(char.data == " " for char in line.values())]),
                 occupacy=len(buffer)/self.lines,
                 min=min(buffer) if buffer else None,
                 max=max(buffer) if buffer else None,
