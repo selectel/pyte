@@ -483,7 +483,10 @@ class Screen:
     @property
     def display(self):
         """A :func:`list` of screen lines as unicode strings."""
-        padding = self.default_char.data
+        # screen.default_char is always the space character
+        # We can skip the lookup of it and set the padding char
+        # directly
+        padding = " "
 
         prev_y = -1
         output = []
