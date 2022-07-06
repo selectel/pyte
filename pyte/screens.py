@@ -1134,13 +1134,30 @@ class Screen:
         self.dirty.add(self.cursor.y)
         count = count or 1
 
-        write_data = self._buffer[self.cursor.y].write_data
-        data = self.cursor.attrs.data
-        width = self.cursor.attrs.width
-        style = self.cursor.attrs.style
-        for x in range(self.cursor.x,
-                       min(self.cursor.x + count, self.columns)):
-            write_data(x, data, width, style)
+        line = self._buffer[self.cursor.y]
+
+        # If the line's default char is equivalent to our cursor, overwriting
+        # a char in the line is equivalent to delete it if from the line
+        if line.default == self.cursor.attrs:
+            pop = line.pop
+            for x in range(self.cursor.x,
+                           min(self.cursor.x + count, self.columns)):
+                pop(x, None)
+
+            # the line may end up being empty, delete it from the buffer (*)
+            if not line:
+                del self._buffer[self.cursor.y]
+
+        else:
+            write_data = line.write_data
+            data = self.cursor.attrs.data
+            width = self.cursor.attrs.width
+            style = self.cursor.attrs.style
+            # a full range scan is required and not a sparse scan
+            # because we were asked to *write* on that full range
+            for x in range(self.cursor.x,
+                           min(self.cursor.x + count, self.columns)):
+                write_data(x, data, width, style)
 
     def erase_in_line(self, how=0, private=False):
         """Erase a line in a specific way.
@@ -1165,12 +1182,28 @@ class Screen:
         elif how == 2:
             interval = range(self.columns)
 
-        write_data = self._buffer[self.cursor.y].write_data
-        data = self.cursor.attrs.data
-        width = self.cursor.attrs.width
-        style = self.cursor.attrs.style
-        for x in interval:
-            write_data(x, data, width, style)
+        line = self._buffer[self.cursor.y]
+
+        # If the line's default char is equivalent to our cursor, overwriting
+        # a char in the line is equivalent to delete it if from the line
+        if line.default == self.cursor.attrs:
+            pop = line.pop
+            for x in interval:
+                pop(x, None)
+
+            # the line may end up being empty, delete it from the buffer (*)
+            if not line:
+                del self._buffer[self.cursor.y]
+
+        else:
+            write_data = line.write_data
+            data = self.cursor.attrs.data
+            width = self.cursor.attrs.width
+            style = self.cursor.attrs.style
+            # a full range scan is required and not a sparse scan
+            # because we were asked to *write* on that full range
+            for x in interval:
+                write_data(x, data, width, style)
 
     def erase_in_display(self, how=0, *args, **kwargs):
         """Erases display in a specific way.
@@ -1209,14 +1242,32 @@ class Screen:
         end = bisect_left(non_empty_y, bottom, begin) # exclusive
 
         self.dirty.update(range(top, bottom))
-        data = self.cursor.attrs.data
-        width = self.cursor.attrs.width
-        style = self.cursor.attrs.style
-        for y in non_empty_y[begin:end]:
-            line = buffer[y]
+
+        # Remove the lines from the buffer as this is equivalent
+        # to overwrite each char in them with the space character
+        # (screen.default_char).
+        # If a deleted line is then requested, a new line will
+        # be added with screen.default_char as its default char
+        if self.default_char == self.cursor.attrs:
+            for y in non_empty_y[begin:end]:
+                del buffer[y]
+
+        else:
             write_data = line.write_data
-            for x in line:
-                write_data(x, data, width, style)
+            data = self.cursor.attrs.data
+            width = self.cursor.attrs.width
+            style = self.cursor.attrs.style
+            for y in non_empty_y[begin:end]:
+                line = buffer[y]
+                write_data = line.write_data
+                # TODO: note that this may not be entirely correct as
+                # 'for x in line' iterates over the non-empty chars
+                # of the line, changing their data when write_data()
+                # is called.
+                # But this means that any empty char in the line
+                # is never touch, in particular, its attributes.
+                for x in line:
+                    write_data(x, data, width, style)
 
         if how == 0 or how == 1:
             self.erase_in_line(how)
