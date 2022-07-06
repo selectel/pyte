@@ -348,9 +348,8 @@ class BufferView:
         self._buffer = screen._buffer
 
     def __getitem__(self, y):
-        try:
-            line = self._buffer[y]
-        except KeyError:
+        line = self._buffer.get(y)
+        if line is None:
             line = Line(self._screen.default_char)
 
         return LineView(line)
