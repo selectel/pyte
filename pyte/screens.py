@@ -256,23 +256,9 @@ class Cursor:
 
 
 class Line(dict):
-    """A :func:`dict` with a static default value representing a line of the screen.
-
-    Unlike :func:`collections.defaultdict` this implementation does not
-    implicitly update the mapping when queried with a missing key.
-
-    >>> d = Line(42)
-    >>> d["foo"]
-    42
-    >>> d
-    {}
-    """
     __slots__ = ('default', )
     def __init__(self, default):
         self.default = default
-
-    def __missing__(self, key):
-        return self.default
 
     def write_data(self, x, data, width, style):
         """
@@ -330,6 +316,19 @@ class LineView:
             return self._line[x]
         except KeyError:
             return self._line.default
+
+    def __eq__(self, other):
+        if not isinstance(other, LineView):
+            raise TypeError()
+
+        return self._line == other._line
+
+    def __ne__(self, other):
+        if not isinstance(other, LineView):
+            raise TypeError()
+
+        return self._line == other._line
+
 
 class BufferView:
     """
@@ -1681,7 +1680,7 @@ class HistoryScreen(Screen):
         top, bottom = self.margins or Margins(0, self.lines - 1)
 
         if self.cursor.y == bottom:
-            self.history.top.append(self._buffer.get(top, self.default_line()))
+            self.history.top.append(self.buffer[top])
 
         super(HistoryScreen, self).index()
 
@@ -1690,7 +1689,7 @@ class HistoryScreen(Screen):
         top, bottom = self.margins or Margins(0, self.lines - 1)
 
         if self.cursor.y == top:
-            self.history.bottom.append(self._buffer.get(bottom, self.default_line()))
+            self.history.bottom.append(self.buffer[bottom])
 
         super(HistoryScreen, self).reverse_index()
 
@@ -1704,11 +1703,12 @@ class HistoryScreen(Screen):
             mid = min(len(self.history.top),
                       int(math.ceil(self.lines * self.history.ratio)))
 
+            bufferview = self.buffer
             buffer = self._buffer
             pop = buffer.pop
 
             self.history.bottom.extendleft(
-                buffer.get(y, self.default_line())
+                bufferview[y]
                 for y in range(self.lines - 1, self.lines - mid - 1, -1)
                 )
 
@@ -1750,7 +1750,7 @@ class HistoryScreen(Screen):
                 pop(z, None)
 
             for y in range(mid - 1, -1, -1):
-                line = self.history.top.pop()
+                line = self.history.top.pop()._line
                 if line:
                     # note: empty lines are not added as they are
                     # the default for non-existent entries in buffer
@@ -1769,11 +1769,12 @@ class HistoryScreen(Screen):
             mid = min(len(self.history.bottom),
                       int(math.ceil(self.lines * self.history.ratio)))
 
+            bufferview = self.buffer
             buffer = self._buffer
             pop = buffer.pop
 
             self.history.top.extend(
-                    buffer.get(y, self.default_line())
+                    bufferview[y]
                     for y in range(mid)
                     )
 
@@ -1809,7 +1810,7 @@ class HistoryScreen(Screen):
                 pop(z, None)
 
             for y in range(self.lines - mid, self.lines):
-                line = self.history.bottom.popleft()
+                line = self.history.bottom.popleft()._line
                 if line:
                     buffer[y] = line
                 else:

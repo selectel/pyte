@@ -28,13 +28,13 @@ def test_index():
     line = screen.buffer[0]
     screen.index()
     assert screen.history.top
-    assert screen.history.top[-1] == line._line
+    assert screen.history.top[-1] == line
 
     # b) second index.
     line = screen.buffer[0]
     screen.index()
     assert len(screen.history.top) == 2
-    assert screen.history.top[-1] == line._line
+    assert screen.history.top[-1] == line
 
     # c) rotation.
     for _ in range(screen.history.size * 2):
@@ -62,13 +62,13 @@ def test_reverse_index():
     line = screen.buffer[screen.lines-1]
     screen.reverse_index()
     assert screen.history.bottom
-    assert screen.history.bottom[0] == line._line
+    assert screen.history.bottom[0] == line
 
     # b) second index.
     line = screen.buffer[screen.lines-1]
     screen.reverse_index()
     assert len(screen.history.bottom) == 2
-    assert screen.history.bottom[1] == line._line
+    assert screen.history.bottom[1] == line
 
     # c) rotation.
     for _ in range(screen.history.size * 2):
@@ -656,7 +656,7 @@ def test_ensure_width(monkeypatch):
     stream.feed(ctrl.ESC + "P")
 
     # Inequality because we have an all-empty last line.
-    assert all(len(l) <= 3 for l in screen.history.bottom)
+    assert all(len(l._line) <= 3 for l in screen.history.bottom)
     assert screen.display == [
         "001",  # 18
         "001",  # 19
