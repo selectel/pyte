@@ -1059,6 +1059,37 @@ def test_insert_lines():
     ]
     consistency_asserts(screen)
 
+
+    screen.insert_lines(1)
+    assert (screen.cursor.y, screen.cursor.x) == (0, 0)
+    assert screen.display == ["   ", "   ", "sam"]
+    assert tolist(screen) == [
+        [screen.default_char] * 3,
+        [screen.default_char] * 3,
+        [Char("s"), Char("a"), Char("m")]
+    ]
+    consistency_asserts(screen)
+
+    screen.insert_lines(1)
+    assert (screen.cursor.y, screen.cursor.x) == (0, 0)
+    assert screen.display == ["   ", "   ", "   "]
+    assert tolist(screen) == [
+        [screen.default_char] * 3,
+        [screen.default_char] * 3,
+        [screen.default_char] * 3,
+    ]
+    consistency_asserts(screen)
+
+    screen.insert_lines(1)
+    assert (screen.cursor.y, screen.cursor.x) == (0, 0)
+    assert screen.display == ["   ", "   ", "   "]
+    assert tolist(screen) == [
+        [screen.default_char] * 3,
+        [screen.default_char] * 3,
+        [screen.default_char] * 3,
+    ]
+    consistency_asserts(screen)
+
     screen = update(pyte.Screen(3, 3), ["sam", "is ", "foo"], colored=[1])
     screen.insert_lines(2)
 
@@ -1068,6 +1099,54 @@ def test_insert_lines():
         [screen.default_char] * 3,
         [screen.default_char] * 3,
         [Char("s"), Char("a"), Char("m")]
+    ]
+    consistency_asserts(screen)
+
+    screen = update(pyte.Screen(3, 5), [
+        "sam",
+        "",     # an empty string will be interpreted as a full empty line
+        "foo",
+        "bar",
+        "baz"
+        ],
+        colored=[2, 3])
+
+    screen.insert_lines(2)
+
+    assert (screen.cursor.y, screen.cursor.x) == (0, 0)
+    assert screen.display == ["   ", "   ", "sam", "   ", "foo"]
+    assert tolist(screen) == [
+        [screen.default_char] * 3,
+        [screen.default_char] * 3,
+        [Char("s"), Char("a"), Char("m")],
+        [screen.default_char] * 3,
+        [Char("f", fg="red"), Char("o", fg="red"), Char("o", fg="red")],
+    ]
+    consistency_asserts(screen)
+
+    screen.insert_lines(1)
+
+    assert (screen.cursor.y, screen.cursor.x) == (0, 0)
+    assert screen.display == ["   ", "   ", "   ", "sam", "   "]
+    assert tolist(screen) == [
+        [screen.default_char] * 3,
+        [screen.default_char] * 3,
+        [screen.default_char] * 3,
+        [Char("s"), Char("a"), Char("m")],
+        [screen.default_char] * 3,
+    ]
+    consistency_asserts(screen)
+
+    screen.insert_lines(1)
+
+    assert (screen.cursor.y, screen.cursor.x) == (0, 0)
+    assert screen.display == ["   ", "   ", "   ", "   ", "sam"]
+    assert tolist(screen) == [
+        [screen.default_char] * 3,
+        [screen.default_char] * 3,
+        [screen.default_char] * 3,
+        [screen.default_char] * 3,
+        [Char("s"), Char("a"), Char("m")],
     ]
     consistency_asserts(screen)
 
@@ -1175,6 +1254,28 @@ def test_delete_lines():
     assert screen.display == ["foo", "   ", "   "]
     assert tolist(screen) == [
         [Char("f"), Char("o"), Char("o")],
+        [screen.default_char] * 3,
+        [screen.default_char] * 3,
+    ]
+    consistency_asserts(screen)
+
+    screen.delete_lines(0)
+
+    assert (screen.cursor.y, screen.cursor.x) == (0, 0)
+    assert screen.display == ["   ", "   ", "   "]
+    assert tolist(screen) == [
+        [screen.default_char] * 3,
+        [screen.default_char] * 3,
+        [screen.default_char] * 3,
+    ]
+    consistency_asserts(screen)
+
+    screen.delete_lines(0)
+
+    assert (screen.cursor.y, screen.cursor.x) == (0, 0)
+    assert screen.display == ["   ", "   ", "   "]
+    assert tolist(screen) == [
+        [screen.default_char] * 3,
         [screen.default_char] * 3,
         [screen.default_char] * 3,
     ]

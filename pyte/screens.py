@@ -1050,9 +1050,8 @@ class Screen:
         if top <= self.cursor.y <= bottom:
             self.dirty.update(range(self.cursor.y, self.lines))
             for y in range(self.cursor.y, bottom + 1):
-                if y + count <= bottom:
-                    if y + count in self._buffer:
-                        self._buffer[y] = self._buffer.pop(y + count)
+                if y + count <= bottom and y + count in self._buffer:
+                    self._buffer[y] = self._buffer.pop(y + count)
                 else:
                     self._buffer.pop(y, None)
 
