@@ -1385,6 +1385,31 @@ def test_insert_characters():
         Char("b"), screen.default_char, screen.default_char
     ]
 
+    assert screen.display == ["  s", "is ", "f o", "b  "]
+
+    # insert 1 at the begin of the previously edited line
+    screen.cursor.y, screen.cursor.x = 3, 0
+    screen.insert_characters(1)
+    assert tolist(screen)[3] == [
+        screen.default_char, Char("b"), screen.default_char,
+    ]
+
+    # insert before the end of the line
+    screen.cursor.y, screen.cursor.x = 3, 2
+    screen.insert_characters(1)
+    assert tolist(screen)[3] == [
+        screen.default_char, Char("b"), screen.default_char,
+    ]
+
+    # insert enough to push outside the screen the remaining char
+    screen.cursor.y, screen.cursor.x = 3, 0
+    screen.insert_characters(2)
+    assert tolist(screen)[3] == [
+        screen.default_char, screen.default_char, screen.default_char,
+    ]
+
+    assert screen.display == ["  s", "is ", "f o", "   "]
+
     # d) 0 is 1
     screen = update(pyte.Screen(3, 3), ["sam", "is ", "foo"], colored=[0])
 
@@ -1403,6 +1428,46 @@ def test_insert_characters():
         Char("s", fg="red"), Char("a", fg="red")
     ]
 
+
+    # ! extreme cases.
+    screen = update(pyte.Screen(5, 1), ["12345"], colored=[0])
+    screen.cursor.x = 1
+    screen.insert_characters(3)
+    assert (screen.cursor.y, screen.cursor.x) == (0, 1)
+    assert screen.display == ["1   2"]
+    assert tolist(screen)[0] == [
+        Char("1", fg="red"),
+        screen.default_char,
+        screen.default_char,
+        screen.default_char,
+        Char("2", fg="red"),
+    ]
+    consistency_asserts(screen)
+
+    screen.insert_characters(1)
+    assert (screen.cursor.y, screen.cursor.x) == (0, 1)
+    assert screen.display == ["1    "]
+    assert tolist(screen)[0] == [
+        Char("1", fg="red"),
+        screen.default_char,
+        screen.default_char,
+        screen.default_char,
+        screen.default_char,
+    ]
+    consistency_asserts(screen)
+
+    screen.cursor.x = 0
+    screen.insert_characters(5)
+    assert (screen.cursor.y, screen.cursor.x) == (0, 0)
+    assert screen.display == ["     "]
+    assert tolist(screen)[0] == [
+        screen.default_char,
+        screen.default_char,
+        screen.default_char,
+        screen.default_char,
+        screen.default_char,
+    ]
+    consistency_asserts(screen)
 
 def test_delete_characters():
     screen = update(pyte.Screen(3, 3), ["sam", "is ", "foo"], colored=[0])
@@ -1425,6 +1490,20 @@ def test_delete_characters():
     screen.delete_characters(0)
     assert (screen.cursor.y, screen.cursor.x) == (1, 1)
     assert screen.display == ["m  ", "i  ", "fo "]
+    consistency_asserts(screen)
+
+    # try to erase spaces
+    screen.cursor.y, screen.cursor.x = 1, 1
+    screen.delete_characters(0)
+    assert (screen.cursor.y, screen.cursor.x) == (1, 1)
+    assert screen.display == ["m  ", "i  ", "fo "]
+    consistency_asserts(screen)
+
+    # try to erase a whole line
+    screen.cursor.y, screen.cursor.x = 1, 0
+    screen.delete_characters(0)
+    assert (screen.cursor.y, screen.cursor.x) == (1, 0)
+    assert screen.display == ["m  ", "   ", "fo "]
     consistency_asserts(screen)
 
     # ! extreme cases.
@@ -1469,6 +1548,18 @@ def test_delete_characters():
     ]
     consistency_asserts(screen)
 
+    screen.delete_characters(2)
+    assert (screen.cursor.y, screen.cursor.x) == (0, 0)
+    assert screen.display == ["     "]
+    assert tolist(screen)[0] == [
+        screen.default_char,
+        screen.default_char,
+        screen.default_char,
+        screen.default_char,
+        screen.default_char
+    ]
+    consistency_asserts(screen)
+
 
 def test_erase_character():
     screen = update(pyte.Screen(3, 3), ["sam", "is ", "foo"], colored=[0])
@@ -1493,6 +1584,20 @@ def test_erase_character():
     screen.erase_characters(0)
     assert (screen.cursor.y, screen.cursor.x) == (1, 1)
     assert screen.display == ["  m", "i  ", "fo "]
+    consistency_asserts(screen)
+
+    # erase the same erased char as before
+    screen.cursor.y, screen.cursor.x = 1, 1
+    screen.erase_characters(0)
+    assert (screen.cursor.y, screen.cursor.x) == (1, 1)
+    assert screen.display == ["  m", "i  ", "fo "]
+    consistency_asserts(screen)
+
+    # erase the whole line
+    screen.cursor.y, screen.cursor.x = 1, 0
+    screen.erase_characters(0)
+    assert (screen.cursor.y, screen.cursor.x) == (1, 0)
+    assert screen.display == ["  m", "   ", "fo "]
     consistency_asserts(screen)
 
     # ! extreme cases.
@@ -1537,6 +1642,18 @@ def test_erase_character():
     ]
     consistency_asserts(screen)
 
+    screen.cursor.x = 2
+    screen.erase_characters(4)
+    assert (screen.cursor.y, screen.cursor.x) == (0, 2)
+    assert screen.display == ["     "]
+    assert tolist(screen)[0] == [
+        screen.default_char,
+        screen.default_char,
+        screen.default_char,
+        screen.default_char,
+        screen.default_char,
+    ]
+    consistency_asserts(screen)
 
 def test_erase_in_line():
     screen = update(pyte.Screen(5, 5),
