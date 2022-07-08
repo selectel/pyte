@@ -1271,7 +1271,6 @@ class Screen:
                 del buffer[y]
 
         else:
-            write_data = line.write_data
             data = self.cursor.attrs.data
             width = self.cursor.attrs.width
             style = self.cursor.attrs.style

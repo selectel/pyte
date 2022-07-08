@@ -1600,6 +1600,33 @@ def test_erase_character():
     assert screen.display == ["  m", "   ", "fo "]
     consistency_asserts(screen)
 
+    # erase 2 chars of an already-empty line with a cursor having a different
+    # attribute
+    screen.select_graphic_rendition(31) # red foreground
+    screen.cursor.y, screen.cursor.x = 1, 0
+    screen.erase_characters(2)
+    assert (screen.cursor.y, screen.cursor.x) == (1, 0)
+    assert screen.display == ["  m", "   ", "fo "]
+    assert tolist(screen)[1] == [
+        Char(" ", fg='red'),
+        Char(" ", fg='red'),
+        screen.default_char
+    ]
+    consistency_asserts(screen)
+
+    # erase 1 chars of a non-empty line with a cursor having a different
+    # attribute
+    screen.cursor.y, screen.cursor.x = 2, 1
+    screen.erase_characters(1)
+    assert (screen.cursor.y, screen.cursor.x) == (2, 1)
+    assert screen.display == ["  m", "   ", "f  "]
+    assert tolist(screen)[2] == [
+        Char("f"),
+        Char(" ", fg='red'),
+        screen.default_char
+    ]
+    consistency_asserts(screen)
+
     # ! extreme cases.
     screen = update(pyte.Screen(5, 1), ["12345"], colored=[0])
     screen.cursor.x = 1
@@ -1661,7 +1688,7 @@ def test_erase_in_line():
                      "s foo",
                      "but a",
                      "re yo",
-                     "u?   "], colored=[0])
+                     "u?   "], colored=[0, 1])
     screen.cursor_position(1, 3)
 
     # a) erase from cursor to the end of line
@@ -1681,6 +1708,59 @@ def test_erase_in_line():
     ]
     consistency_asserts(screen)
 
+    # erase from cursor to the end of line (again, same place)
+    screen.erase_in_line(0)
+    assert (screen.cursor.y, screen.cursor.x) == (0, 2)
+    assert screen.display == ["sa   ",
+                              "s foo",
+                              "but a",
+                              "re yo",
+                              "u?   "]
+    assert tolist(screen)[0] == [
+        Char("s", fg="red"),
+        Char("a", fg="red"),
+        screen.default_char,
+        screen.default_char,
+        screen.default_char
+    ]
+    consistency_asserts(screen)
+
+    # erase from cursor to the end of line (again but from the middle of a line))
+    screen.cursor.y = 1
+    screen.erase_in_line(0)
+    assert (screen.cursor.y, screen.cursor.x) == (1, 2)
+    assert screen.display == ["sa   ",
+                              "s    ",
+                              "but a",
+                              "re yo",
+                              "u?   "]
+    assert tolist(screen)[1] == [
+        Char("s", fg="red"),
+        Char(" ", fg="red"), # this space comes from the setup, not from the erase
+        screen.default_char,
+        screen.default_char,
+        screen.default_char
+    ]
+    consistency_asserts(screen)
+
+    # erase from cursor to the end of line erasing the whole line
+    screen.cursor.x = 0
+    screen.erase_in_line(0)
+    assert (screen.cursor.y, screen.cursor.x) == (1, 0)
+    assert screen.display == ["sa   ",
+                              "     ",
+                              "but a",
+                              "re yo",
+                              "u?   "]
+    assert tolist(screen)[1] == [
+        screen.default_char,
+        screen.default_char,
+        screen.default_char,
+        screen.default_char,
+        screen.default_char
+    ]
+    consistency_asserts(screen)
+
     # b) erase from the beginning of the line to the cursor
     screen = update(screen,
                     ["sam i",
@@ -1688,6 +1768,8 @@ def test_erase_in_line():
                      "but a",
                      "re yo",
                      "u?   "], colored=[0])
+    screen.cursor.x = 2
+    screen.cursor.y = 0
     screen.erase_in_line(1)
     assert (screen.cursor.y, screen.cursor.x) == (0, 2)
     assert screen.display == ["    i",
@@ -1721,6 +1803,37 @@ def test_erase_in_line():
     assert tolist(screen)[0] == [screen.default_char] * 5
     consistency_asserts(screen)
 
+    # d) erase with a non-default attributes cursor
+    screen.select_graphic_rendition(31) # red foreground
+
+    screen.cursor.y = 1
+    screen.erase_in_line(2)
+    assert (screen.cursor.y, screen.cursor.x) == (1, 2)
+    assert screen.display == ["     ",
+                              "     ",
+                              "but a",
+                              "re yo",
+                              "u?   "]
+    assert tolist(screen)[1] == [Char(" ", fg="red")] * 5
+    consistency_asserts(screen)
+
+    screen.cursor.y = 2
+    screen.erase_in_line(1)
+    assert (screen.cursor.y, screen.cursor.x) == (2, 2)
+    assert screen.display == ["     ",
+                              "     ",
+                              "    a",
+                              "re yo",
+                              "u?   "]
+    assert tolist(screen)[2] == [
+            Char(" ", fg="red"),
+            Char(" ", fg="red"),
+            Char(" ", fg="red"),
+            screen.default_char,
+            Char("a"),
+            ]
+
+    consistency_asserts(screen)
 
 def test_erase_in_display():
     screen = update(pyte.Screen(5, 5),
@@ -1832,6 +1945,36 @@ def test_erase_in_display():
                               "     ",
                               "     ",
                               "     "]
+    consistency_asserts(screen)
+
+    # erase from the beginning of the display to the cursor,
+    # including it, but with the cursor having a non-default attribute
+    screen = update(screen,
+                    ["sam i",
+                     "s foo",
+                     "but a",
+                     "re yo",
+                     "u?   "], colored=[2, 3])
+
+    screen.cursor.x = 2
+    screen.cursor.y = 2
+    screen.select_graphic_rendition(31) # red foreground
+    screen.erase_in_display(1)
+    assert (screen.cursor.y, screen.cursor.x) == (2, 2)
+    assert screen.display == ["     ",
+                              "     ",
+                              "    a",
+                              "re yo",
+                              "u?   "]
+    assert tolist(screen)[:3] == [
+        [Char(" ", fg="red")] * 5,
+        [Char(" ", fg="red")] * 5,
+        [Char(" ", fg="red"),
+         Char(" ", fg="red"),
+         Char(" ", fg="red"),
+         Char(" ", fg="red"),
+         Char("a", fg="red")],
+    ]
     consistency_asserts(screen)
 
 
