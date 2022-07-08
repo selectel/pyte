@@ -1704,18 +1704,62 @@ class HistoryScreen(Screen):
             mid = min(len(self.history.top),
                       int(math.ceil(self.lines * self.history.ratio)))
 
+            buffer = self._buffer
+            pop = buffer.pop
+
             self.history.bottom.extendleft(
-                self._buffer.get(y, self.default_line())
+                buffer.get(y, self.default_line())
                 for y in range(self.lines - 1, self.lines - mid - 1, -1)
                 )
 
             self.history = self.history \
                 ._replace(position=self.history.position - mid)
 
-            for y in range(self.lines - 1, mid - 1, -1):
-                self._buffer[y] = self._buffer[y - mid]
+            non_empty_y = sorted(buffer)
+            end = bisect_left(non_empty_y, self.lines - mid)
+
+            to_move = reversed(non_empty_y[:end])
+
+            #      to_move
+            # |---------------|
+            #   0   1   x   3   4   5      mid = 2  (x means empty)
+            #
+            #   0   1   0   1   4   3      (first for-loop without the inner loop: the "4" is wrong)
+            #
+            #   0   1   0   1   x   3      (first for-loop with the inner loop: the "4" is removed)
+            #
+            #   P   P   0   1   x   3      (after third for-loop, P are from history.top)
+            next_y = self.lines - mid
+            for y in to_move:
+                # Notice how if (y + 1) == (next_y) then you know
+                # that no empty lines are in between this y and the next one
+                # and therefore the range() loop gets empty.
+                # In other cases, (y + 1) < (next_y)
+                for z in range(y + 1 + mid, next_y + mid):
+                    pop(z, None)
+
+                # it may look weird but the current "y" is the "next_y"
+                # of the next iteration because we are iterating to_move
+                # backwards
+                next_y = y
+                buffer[y + mid] = buffer[y]
+
+            # between the last moved line and the begin of the page
+            # we may have lines that should be emptied
+            for z in range(0 + mid, next_y + mid):
+                pop(z, None)
+
             for y in range(mid - 1, -1, -1):
-                self._buffer[y] = self.history.top.pop()
+                line = self.history.top.pop()
+                if line:
+                    # note: empty lines are not added as they are
+                    # the default for non-existent entries in buffer
+                    buffer[y] = line
+                else:
+                    # because empty lines are not added we need to ensure
+                    # that the old lines in that position become empty
+                    # anyways (aka, we remove the old ones)
+                    pop(y, None)
 
             self.dirty = set(range(self.lines))
 
@@ -1725,18 +1769,54 @@ class HistoryScreen(Screen):
             mid = min(len(self.history.bottom),
                       int(math.ceil(self.lines * self.history.ratio)))
 
+            buffer = self._buffer
+            pop = buffer.pop
+
             self.history.top.extend(
-                    self._buffer.get(y, self.default_line())
+                    buffer.get(y, self.default_line())
                     for y in range(mid)
                     )
 
             self.history = self.history \
                 ._replace(position=self.history.position + mid)
 
-            for y in range(self.lines - mid):
-                self._buffer[y] = self._buffer[y + mid]
+            non_empty_y = sorted(buffer)
+            begin = bisect_left(non_empty_y, mid)
+
+            to_move = non_empty_y[begin:]
+
+            #              to_move
+            #         |---------------|
+            #   0   1   2   x   4   5      mid = 2
+            #
+            #   2   1   4   5   4   5
+            #
+            #   2   3   4   5   P   P      (final result)
+
+            prev_y = mid - 1
+            for y in to_move:
+                # Notice how if (prev_y + 1) == (y) then you know
+                # that no empty lines are in between and therefore
+                # the range() loop gets empty.
+                # In other cases, (prev_y + 1) > (y)
+                for z in range(prev_y + 1 - mid, y - mid):
+                    pop(z, None)
+
+                prev_y = y
+                buffer[y - mid] = buffer[y]
+
+            for z in range(prev_y + 1 - mid, self.lines - mid):
+                pop(z, None)
+
             for y in range(self.lines - mid, self.lines):
-                self._buffer[y] = self.history.bottom.popleft()
+                line = self.history.bottom.popleft()
+                if line:
+                    buffer[y] = line
+                else:
+                    # because empty lines are not added we need to ensure
+                    # that the old lines in that position become empty
+                    # anyways (aka, we remove the old ones)
+                    pop(y, None)
 
             self.dirty = set(range(self.lines))
 
