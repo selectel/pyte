@@ -231,6 +231,7 @@ def test_resize():
     screen.set_margins(0, 1)
     assert screen.columns == screen.lines == 2
     assert tolist(screen) == [[screen.default_char, screen.default_char]] * 2
+    consistency_asserts(screen)
 
     screen.resize(3, 3)
     assert screen.columns == screen.lines == 3
@@ -239,10 +240,12 @@ def test_resize():
     ] * 3
     assert mo.DECOM in screen.mode
     assert screen.margins is None
+    consistency_asserts(screen)
 
     screen.resize(2, 2)
     assert screen.columns == screen.lines == 2
     assert tolist(screen) == [[screen.default_char, screen.default_char]] * 2
+    consistency_asserts(screen)
 
     # Quirks:
     # a) if the current display is narrower than the requested size,
@@ -280,6 +283,7 @@ def test_resize_same():
     screen.dirty.clear()
     screen.resize(2, 2)
     assert not screen.dirty
+    consistency_asserts(screen)
 
 
 def test_set_mode():
@@ -341,6 +345,7 @@ def test_draw():
     # ... one` more character -- now we got a linefeed!
     screen.draw("a")
     assert (screen.cursor.y, screen.cursor.x) == (1, 1)
+    consistency_asserts(screen)
 
     # ``DECAWM`` is off.
     screen = pyte.Screen(3, 3)
@@ -404,6 +409,7 @@ def test_draw_width2():
     screen = pyte.Screen(10, 1)
     screen.draw("コンニチハ")
     assert screen.cursor.x == screen.columns
+    consistency_asserts(screen)
 
 
 def test_draw_width2_line_end():
@@ -411,6 +417,7 @@ def test_draw_width2_line_end():
     screen = pyte.Screen(10, 1)
     screen.draw(" コンニチハ")
     assert screen.cursor.x == screen.columns
+    consistency_asserts(screen)
 
 
 @pytest.mark.xfail
@@ -467,11 +474,13 @@ def test_draw_width0_decawm_off():
     screen.reset_mode(mo.DECAWM)
     screen.draw(" コンニチハ")
     assert screen.cursor.x == screen.columns
+    consistency_asserts(screen)
 
     # The following should not advance the cursor.
     screen.draw("\N{ZERO WIDTH SPACE}")
     screen.draw("\u0007")  # DELETE.
     assert screen.cursor.x == screen.columns
+    consistency_asserts(screen)
 
 
 def test_draw_cp437():
@@ -520,6 +529,7 @@ def test_carriage_return():
     screen.carriage_return()
 
     assert screen.cursor.x == 0
+    consistency_asserts(screen)
 
 
 def test_index():
@@ -536,6 +546,7 @@ def test_index():
         [Char("w"), Char("o")],
         [Char("o", fg="red"), Char("t", fg="red")]
     ]
+    consistency_asserts(screen)
 
     # b) indexing on the last row should push everything up and
     # create a new row at the bottom.
@@ -546,6 +557,7 @@ def test_index():
         [Char("o", fg="red"), Char("t", fg="red")],
         [screen.default_char, screen.default_char]
     ]
+    consistency_asserts(screen)
 
     # c) same with margins
     screen = update(pyte.Screen(2, 5), ["bo", "sh", "th", "er", "oh"],
@@ -645,6 +657,7 @@ def test_index_sparse():
         [screen.default_char] * 5,
         [Char("x")] + [screen.default_char] * 3 + [Char("z")],
     ]
+    consistency_asserts(screen)
 
     # b) indexing on the last row should push everything up and
     # create a new row at the bottom.
@@ -667,6 +680,7 @@ def test_index_sparse():
         [Char("x")] + [screen.default_char] * 3 + [Char("z")],
         [screen.default_char] * 5,
     ]
+    consistency_asserts(screen)
 
     # again
     screen.index()
@@ -685,6 +699,7 @@ def test_index_sparse():
         [screen.default_char] * 5,
         [screen.default_char] * 5,
     ]
+    consistency_asserts(screen)
 
     # leave the screen cleared
     screen.index()
@@ -705,6 +720,7 @@ def test_index_sparse():
         [screen.default_char] * 5,
         [screen.default_char] * 5,
     ]
+    consistency_asserts(screen)
 
 
 def test_reverse_index():
@@ -718,6 +734,7 @@ def test_reverse_index():
         [screen.default_char, screen.default_char],
         [Char("w", fg="red"), Char("o", fg="red")]
     ]
+    consistency_asserts(screen)
 
     # b) once again ...
     screen.reverse_index()
@@ -726,6 +743,7 @@ def test_reverse_index():
         [screen.default_char, screen.default_char],
         [screen.default_char, screen.default_char],
     ]
+    consistency_asserts(screen)
 
     # c) same with margins
     screen = update(pyte.Screen(2, 5), ["bo", "sh", "th", "er", "oh"],
@@ -804,6 +822,7 @@ def test_reverse_index_sparse():
             "     ",
             "x   z",
             ]
+    consistency_asserts(screen)
 
     # a) reverse indexing on the first row should push rows down
     # and create a new row at the top.
@@ -823,6 +842,7 @@ def test_reverse_index_sparse():
         [screen.default_char, Char("o", fg="red"), screen.default_char, Char("t", fg="red"), screen.default_char],
         [screen.default_char] * 5,
     ]
+    consistency_asserts(screen)
 
     # again
     screen.reverse_index()
@@ -841,6 +861,7 @@ def test_reverse_index_sparse():
         [screen.default_char] * 5,
         [screen.default_char, Char("o", fg="red"), screen.default_char, Char("t", fg="red"), screen.default_char],
     ]
+    consistency_asserts(screen)
 
     # again
     screen.reverse_index()
@@ -859,6 +880,7 @@ def test_reverse_index_sparse():
         [Char("w"), Char("o"),] + [screen.default_char] * 3,
         [screen.default_char] * 5,
     ]
+    consistency_asserts(screen)
 
     # leave the screen cleared
     screen.reverse_index()
@@ -878,6 +900,7 @@ def test_reverse_index_sparse():
         [screen.default_char] * 5,
         [screen.default_char] * 5,
     ]
+    consistency_asserts(screen)
 
 def test_linefeed():
     screen = update(pyte.Screen(2, 2), ["bo", "sh"], [None, None])
@@ -888,12 +911,14 @@ def test_linefeed():
     screen.cursor.x, screen.cursor.y = 1, 0
     screen.linefeed()
     assert (screen.cursor.y, screen.cursor.x) == (1, 0)
+    consistency_asserts(screen)
 
     # b) LNM off.
     screen.reset_mode(mo.LNM)
     screen.cursor.x, screen.cursor.y = 1, 0
     screen.linefeed()
     assert (screen.cursor.y, screen.cursor.x) == (1, 1)
+    consistency_asserts(screen)
 
 
 def test_linefeed_margins():
@@ -902,8 +927,10 @@ def test_linefeed_margins():
     screen.set_margins(3, 27)
     screen.cursor_position()
     assert (screen.cursor.y, screen.cursor.x) == (0, 0)
+    consistency_asserts(screen)
     screen.linefeed()
     assert (screen.cursor.y, screen.cursor.x) == (1, 0)
+    consistency_asserts(screen)
 
 
 def test_tabstops():
@@ -930,6 +957,7 @@ def test_tabstops():
     assert screen.cursor.x == 9
     screen.tab()
     assert screen.cursor.x == 9
+    consistency_asserts(screen)
 
 
 def test_clear_tabstops():
@@ -944,6 +972,7 @@ def test_clear_tabstops():
     screen.clear_tab_stop()
 
     assert screen.tabstops == set([1])
+    consistency_asserts(screen)
 
     screen.set_tab_stop()
     screen.clear_tab_stop(0)
@@ -957,6 +986,7 @@ def test_clear_tabstops():
     screen.clear_tab_stop(3)
 
     assert not screen.tabstops
+    consistency_asserts(screen)
 
 
 def test_backspace():
@@ -967,6 +997,7 @@ def test_backspace():
     screen.cursor.x = 1
     screen.backspace()
     assert screen.cursor.x == 0
+    consistency_asserts(screen)
 
 
 def test_save_cursor():
@@ -1008,6 +1039,7 @@ def test_save_cursor():
 
     assert screen.cursor.attrs != screen.default_char
     assert screen.cursor.attrs == Char(" ", underscore=True)
+    consistency_asserts(screen)
 
 
 def test_restore_cursor_with_none_saved():
@@ -1031,6 +1063,7 @@ def test_restore_cursor_out_of_bounds():
     screen.restore_cursor()
 
     assert (screen.cursor.y, screen.cursor.x) == (2, 2)
+    consistency_asserts(screen)
 
     # b) origin mode is on.
     screen.resize(10, 10)
@@ -1043,6 +1076,7 @@ def test_restore_cursor_out_of_bounds():
     screen.restore_cursor()
 
     assert (screen.cursor.y, screen.cursor.x) == (2, 4)
+    consistency_asserts(screen)
 
 
 def test_insert_lines():
@@ -1373,12 +1407,14 @@ def test_insert_characters():
         screen.default_char,
         Char("s", fg="red")
     ]
+    consistency_asserts(screen)
 
     # b) now inserting from the middle of the line
     screen.cursor.y, screen.cursor.x = 2, 1
     screen.insert_characters(1)
     assert screen.display == ["  s", "is ", "f o", "bar"]
     assert tolist(screen)[2] == [Char("f"), screen.default_char, Char("o")]
+    consistency_asserts(screen)
 
     # c) inserting more than we have
     screen.cursor.y, screen.cursor.x = 3, 1
@@ -1389,6 +1425,7 @@ def test_insert_characters():
     ]
 
     assert screen.display == ["  s", "is ", "f o", "b  "]
+    consistency_asserts(screen)
 
     # insert 1 at the begin of the previously edited line
     screen.cursor.y, screen.cursor.x = 3, 0
@@ -1396,6 +1433,7 @@ def test_insert_characters():
     assert tolist(screen)[3] == [
         screen.default_char, Char("b"), screen.default_char,
     ]
+    consistency_asserts(screen)
 
     # insert before the end of the line
     screen.cursor.y, screen.cursor.x = 3, 2
@@ -1403,6 +1441,7 @@ def test_insert_characters():
     assert tolist(screen)[3] == [
         screen.default_char, Char("b"), screen.default_char,
     ]
+    consistency_asserts(screen)
 
     # insert enough to push outside the screen the remaining char
     screen.cursor.y, screen.cursor.x = 3, 0
@@ -1412,6 +1451,7 @@ def test_insert_characters():
     ]
 
     assert screen.display == ["  s", "is ", "f o", "   "]
+    consistency_asserts(screen)
 
     # d) 0 is 1
     screen = update(pyte.Screen(3, 3), ["sam", "is ", "foo"], colored=[0])
@@ -1422,6 +1462,7 @@ def test_insert_characters():
         screen.default_char,
         Char("s", fg="red"), Char("a", fg="red")
     ]
+    consistency_asserts(screen)
 
     screen = update(pyte.Screen(3, 3), ["sam", "is ", "foo"], colored=[0])
     screen.cursor_position()
@@ -1430,6 +1471,7 @@ def test_insert_characters():
         screen.default_char,
         Char("s", fg="red"), Char("a", fg="red")
     ]
+    consistency_asserts(screen)
 
 
     # ! extreme cases.
@@ -2084,6 +2126,7 @@ def test_cursor_back_last_column():
 
     screen.cursor_back(5)
     assert screen.cursor.x == (screen.columns - 1) - 5
+    consistency_asserts(screen)
 
 
 def test_cursor_forward():

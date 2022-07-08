@@ -1715,11 +1715,13 @@ class HistoryScreen(Screen):
         :param str event: event name, for example ``"linefeed"``.
         """
         if event in ["prev_page", "next_page"]:
+            columns = self.columns
             for line in self._buffer.values():
                 pop = line.pop
-                for x in line:
-                    if x > self.columns:
-                        pop(x)
+                non_empty_x = sorted(line.keys())
+                begin = bisect_left(non_empty_x, columns)
+                for x in non_empty_x[begin:]:
+                    pop(x)
 
         # If we're at the bottom of the history buffer and `DECTCEM`
         # mode is set -- show the cursor.

@@ -1,6 +1,10 @@
 import pyte
 from pyte import modes as mo
 
+import sys, os
+sys.path.append(os.path.join(os.path.dirname(__file__), "helpers"))
+from asserts import consistency_asserts
+
 
 def test_mark_whole_screen():
     # .. this is straightforward -- make sure we have a dirty attribute
@@ -45,6 +49,7 @@ def test_mark_single_line():
         getattr(screen, method)()
         assert len(screen.dirty) == 1
         assert screen.cursor.y in screen.dirty
+        consistency_asserts(screen)
 
 
 def test_modes():
@@ -72,6 +77,7 @@ def test_index():
     screen.cursor_to_line(24)
     screen.index()
     assert screen.dirty == set(range(screen.lines))
+    consistency_asserts(screen)
 
 
 def test_reverse_index():
@@ -81,12 +87,14 @@ def test_reverse_index():
     # a) not at the top margin -- whole screen is dirty.
     screen.reverse_index()
     assert screen.dirty == set(range(screen.lines))
+    consistency_asserts(screen)
 
     # b) nothing is marked dirty.
     screen.dirty.clear()
     screen.cursor_to_line(screen.lines // 2)
     screen.reverse_index()
     assert not screen.dirty
+    consistency_asserts(screen)
 
 
 def test_insert_delete_lines():
@@ -97,6 +105,7 @@ def test_insert_delete_lines():
         screen.dirty.clear()
         getattr(screen, method)()
         assert screen.dirty == set(range(screen.cursor.y, screen.lines))
+        consistency_asserts(screen)
 
 
 def test_erase_in_display():
@@ -107,20 +116,24 @@ def test_erase_in_display():
     screen.dirty.clear()
     screen.erase_in_display()
     assert screen.dirty == set(range(screen.cursor.y, screen.lines))
+    consistency_asserts(screen)
 
     # b) from the beginning of the screen to cursor.
     screen.dirty.clear()
     screen.erase_in_display(1)
     assert screen.dirty == set(range(0, screen.cursor.y + 1))
+    consistency_asserts(screen)
 
     # c) whole screen.
     screen.dirty.clear()
     screen.erase_in_display(2)
     assert screen.dirty == set(range(0, screen.lines))
+    consistency_asserts(screen)
 
     screen.dirty.clear()
     screen.erase_in_display(3)
     assert screen.dirty == set(range(0, screen.lines))
+    consistency_asserts(screen)
 
 
 def test_draw_wrap():
@@ -132,6 +145,7 @@ def test_draw_wrap():
         screen.draw("g")
     assert screen.cursor.y == 0
     screen.dirty.clear()
+    consistency_asserts(screen)
 
     # now write one more character which should cause wrapping
     screen.draw("h")
@@ -139,6 +153,7 @@ def test_draw_wrap():
     # regression test issue #36 where the wrong line was marked as
     # dirty
     assert screen.dirty == set([0, 1])
+    consistency_asserts(screen)
 
 
 def test_draw_multiple_chars_wrap():
@@ -147,3 +162,4 @@ def test_draw_multiple_chars_wrap():
     screen.draw("1234567890")
     assert screen.cursor.y == 1
     assert screen.dirty == set([0, 1])
+    consistency_asserts(screen)
