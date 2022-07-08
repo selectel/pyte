@@ -1255,11 +1255,14 @@ class Screen:
 
         buffer = self._buffer
 
-        non_empty_y = sorted(buffer)
-        begin = bisect_left(non_empty_y, top)  # inclusive
-        end = bisect_left(non_empty_y, bottom, begin) # exclusive
-
         self.dirty.update(range(top, bottom))
+
+        # if we were requested to clear the whole screen and
+        # the cursor's attrs are the same than the screen's default
+        # then this is equivalent to delete all the lines from the buffer
+        if (how == 2 or how == 3) and self.default_char == self.cursor.attrs:
+            buffer.clear()
+            return
 
         # Remove the lines from the buffer as this is equivalent
         # to overwrite each char in them with the space character
@@ -1267,6 +1270,10 @@ class Screen:
         # If a deleted line is then requested, a new line will
         # be added with screen.default_char as its default char
         if self.default_char == self.cursor.attrs:
+            non_empty_y = sorted(buffer)
+            begin = bisect_left(non_empty_y, top)  # inclusive
+            end = bisect_left(non_empty_y, bottom, begin) # exclusive
+
             for y in non_empty_y[begin:end]:
                 del buffer[y]
 
@@ -1274,16 +1281,10 @@ class Screen:
             data = self.cursor.attrs.data
             width = self.cursor.attrs.width
             style = self.cursor.attrs.style
-            for y in non_empty_y[begin:end]:
+            for y in range(top, bottom):
                 line = buffer[y]
                 write_data = line.write_data
-                # TODO: note that this may not be entirely correct as
-                # 'for x in line' iterates over the non-empty chars
-                # of the line, changing their data when write_data()
-                # is called.
-                # But this means that any empty char in the line
-                # is never touch, in particular, its attributes.
-                for x in line:
+                for x in range(0, self.columns):
                     write_data(x, data, width, style)
 
         if how == 0 or how == 1:

@@ -1977,6 +1977,43 @@ def test_erase_in_display():
     ]
     consistency_asserts(screen)
 
+    screen.erase_in_display(3)
+    assert (screen.cursor.y, screen.cursor.x) == (2, 2)
+    assert screen.display == ["     ",
+                              "     ",
+                              "     ",
+                              "     ",
+                              "     "]
+    assert tolist(screen) == [
+        [Char(" ", fg="red")] * 5,
+        [Char(" ", fg="red")] * 5,
+        [Char(" ", fg="red")] * 5,
+        [Char(" ", fg="red")] * 5,
+        [Char(" ", fg="red")] * 5,
+    ]
+    consistency_asserts(screen)
+
+    # erase a clean screen (reset) from the begin to cursor
+    screen.reset()
+    screen.cursor.y = 2
+    screen.cursor.x = 2
+    screen.select_graphic_rendition(31) # red foreground
+
+    screen.erase_in_display(1)
+    assert (screen.cursor.y, screen.cursor.x) == (2, 2)
+    assert screen.display == ["     ",
+                              "     ",
+                              "     ",
+                              "     ",
+                              "     "]
+    assert tolist(screen) == [
+        [Char(" ", fg="red")] * 5,
+        [Char(" ", fg="red")] * 5,
+        [Char(" ", fg="red")] * 3 + [screen.default_char] * 2,
+        [screen.default_char] * 5,
+        [screen.default_char] * 5,
+    ]
+    consistency_asserts(screen)
 
 def test_cursor_up():
     screen = pyte.Screen(10, 10)
