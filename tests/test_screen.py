@@ -1367,6 +1367,7 @@ def test_insert_characters():
     cursor = copy.copy(screen.cursor)
     screen.insert_characters(2)
     assert (screen.cursor.y, screen.cursor.x) == (cursor.y, cursor.x)
+    assert screen.display == ["  s", "is ", "foo", "bar"]
     assert tolist(screen)[0] == [
         screen.default_char,
         screen.default_char,
@@ -1376,11 +1377,13 @@ def test_insert_characters():
     # b) now inserting from the middle of the line
     screen.cursor.y, screen.cursor.x = 2, 1
     screen.insert_characters(1)
+    assert screen.display == ["  s", "is ", "f o", "bar"]
     assert tolist(screen)[2] == [Char("f"), screen.default_char, Char("o")]
 
     # c) inserting more than we have
     screen.cursor.y, screen.cursor.x = 3, 1
     screen.insert_characters(10)
+    assert screen.display == ["  s", "is ", "f o", "b  "]
     assert tolist(screen)[3] == [
         Char("b"), screen.default_char, screen.default_char
     ]
