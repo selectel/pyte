@@ -237,6 +237,26 @@ class Char:
 
         return any(getattr(self, name) != getattr(other, name) for name in self._fields)
 
+    def __repr__(self):
+        r = "'%s'" % self.data
+        attrs = []
+        if self.fg != "default":
+            attrs.append("fg=%s" % self.fg)
+        if self.bg != "default":
+            attrs.append("bg=%s" % self.bg)
+
+        for attrname in ['bold', 'italics', 'underscore',
+                'strikethrough', 'reverse', 'blink']:
+            val = getattr(self, attrname)
+            if val:
+                attrs.append("%s=%s" % (attrname, val))
+
+        if attrs:
+            r += " (" + (", ".join(attrs)) + ")"
+
+        return r
+
+
 class Cursor:
     """Screen cursor.
 
