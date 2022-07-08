@@ -21,7 +21,7 @@ class Char(_orig_Char):
 
 # Test helpers.
 
-def update(screen, lines, colored=[]):
+def update(screen, lines, colored=[], write_spaces=True):
     """Updates a given screen object with given lines, colors each line
     from ``colored`` in "red" and returns the modified screen.
     """
@@ -35,7 +35,11 @@ def update(screen, lines, colored=[]):
                 style = base_style
             # Note: this hack is only for testing purposes.
             # Modifying the screen's buffer is not allowed.
-            screen._buffer[y].write_data(x, char, 1, style)
+            if char == ' ' and not write_spaces:
+                # skip, leave the default char in the screen
+                pass
+            else:
+                screen._buffer[y].write_data(x, char, 1, style)
 
     return screen
 
@@ -604,6 +608,105 @@ def test_index():
     consistency_asserts(screen)
 
 
+def test_index_sparse():
+    screen = update(pyte.Screen(5, 5),
+            ["wo   ",
+             "     ",
+             " o t ",
+             "     ",
+             "x   z",
+             ],
+            colored=[2],
+            write_spaces=False)
+    assert (screen.cursor.y, screen.cursor.x) == (0, 0)
+    assert screen.display == [
+            "wo   ",
+            "     ",
+            " o t ",
+            "     ",
+            "x   z",
+            ]
+
+    # a) indexing on a row that isn't the last should just move
+    # the cursor down.
+    screen.index()
+    assert (screen.cursor.y, screen.cursor.x) == (1, 0)
+    assert screen.display == [
+            "wo   ",
+            "     ",
+            " o t ",
+            "     ",
+            "x   z",
+            ]
+    assert tolist(screen) == [
+        [Char("w"), Char("o"),] + [screen.default_char] * 3,
+        [screen.default_char] * 5,
+        [screen.default_char, Char("o", fg="red"), screen.default_char, Char("t", fg="red"), screen.default_char],
+        [screen.default_char] * 5,
+        [Char("x")] + [screen.default_char] * 3 + [Char("z")],
+    ]
+
+    # b) indexing on the last row should push everything up and
+    # create a new row at the bottom.
+    screen.index()
+    screen.index()
+    screen.index()
+    screen.index()
+    assert screen.cursor.y == 4
+    assert screen.display == [
+            "     ",
+            " o t ",
+            "     ",
+            "x   z",
+            "     ",
+            ]
+    assert tolist(screen) == [
+        [screen.default_char] * 5,
+        [screen.default_char, Char("o", fg="red"), screen.default_char, Char("t", fg="red"), screen.default_char],
+        [screen.default_char] * 5,
+        [Char("x")] + [screen.default_char] * 3 + [Char("z")],
+        [screen.default_char] * 5,
+    ]
+
+    # again
+    screen.index()
+    assert screen.cursor.y == 4
+    assert screen.display == [
+            " o t ",
+            "     ",
+            "x   z",
+            "     ",
+            "     ",
+            ]
+    assert tolist(screen) == [
+        [screen.default_char, Char("o", fg="red"), screen.default_char, Char("t", fg="red"), screen.default_char],
+        [screen.default_char] * 5,
+        [Char("x")] + [screen.default_char] * 3 + [Char("z")],
+        [screen.default_char] * 5,
+        [screen.default_char] * 5,
+    ]
+
+    # leave the screen cleared
+    screen.index()
+    screen.index()
+    screen.index()
+    assert (screen.cursor.y, screen.cursor.x) == (4, 0)
+    assert screen.display == [
+            "     ",
+            "     ",
+            "     ",
+            "     ",
+            "     ",
+            ]
+    assert tolist(screen) == [
+        [screen.default_char] * 5,
+        [screen.default_char] * 5,
+        [screen.default_char] * 5,
+        [screen.default_char] * 5,
+        [screen.default_char] * 5,
+    ]
+
+
 def test_reverse_index():
     screen = update(pyte.Screen(2, 2), ["wo", "ot"], colored=[0])
 
@@ -682,6 +785,99 @@ def test_reverse_index():
     ]
     consistency_asserts(screen)
 
+
+def test_reverse_index_sparse():
+    screen = update(pyte.Screen(5, 5),
+            ["wo   ",
+             "     ",
+             " o t ",
+             "     ",
+             "x   z",
+             ],
+            colored=[2],
+            write_spaces=False)
+    assert (screen.cursor.y, screen.cursor.x) == (0, 0)
+    assert screen.display == [
+            "wo   ",
+            "     ",
+            " o t ",
+            "     ",
+            "x   z",
+            ]
+
+    # a) reverse indexing on the first row should push rows down
+    # and create a new row at the top.
+    screen.reverse_index()
+    assert (screen.cursor.y, screen.cursor.x) == (0, 0)
+    assert screen.display == [
+            "     ",
+            "wo   ",
+            "     ",
+            " o t ",
+            "     ",
+            ]
+    assert tolist(screen) == [
+        [screen.default_char] * 5,
+        [Char("w"), Char("o"),] + [screen.default_char] * 3,
+        [screen.default_char] * 5,
+        [screen.default_char, Char("o", fg="red"), screen.default_char, Char("t", fg="red"), screen.default_char],
+        [screen.default_char] * 5,
+    ]
+
+    # again
+    screen.reverse_index()
+    assert (screen.cursor.y, screen.cursor.x) == (0, 0)
+    assert screen.display == [
+            "     ",
+            "     ",
+            "wo   ",
+            "     ",
+            " o t ",
+            ]
+    assert tolist(screen) == [
+        [screen.default_char] * 5,
+        [screen.default_char] * 5,
+        [Char("w"), Char("o"),] + [screen.default_char] * 3,
+        [screen.default_char] * 5,
+        [screen.default_char, Char("o", fg="red"), screen.default_char, Char("t", fg="red"), screen.default_char],
+    ]
+
+    # again
+    screen.reverse_index()
+    assert (screen.cursor.y, screen.cursor.x) == (0, 0)
+    assert screen.display == [
+            "     ",
+            "     ",
+            "     ",
+            "wo   ",
+            "     ",
+            ]
+    assert tolist(screen) == [
+        [screen.default_char] * 5,
+        [screen.default_char] * 5,
+        [screen.default_char] * 5,
+        [Char("w"), Char("o"),] + [screen.default_char] * 3,
+        [screen.default_char] * 5,
+    ]
+
+    # leave the screen cleared
+    screen.reverse_index()
+    screen.reverse_index()
+    assert (screen.cursor.y, screen.cursor.x) == (0, 0)
+    assert screen.display == [
+            "     ",
+            "     ",
+            "     ",
+            "     ",
+            "     ",
+            ]
+    assert tolist(screen) == [
+        [screen.default_char] * 5,
+        [screen.default_char] * 5,
+        [screen.default_char] * 5,
+        [screen.default_char] * 5,
+        [screen.default_char] * 5,
+    ]
 
 def test_linefeed():
     screen = update(pyte.Screen(2, 2), ["bo", "sh"], [None, None])
