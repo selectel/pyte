@@ -227,8 +227,10 @@ def test_attributes_reset():
 
 def test_resize():
     screen = pyte.Screen(2, 2)
+    assert screen.margins == (0, 1)
     screen.set_mode(mo.DECOM)
     screen.set_margins(0, 1)
+    assert screen.margins == (0, 1)
     assert screen.columns == screen.lines == 2
     assert tolist(screen) == [[screen.default_char, screen.default_char]] * 2
     consistency_asserts(screen)
@@ -239,7 +241,7 @@ def test_resize():
         [screen.default_char, screen.default_char, screen.default_char]
     ] * 3
     assert mo.DECOM in screen.mode
-    assert screen.margins is None
+    assert screen.margins == (0, 2)
     consistency_asserts(screen)
 
     screen.resize(2, 2)
@@ -2218,7 +2220,7 @@ def test_alignment_display():
 def test_set_margins():
     screen = pyte.Screen(10, 10)
 
-    assert screen.margins is None
+    assert screen.margins == (0, 9)
 
     # a) ok-case
     screen.set_margins(1, 5)
@@ -2231,7 +2233,7 @@ def test_set_margins():
 
     # c) no margins provided -- reset to full screen.
     screen.set_margins()
-    assert screen.margins is None
+    assert screen.margins == (0, 9)
 
 
 def test_set_margins_zero():
@@ -2240,7 +2242,7 @@ def test_set_margins_zero():
     screen.set_margins(1, 5)
     assert screen.margins == (0, 4)
     screen.set_margins(0)
-    assert screen.margins is None
+    assert screen.margins == (0, 23)
 
 
 def test_hide_cursor():
