@@ -1244,9 +1244,12 @@ class Screen:
         # a char in the line is equivalent to delete it if from the line
         if line.default == self.cursor.attrs:
             pop = line.pop
-            for x in range(self.cursor.x,
-                           min(self.cursor.x + count, self.columns)):
-                pop(x, None)
+            non_empty_x = sorted(line)
+            begin = bisect_left(non_empty_x, self.cursor.x)
+            end = bisect_left(non_empty_x, self.cursor.x + count, begin)
+
+            for x in non_empty_x[begin:end]:
+                pop(x)
 
             # the line may end up being empty, delete it from the buffer (*)
             if not line:
@@ -1280,11 +1283,11 @@ class Screen:
         """
         self.dirty.add(self.cursor.y)
         if how == 0:
-            interval = range(self.cursor.x, self.columns)
+            low, high = self.cursor.x, self.columns
         elif how == 1:
-            interval = range(self.cursor.x + 1)
+            low, high = 0, (self.cursor.x + 1)
         elif how == 2:
-            interval = range(self.columns)
+            low, high = 0, self.columns
 
         line = self._buffer[self.cursor.y]
 
@@ -1292,8 +1295,12 @@ class Screen:
         # a char in the line is equivalent to delete it if from the line
         if line.default == self.cursor.attrs:
             pop = line.pop
-            for x in interval:
-                pop(x, None)
+            non_empty_x = sorted(line)
+            begin = bisect_left(non_empty_x, low)
+            end = bisect_left(non_empty_x, high, begin)
+
+            for x in non_empty_x[begin:end]:
+                pop(x)
 
             # the line may end up being empty, delete it from the buffer (*)
             if not line:
@@ -1306,7 +1313,7 @@ class Screen:
             style = self.cursor.attrs.style
             # a full range scan is required and not a sparse scan
             # because we were asked to *write* on that full range
-            for x in interval:
+            for x in range(low, high):
                 write_data(x, data, width, style)
 
     def erase_in_display(self, how=0, *args, **kwargs):
