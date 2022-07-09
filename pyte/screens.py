@@ -1048,10 +1048,28 @@ class Screen:
         # If cursor is outside scrolling margins it -- do nothin'.
         if top <= self.cursor.y <= bottom:
             self.dirty.update(range(self.cursor.y, self.lines))
-            for y in range(bottom, self.cursor.y - 1, -1):
-                if y + count <= bottom and y in self._buffer:
-                    self._buffer[y + count] = self._buffer[y]
-                self._buffer.pop(y, None)
+
+            # the following algorithm is similar to the one found
+            # in insert_characters except that operates over
+            # the lines (y range) and not the chars (x range)
+            buffer = self._buffer
+            pop = buffer.pop
+            non_empty_y = sorted(buffer)
+            begin = bisect_left(non_empty_y, self.cursor.y)
+            end = bisect_left(non_empty_y, (bottom + 1) - count)
+
+            to_move = reversed(non_empty_y[begin:end])
+
+            next_y = (bottom + 1) - count
+            for y in to_move:
+                for z in range(y + 1 + count, next_y + count):
+                    pop(z, None)
+
+                next_y = y
+                buffer[y + count] = pop(y)
+
+            for z in range(self.cursor.y, next_y + count):
+                pop(z, None)
 
             self.carriage_return()
 
@@ -1069,11 +1087,25 @@ class Screen:
         # If cursor is outside scrolling margins -- do nothin'.
         if top <= self.cursor.y <= bottom:
             self.dirty.update(range(self.cursor.y, self.lines))
-            for y in range(self.cursor.y, bottom + 1):
-                if y + count <= bottom and y + count in self._buffer:
-                    self._buffer[y] = self._buffer.pop(y + count)
-                else:
-                    self._buffer.pop(y, None)
+
+            buffer = self._buffer
+            pop = buffer.pop
+            non_empty_y = sorted(buffer)
+            begin = bisect_left(non_empty_y, self.cursor.y + count)
+            end = bisect_left(non_empty_y, bottom + 1)
+
+            to_move = non_empty_y[begin:end]
+
+            prev_y = self.cursor.y + count - 1
+            for y in to_move:
+                for z in range(prev_y + 1 - count, y - count):
+                    pop(z, None)
+
+                prev_y = y
+                buffer[y - count] = pop(y)
+
+            for z in range(prev_y + 1 - count, min(prev_y + 1, bottom + 1)):
+                pop(z, None)
 
             self.carriage_return()
 
@@ -1179,7 +1211,7 @@ class Screen:
             # that no empty char are in between this x and the prev one
             # and therefore the range() loop gets empty.
             # In other cases, (prev_x + 1) > (x)
-            for z in range(prev_x + 1 + count, x + count):
+            for z in range(prev_x + 1 - count, x - count):
                 pop(z, None)
 
             prev_x = x
