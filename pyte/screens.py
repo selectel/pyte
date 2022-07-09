@@ -622,8 +622,11 @@ class Screen:
 
         if columns < self.columns:
             for line in self._buffer.values():
-                for x in range(columns, self.columns):
-                    line.pop(x, None)
+                pop = line.pop
+                non_empty_x = sorted(line)
+                begin = bisect_left(non_empty_x, columns)
+                for x in non_empty_x[begin:]:
+                    pop(x)
 
         self.lines, self.columns = lines, columns
         self.set_margins()
