@@ -25,6 +25,7 @@
     :license: LGPL, see LICENSE for more details.
 """
 
+import collections
 import copy
 import json
 import math
@@ -376,6 +377,26 @@ class BufferView:
     def __len__(self):
         return self._screen.lines
 
+class NullSet(collections.abc.MutableSet):
+    ''' Implementation of a set that it is always empty. '''
+    def __contains__(self, x):
+        return False
+
+    def __iter__(self):
+        return iter(set())
+
+    def __len__(self):
+        return 0
+
+    def add(self, x):
+        return
+
+    def discard(self, x):
+        return
+
+    def update(self, it):
+        return
+
 class Screen:
     """
     A screen is an in-memory matrix of characters that represents the
@@ -455,12 +476,12 @@ class Screen:
     def default_line(self):
         return Line(self.default_char)
 
-    def __init__(self, columns, lines):
+    def __init__(self, columns, lines, track_dirty_lines=True):
         self.savepoints = []
         self.columns = columns
         self.lines = lines
         self._buffer = defaultdict(lambda: Line(self.default_char))
-        self.dirty = set()
+        self.dirty = set() if track_dirty_lines else NullSet()
 
         self._default_style = CharStyle(
                 fg="default", bg="default", bold=False,
@@ -1878,7 +1899,8 @@ class HistoryScreen(Screen):
                     # anyways (aka, we remove the old ones)
                     pop(y, None)
 
-            self.dirty = set(range(self.lines))
+            self.dirty.clear()
+            self.dirty.update(range(self.lines))
 
     def next_page(self):
         """Move the screen page down through the history buffer."""
@@ -1936,7 +1958,8 @@ class HistoryScreen(Screen):
                     # anyways (aka, we remove the old ones)
                     pop(y, None)
 
-            self.dirty = set(range(self.lines))
+            self.dirty.clear()
+            self.dirty.update(range(self.lines))
 
 
 class DebugEvent(namedtuple("Event", "name args kwargs")):

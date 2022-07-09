@@ -40,7 +40,12 @@ def setup(path, screen_cls, columns, lines):
     with io.open(path, "rb") as handle:
         data = handle.read()
 
-    screen = screen_cls(columns, lines)
+    if screen_cls == pyte.Screen:
+        extra_args = {'track_dirty_lines': False}
+    else:
+        extra_args = {}
+
+    screen = screen_cls(columns, lines, **extra_args)
     stream = pyte.ByteStream(screen)
 
     return data, screen, stream
