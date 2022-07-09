@@ -39,7 +39,7 @@ def update(screen, lines, colored=[], write_spaces=True):
                 # skip, leave the default char in the screen
                 pass
             else:
-                screen._buffer[y].write_data(x, char, 1, style)
+                screen._buffer.line_at(y).write_data(x, char, 1, style)
 
     return screen
 

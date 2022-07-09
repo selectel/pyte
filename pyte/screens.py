@@ -33,7 +33,7 @@ import os
 import sys
 import unicodedata
 import warnings
-from collections import deque, namedtuple, defaultdict
+from collections import deque, namedtuple
 from functools import lru_cache
 from bisect import bisect_left, bisect_right
 
@@ -317,6 +317,17 @@ class Line(dict):
                 span=(max(self) - min(self)) if self else None
                 )
 
+class Buffer(dict):
+    __slots__ = ('_screen', )
+    def __init__(self, screen):
+        self._screen = screen
+
+    def line_at(self, y):
+        try:
+            return self[y]
+        except KeyError:
+            self[y] = line = self._screen.default_line()
+            return line
 
 class LineView:
     """
@@ -480,7 +491,7 @@ class Screen:
         self.savepoints = []
         self.columns = columns
         self.lines = lines
-        self._buffer = defaultdict(lambda: Line(self.default_char))
+        self._buffer = Buffer(self)
         self.dirty = set() if track_dirty_lines else NullSet()
 
         self._default_style = CharStyle(
@@ -826,7 +837,7 @@ class Screen:
         # so we fetch them here and update accordingly if necessary
         cursor_x = cursor.x
         cursor_y = cursor.y
-        line = buffer[cursor_y]
+        line = buffer.line_at(cursor_y)
 
         write_data = line.write_data
         char_at = line.char_at
@@ -852,7 +863,7 @@ class Screen:
                     # linefeed may update cursor.y so we update cursor_y and
                     # the current line accordingly.
                     cursor_y = cursor.y
-                    line = buffer[cursor_y]
+                    line = buffer.line_at(cursor_y)
                     write_data = line.write_data
                     char_at = line.char_at
                 elif char_width > 0:
@@ -894,7 +905,7 @@ class Screen:
                     normalized = unicodedata.normalize("NFC", last.data + char)
                     last.data = normalized
                 elif cursor_y:
-                    last = buffer[cursor_y - 1].char_at(columns - 1)
+                    last = buffer.line_at(cursor_y - 1).char_at(columns - 1)
                     normalized = unicodedata.normalize("NFC", last.data + char)
                     last.data = normalized
             else:
@@ -1264,7 +1275,7 @@ class Screen:
         self.dirty.add(self.cursor.y)
         count = count or 1
 
-        line = self._buffer[self.cursor.y]
+        line = self._buffer.line_at(self.cursor.y)
 
         # If the line's default char is equivalent to our cursor, overwriting
         # a char in the line is equivalent to delete it if from the line
@@ -1315,7 +1326,7 @@ class Screen:
         elif how == 2:
             low, high = 0, self.columns
 
-        line = self._buffer[self.cursor.y]
+        line = self._buffer.line_at(self.cursor.y)
 
         # If the line's default char is equivalent to our cursor, overwriting
         # a char in the line is equivalent to delete it if from the line
@@ -1401,7 +1412,7 @@ class Screen:
             width = self.cursor.attrs.width
             style = self.cursor.attrs.style
             for y in range(top, bottom):
-                line = buffer[y]
+                line = buffer.line_at(y)
                 write_data = line.write_data
                 for x in range(0, self.columns):
                     write_data(x, data, width, style)
@@ -1569,7 +1580,7 @@ class Screen:
         self.dirty.update(range(self.lines))
         style = self._default_style
         for y in range(self.lines):
-            line = self._buffer[y]
+            line = self._buffer.line_at(y)
             for x in range(self.columns):
                 line.write_data(x, "E", wcwidth("E"), style)
 
