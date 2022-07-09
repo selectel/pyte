@@ -658,8 +658,8 @@ class Screen:
                 pop = line.pop
                 non_empty_x = sorted(line)
                 begin = bisect_left(non_empty_x, columns)
-                for x in non_empty_x[begin:]:
-                    pop(x)
+
+                list(map(pop, non_empty_x[begin:]))
 
         self.lines, self.columns = lines, columns
         self.set_margins()
@@ -1286,8 +1286,7 @@ class Screen:
             begin = bisect_left(non_empty_x, self.cursor.x)
             end = bisect_left(non_empty_x, self.cursor.x + count, begin)
 
-            for x in non_empty_x[begin:end]:
-                pop(x)
+            list(map(pop, non_empty_x[begin:end]))
 
             # the line may end up being empty, delete it from the buffer (*)
             if not line:
@@ -1337,8 +1336,7 @@ class Screen:
             begin = bisect_left(non_empty_x, low)
             end = bisect_left(non_empty_x, high, begin)
 
-            for x in non_empty_x[begin:end]:
-                pop(x)
+            list(map(pop, non_empty_x[begin:end]))
 
             # the line may end up being empty, delete it from the buffer (*)
             if not line:
@@ -1401,12 +1399,12 @@ class Screen:
         # If a deleted line is then requested, a new line will
         # be added with screen.default_char as its default char
         if self.default_char == self.cursor.attrs:
+            pop = buffer.pop
             non_empty_y = sorted(buffer)
             begin = bisect_left(non_empty_y, top)  # inclusive
             end = bisect_left(non_empty_y, bottom, begin) # exclusive
 
-            for y in non_empty_y[begin:end]:
-                del buffer[y]
+            list(map(pop, non_empty_y[begin:end]))
 
         else:
             data = self.cursor.attrs.data
@@ -1795,10 +1793,10 @@ class HistoryScreen(Screen):
             columns = self.columns
             for line in self._buffer.values():
                 pop = line.pop
-                non_empty_x = sorted(line.keys())
+                non_empty_x = sorted(line)
                 begin = bisect_left(non_empty_x, columns)
-                for x in non_empty_x[begin:]:
-                    pop(x)
+
+                list(map(pop, non_empty_x[begin:]))
 
         # If we're at the bottom of the history buffer and `DECTCEM`
         # mode is set -- show the cursor.
