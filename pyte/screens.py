@@ -487,12 +487,13 @@ class Screen:
     def default_line(self):
         return Line(self.default_char)
 
-    def __init__(self, columns, lines, track_dirty_lines=True):
+    def __init__(self, columns, lines, track_dirty_lines=True, disable_display_graphic=False):
         self.savepoints = []
         self.columns = columns
         self.lines = lines
         self._buffer = Buffer(self)
         self.dirty = set() if track_dirty_lines else NullSet()
+        self.disabled_display_graphic = disable_display_graphic
 
         self._default_style = CharStyle(
                 fg="default", bg="default", bold=False,
@@ -1592,7 +1593,7 @@ class Screen:
         replace = {}
 
         # Fast path for resetting all attributes.
-        if not attrs or attrs == (0, ):
+        if not attrs or attrs == (0, ) or self.disabled_display_graphic:
             self.cursor.attrs = self.default_char
             return
         else:
