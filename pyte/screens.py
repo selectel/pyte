@@ -1010,14 +1010,16 @@ class Screen:
         """Move to the next tab space, or the end of the screen if there
         aren't anymore left.
         """
-        for stop in sorted(self.tabstops):
-            if self.cursor.x < stop:
-                column = stop
-                break
-        else:
-            column = self.columns - 1
+        tabstops = sorted(self.tabstops)
 
-        self.cursor.x = column
+        # use bisect_right because self.cursor.x must not
+        # be included
+        at = bisect_right(tabstops, self.cursor.x)
+        if at == len(tabstops):
+            # no tabstops found, set the x to the end of the screen
+            self.cursor.x = self.columns - 1
+        else:
+            self.cursor.x = tabstops[at]
 
     def backspace(self):
         """Move cursor to the left one or keep it in its position if
@@ -1425,7 +1427,7 @@ class Screen:
             # present, or silently fails if otherwise.
             self.tabstops.discard(self.cursor.x)
         elif how == 3:
-            self.tabstops = set()  # Clears all horizontal tab stops.
+            self.tabstops.clear()  # Clears all horizontal tab stops.
 
     def ensure_hbounds(self):
         """Ensure the cursor is within horizontal screen bounds."""
