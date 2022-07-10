@@ -1748,14 +1748,17 @@ class HistoryScreen(Screen):
     _wrapped = set(Stream.events)
     _wrapped.update(["next_page", "prev_page"])
 
-    def __init__(self, columns, lines, history=100, ratio=.5):
+    def __init__(self, columns, lines, history=100, ratio=.5,
+                 track_dirty_lines=True, disable_display_graphic=False):
         self.history = History(deque(maxlen=history),
                                deque(maxlen=history),
                                float(ratio),
                                history,
                                history)
 
-        super(HistoryScreen, self).__init__(columns, lines)
+        super(HistoryScreen, self).__init__(columns, lines,
+                track_dirty_lines=track_dirty_lines,
+                disable_display_graphic=disable_display_graphic)
 
     def _make_wrapper(self, event, handler):
         def inner(*args, **kwargs):
