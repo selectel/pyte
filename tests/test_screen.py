@@ -1,4 +1,4 @@
-import copy, sys, os
+import copy, sys, os, itertools
 
 import pytest
 
@@ -7,7 +7,7 @@ from pyte import modes as mo, control as ctrl, graphics as g
 from pyte.screens import Char as _orig_Char, CharStyle
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "helpers"))
-from asserts import consistency_asserts
+from asserts import consistency_asserts, splice
 
 # Implement the old API of Char so we don't have to change
 # all the tests
@@ -2313,3 +2313,212 @@ def test_screen_set_icon_name_title():
 
     screen.set_title(text)
     assert screen.title == text
+
+
+def test_fuzzy_insert_characters():
+    columns = 7
+
+    # test different one-line screen scenarios with a mix
+    # of empty and non-empty chars
+    for mask in itertools.product('x ', repeat=columns):
+        # make each 'x' a different letter so we can spot subtle errors
+        line = [c if m == 'x' else ' ' for m, c in zip(mask, 'ABCDEFGHIJK')]
+        assert len(line) == columns
+        original = list(line)
+        for count in [1, 2, columns//2, columns-1, columns, columns+1]:
+            for at in [0, 1, columns//2, columns-count, columns-count+1, columns-1]:
+                if at < 0:
+                    continue
+
+                for margins in [None, (1, columns-2)]:
+                    screen = update(pyte.Screen(columns, 1), [line], write_spaces=False)
+
+                    if margins:
+                        # set_margins is 1-based indexes
+                        screen.set_margins(top=margins[0]+1, bottom=margins[1]+1)
+
+                    screen.cursor.x = at
+                    screen.insert_characters(count)
+
+                    # screen.insert_characters are not margins-aware so they
+                    # will ignore any margin set. Therefore the expected
+                    # line should also ignore them
+                    expected_line = splice(line, at, count, [" "], margins=None)
+                    expected_line = ''.join(expected_line)
+
+                    assert screen.display == [expected_line], "At {}, cnt {}, (m {}), initial line: {}".format(at, count, margins, line)
+                    consistency_asserts(screen)
+
+                    # map the chars to Char objects
+                    expected_line = [screen.default_char if c == ' ' else Char(c) for c in expected_line]
+                    assert tolist(screen)[0] == expected_line, "At {}, cnt {}, (m {}), initial line: {}".format(at, count, margins, line)
+
+        # ensure that the line that we used for the tests was not modified
+        # so the tests used the correct line object (otherwise the tests
+        # are invalid)
+        assert original == line
+
+
+
+def test_fuzzy_delete_characters():
+    columns = 7
+
+    # test different one-line screen scenarios with a mix
+    # of empty and non-empty chars
+    for mask in itertools.product('x ', repeat=columns):
+        line = [c if m == 'x' else ' ' for m, c in zip(mask, 'ABCDEFGHIJK')]
+        assert len(line) == columns
+        original = list(line)
+        for count in [1, 2, columns//2, columns-1, columns, columns+1]:
+            for at in [0, 1, columns//2, columns-count, columns-count+1, columns-1]:
+                if at < 0:
+                    continue
+                for margins in [None, (1, columns-2)]:
+                    screen = update(pyte.Screen(columns, 1), [line], write_spaces=False)
+
+                    if margins:
+                        # set_margins is 1-based indexes
+                        screen.set_margins(top=margins[0]+1, bottom=margins[1]+1)
+
+                    screen.cursor.x = at
+                    screen.delete_characters(count)
+
+                    # screen.delete_characters are not margins-aware so they
+                    # will ignore any margin set. Therefore the expected
+                    # line should also ignore them
+                    expected_line = splice(line, at, (-1)*count, [" "], margins=None)
+                    expected_line = ''.join(expected_line)
+
+                    assert screen.display == [expected_line], "At {}, cnt {}, (m {}), initial line: {}".format(at, count, margins, line)
+                    consistency_asserts(screen)
+
+                    # map the chars to Char objects
+                    expected_line = [screen.default_char if c == ' ' else Char(c) for c in expected_line]
+                    assert tolist(screen)[0] == expected_line, "At {}, cnt {}, (m {}), initial line: {}".format(at, count, margins, line)
+
+        # ensure that the line that we used for the tests was not modified
+        # so the tests used the correct line object (otherwise the tests
+        # are invalid)
+        assert original == line
+
+
+
+
+def test_fuzzy_erase_characters():
+    columns = 7
+
+    # test different one-line screen scenarios with a mix
+    # of empty and non-empty chars
+    for mask in itertools.product('x ', repeat=columns):
+        line = [c if m == 'x' else ' ' for m, c in zip(mask, 'ABCDEFGHIJK')]
+        assert len(line) == columns
+        original = list(line)
+        for count in [1, 2, columns//2, columns-1, columns, columns+1]:
+            for at in [0, 1, columns//2, columns-count, columns-count+1, columns-1]:
+                if at < 0:
+                    continue
+                for margins in [None, (1, columns-2)]:
+                    screen = update(pyte.Screen(columns, 1), [line], write_spaces=False)
+
+                    if margins:
+                        # set_margins is 1-based indexes
+                        screen.set_margins(top=margins[0]+1, bottom=margins[1]+1)
+
+                    screen.cursor.x = at
+                    screen.erase_characters(count)
+
+                    expected_line = list(line)
+                    expected_line[at:at+count] = [" "] * (min(at+count, columns) - at)
+                    expected_line = ''.join(expected_line)
+
+                    assert screen.display == [expected_line], "At {}, cnt {}, (m {}), initial line: {}".format(at, count, margins, line)
+                    consistency_asserts(screen)
+
+                    # map the chars to Char objects
+                    expected_line = [screen.default_char if c == ' ' else Char(c) for c in expected_line]
+                    assert tolist(screen)[0] == expected_line, "At {}, cnt {}, (m {}), initial line: {}".format(at, count, margins, line)
+
+        # ensure that the line that we used for the tests was not modified
+        # so the tests used the correct line object (otherwise the tests
+        # are invalid)
+        assert original == line
+
+
+def test_fuzzy_insert_lines():
+    rows = 7
+
+    # test different screen scenarios with a mix
+    # of empty and non-empty lines
+    for masks in itertools.product(['x x', '   '], repeat=rows):
+        # make each line different
+        lines = [m if m == '   ' else '%c %c' % (c,c) for m, c in zip(masks, "ABCDEFGHIJK")]
+        assert len(lines) == rows
+        original = list(lines)
+        for count in [1, 2, rows//2, rows-1, rows, rows+1]:
+            for at in [0, 1, rows//2, rows-count, rows-count+1, rows-1]:
+                if at < 0:
+                    continue
+                for margins in [None, (1, rows-2)]:
+                    screen = update(pyte.Screen(3, rows), lines, write_spaces=False)
+
+                    if margins:
+                        # set_margins is 1-based indexes
+                        screen.set_margins(top=margins[0]+1, bottom=margins[1]+1)
+
+                    screen.cursor.y = at
+                    screen.insert_lines(count)
+
+                    expected_lines = splice(lines, at, count, ["   "], margins)
+
+                    assert screen.display == expected_lines, "At {}, cnt {}, (m {}), initial lines: {}".format(at, count, margins, lines)
+                    consistency_asserts(screen)
+
+                    # map the chars to Char objects
+                    expected_lines = [[screen.default_char if c == ' ' else Char(c) for c in l] for l in expected_lines]
+                    assert tolist(screen) == expected_lines, "At {}, cnt {}, (m {}), initial lines: {}".format(at, count, margins, lines)
+
+        # ensure that the line that we used for the tests was not modified
+        # so the tests used the correct line object (otherwise the tests
+        # are invalid)
+        assert original == lines
+
+
+
+def test_fuzzy_delete_lines():
+    rows = 7
+
+    # test different screen scenarios with a mix
+    # of empty and non-empty lines
+    for masks in itertools.product(['x x', '   '], repeat=rows):
+        lines = [m if m == '   ' else '%c %c' % (c,c) for m, c in zip(masks, "ABCDEFGHIJK")]
+        assert len(lines) == rows
+        original = list(lines)
+        for count in [1, 2, rows//2, rows-1, rows, rows+1]:
+            for at in [0, 1, rows//2, rows-count, rows-count+1, rows-1]:
+                if at < 0:
+                    continue
+                for margins in [None, (1, rows-2)]:
+                    screen = update(pyte.Screen(3, rows), lines, write_spaces=False)
+
+                    if margins:
+                        # set_margins is 1-based indexes
+                        screen.set_margins(top=margins[0]+1, bottom=margins[1]+1)
+
+                    screen.cursor.y = at
+                    screen.delete_lines(count)
+
+                    expected_lines = splice(lines, at, (-1)*count, ["   "], margins)
+
+                    assert screen.display == expected_lines, "At {}, cnt {}, (m {}), initial lines: {}".format(at, count, margins, lines)
+                    consistency_asserts(screen)
+
+                    # map the chars to Char objects
+                    expected_lines = [[screen.default_char if c == ' ' else Char(c) for c in l] for l in expected_lines]
+                    assert tolist(screen) == expected_lines, "At {}, cnt {}, (m {}), initial lines: {}".format(at, count, margins, lines)
+
+        # ensure that the line that we used for the tests was not modified
+        # so the tests used the correct line object (otherwise the tests
+        # are invalid)
+        assert original == lines
+
+

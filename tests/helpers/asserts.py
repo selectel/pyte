@@ -36,3 +36,45 @@ def consistency_asserts(screen):
         max_x = max(non_empty_x) if non_empty_x else screen.columns - 1
 
         assert 0 <= min_x <= max_x < screen.columns
+
+
+def splice(seq, at, count, padding, margins=None):
+    ''' Take a sequence and add count padding objects at the
+        given position "at".
+        If count is negative, instead of adding, remove
+        objects at the given position and append the same
+        amount at the end.
+
+        If margins=(low, high) are given, operate between
+        the low and the high indexes of the sequence.
+        These are 0-based indexes, both inclusive.
+    '''
+
+    assert count != 0
+    assert isinstance(seq, list)
+
+    low, high = margins if margins else (0, len(seq) - 1)
+
+    if not (low <= at <= high):
+        return list(seq)
+
+    low_part = seq[:low]
+    high_part = seq[high+1:]
+
+    middle = seq[low:high+1]
+    at = at - low  # "at" now is an index of middle, not of seq.
+
+    if count < 0:   # remove mode
+        count = abs(count)
+        l = len(middle)
+        del middle[at:at+count]
+        middle += padding * (l - len(middle))
+    else:           # insert mode
+        middle = middle[:at] + padding * count + middle[at:]
+        del middle[-count:]
+
+    new = low_part + middle + high_part
+    assert len(new) == len(seq)
+    return new
+
+
