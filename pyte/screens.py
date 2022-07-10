@@ -77,12 +77,46 @@ class LineStats(namedtuple("_LineStats", [
     "empty",
     "chars",
     "columns",
-    "occupacy",
+    "occupancy",
     "min",
     "max",
     "span",
     ])):
     """
+    LineStats contains some useful statistics about a single line in
+    the screen to understand how the terminal program draw on it
+    and how pyte.Screen makes use of the line.
+
+    The basic statistic is the character count over the total count
+    of columns of the screen. The line is implemented as a sparse
+    buffer so space characters are not really stored and this ratio
+    reflects how many non-space chars are. The ratio is also known
+    as occupancy.
+
+    A ratio close to 0 means that the line is mostly empty
+    and it will consume little memory and the screen's algorithms
+    will run faster; close to 1 means that it is mostly full and it will
+    have the opposite effects.
+
+    For non-empty lines, the second statistic useful is its range.
+    The range of a line is the minimum and maximum x coordinates
+    where we find a non-space char.
+    For a screen of 80 columns, a range of [10 - 20] means that
+    the chars up to the x=10 are spaces and the chars after x=20
+    are spaces too.
+    The length of the range, also known as the span, is calculated.
+    The chars/span ratio gives you how densely packed is the range.
+
+    A ratio close to 0 means that the chars are sparse within the range
+    so it is too fragmented and the screen's algorithms will have to jump
+    between the chars and the gaps having a lower performance.
+    A ratio close to 1 means that they are highly packed and the screen
+    will have a better performance.
+
+    With the ratios char/columns and chars/span one can understand
+    the balance of sparsity, its distribution and how it will impact
+    on the memory and execution time.
+
     Note: this is not part of the stable API so it may change
     between version of pyte.
     """
@@ -90,12 +124,12 @@ class LineStats(namedtuple("_LineStats", [
     def __repr__(self):
         if self.empty:
             return "chars: {0: >3}/{1} ({2:.2f})".format(
-                    self.chars, self.columns, self.occupacy,
+                    self.chars, self.columns, self.occupancy,
                     )
         else:
             return "chars: {0: >3}/{1} ({2:.2f}); range: [{3: >3} - {4: >3}], len: {5: >3} ({6:.2f})".format(
-                    self.chars, self.columns, self.occupacy,
-                    self.min, self.max, self.span, self.span/self.columns
+                    self.chars, self.columns, self.occupancy,
+                    self.min, self.max, self.span, self.chars/self.span
                     )
 
 class BufferStats(namedtuple("_BufferStats", [
@@ -105,13 +139,49 @@ class BufferStats(namedtuple("_BufferStats", [
     "lines",
     "falses",
     "blanks",
-    "occupacy",
+    "occupancy",
     "min",
     "max",
     "span",
     "line_stats",
     ])):
     """
+    BufferStats has some statistics about the buffer of the screen,
+    a 2d sparse matrix representation of the screen.
+
+    The sparse implementation means that empty lines are not stored
+    in the buffer explicitly.
+
+    The stats count the real lines (aka entries) and the ratio entries
+    over total lines that the screen has (aka occupancy).
+
+    A ratio close to 0 means that the buffer is mostly empty
+    and it will consume little memory and the screen's algorithms
+    will run faster; close to 1 means that it is mostly full and it will
+    have the opposite effects.
+
+    The buffer may have entries for empty lines in two forms:
+
+     - falses lines: empty lines that are the same as the buffer's default
+       and therefore should not be in the buffer at all
+     - empty lines: non-empty lines but full of spaces. It is suspicious
+       because a line full of spaces should not have entries within but
+       there are legit cases when this is not true: for example when
+       the terminal program erase some chars typing space chars with
+       a non-default cursor attributes.
+
+    Both counts are part of the stats with their falses/entries
+    and blanks/entries ratios.
+
+    For non-empty buffers the minimum and maximum y-coordinates
+    are part of the stats. From there, the range and the span (length)
+    are calculated as well the entries/span ratio to see how densely
+    packed are the lines.
+    See LineStats for more about these stats.
+
+    After the buffer's stats, the stats of each non-empty line in the buffer
+    follows. See LineStats for that.
+
     Note: this is not part of the stable API so it may change
     between version of pyte.
     """
@@ -126,7 +196,7 @@ class BufferStats(namedtuple("_BufferStats", [
         if self.empty:
             return bstats + \
                     "line entries: {0: >3}/{1} ({2:.2f}), falses: {3:> 3} ({4:.2f}), blanks: {5:> 3} ({6:.2f})\n{7}".format(
-                    self.entries, self.lines, self.occupacy,
+                    self.entries, self.lines, self.occupancy,
                     self.falses, self.falses/self.entries,
                     self.blanks, self.blanks/self.entries,
                     "\n".join("{0: >3}: {1}".format(x, stats) for x, stats in self.line_stats)
@@ -134,10 +204,10 @@ class BufferStats(namedtuple("_BufferStats", [
         else:
             return bstats + \
                     "line entries: {0: >3}/{1} ({2:.2f}), falses: {3:> 3} ({4:.2f}), blanks: {5:> 3} ({6:.2f}); range: [{7: >3} - {8: >3}], len: {9: >3} ({10:.2f})\n{11}".format(
-                    self.entries, self.lines, self.occupacy,
+                    self.entries, self.lines, self.occupancy,
                     self.falses, self.falses/self.entries,
                     self.blanks, self.blanks/self.entries,
-                    self.min, self.max, self.span, self.span/self.lines,
+                    self.min, self.max, self.span, self.entries/self.span,
                     "\n".join("{0: >3}: {1}".format(x, stats) for x, stats in self.line_stats)
                     )
 
@@ -311,7 +381,7 @@ class Line(dict):
                 empty=not bool(self),
                 chars=len(self),
                 columns=screen.columns,
-                occupacy=len(self)/screen.columns,
+                occupancy=len(self)/screen.columns,
                 min=min(self) if self else None,
                 max=max(self) if self else None,
                 span=(max(self) - min(self)) if self else None
@@ -524,7 +594,7 @@ class Screen:
                 lines=self.lines,
                 falses=len([line for line in buffer.values() if not line]),
                 blanks=len([line for line in buffer.values() if all(char.data == " " for char in line.values())]),
-                occupacy=len(buffer)/self.lines,
+                occupancy=len(buffer)/self.lines,
                 min=min(buffer) if buffer else None,
                 max=max(buffer) if buffer else None,
                 span=(max(buffer) - min(buffer)) if buffer else None,
