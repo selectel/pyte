@@ -20,7 +20,7 @@
               how to do -- feel free to submit a pull request.
 
     :copyright: (c) 2011-2012 by Selectel.
-    :copyright: (c) 2012-2017 by pyte authors and contributors,
+    :copyright: (c) 2012-2022 by pyte authors and contributors,
                     see AUTHORS for details.
     :license: LGPL, see LICENSE for more details.
 """
@@ -83,9 +83,9 @@ class LineStats(namedtuple("_LineStats", [
     "span",
     ])):
     """
-    LineStats contains some useful statistics about a single line in
-    the screen to understand how the terminal program draw on it
-    and how pyte.Screen makes use of the line.
+    :class:`~pyte.screens.LineStats` contains some useful statistics
+    about a single line in the screen to understand how the terminal program
+    draw on it and how :class:`~pyte.screens.Screen` makes use of the line.
 
     The basic statistic is the character count over the total count
     of columns of the screen. The line is implemented as a sparse
@@ -117,7 +117,9 @@ class LineStats(namedtuple("_LineStats", [
     the balance of sparsity, its distribution and how it will impact
     on the memory and execution time.
 
-    Note: this is not part of the stable API so it may change
+    .. note::
+
+    This is not part of the stable API so it may change
     between version of pyte.
     """
 
@@ -146,8 +148,8 @@ class BufferStats(namedtuple("_BufferStats", [
     "line_stats",
     ])):
     """
-    BufferStats has some statistics about the buffer of the screen,
-    a 2d sparse matrix representation of the screen.
+    :class:`~pyte.screens.BufferStats` has some statistics about
+    the buffer of the screen, a 2d sparse matrix representation of the screen.
 
     The sparse implementation means that empty lines are not stored
     in the buffer explicitly.
@@ -177,12 +179,14 @@ class BufferStats(namedtuple("_BufferStats", [
     are part of the stats. From there, the range and the span (length)
     are calculated as well the entries/span ratio to see how densely
     packed are the lines.
-    See LineStats for more about these stats.
+    See :class:`~pyte.screens.LineStats` for more about these stats.
 
     After the buffer's stats, the stats of each non-empty line in the buffer
-    follows. See LineStats for that.
+    follows. See :class:`~pyte.screens.LineStats` for that.
 
-    Note: this is not part of the stable API so it may change
+    .. note::
+
+    This is not part of the stable API so it may change
     between version of pyte.
     """
 
@@ -213,9 +217,21 @@ class BufferStats(namedtuple("_BufferStats", [
 
 
 class Char:
-    """A single styled on-screen character.
+    """
+    A single styled on-screen character. The character is made
+    of an unicode character (data), its width and its style.
 
     :param str data: unicode character. Invariant: ``len(data) == 1``.
+    :param bool width: the width in terms of cells to display this char.
+    :param CharStyle style: the style of the character.
+
+    The :meth:`~pyte.screens.Char.from_attributes` allows to create
+    a new :class:`~pyte.screens.Char` object
+    setting each attribute, one by one, without requiring and explicit
+    :class:`~pyte.screens.CharStyle` object.
+
+    The supported attributes are:
+
     :param str fg: foreground colour. Defaults to ``"default"``.
     :param str bg: background colour. Defaults to ``"default"``.
     :param bool bold: flag for rendering the character using bold font.
@@ -230,7 +246,11 @@ class Char:
                          during rendering. Defaults to ``False``.
     :param bool blink: flag for rendering the character blinked. Defaults to
                        ``False``.
-    :param bool width: the width in terms of cells to display this char.
+
+    The attributes data, width and style of :class:`~pyte.screens.Char`
+    must be considered read-only. Any modification is undefined.
+    If you want to modify a :class:`~pyte.screens.Char`, use the public
+    interface of :class:`~pyte.screens.Screen`.
     """
     __slots__ = (
         "data",
@@ -347,6 +367,15 @@ class Cursor:
 
 
 class Line(dict):
+    """A line or row of the screen.
+
+    This dict subclass implements a sparse array for 0-based
+    indexed characters that represents a single line or row of the screen.
+
+    :param pyte.screens.Char default: a :class:`~pyte.screens.Char` instance
+        to be used as default. See :meth:`~pyte.screens.Line.char_at`
+        for details.
+    """
     __slots__ = ('default', )
     def __init__(self, default):
         self.default = default
@@ -354,7 +383,8 @@ class Line(dict):
     def write_data(self, x, data, width, style):
         """
         Update the char at the position x with the new data, width and style.
-        If no char is at that position, a new char is created.
+        If no char is at that position, a new char is created and added
+        to the line.
         """
         if x in self:
             char = self[x]
@@ -365,16 +395,27 @@ class Line(dict):
             self[x] = Char(data, width, style)
 
     def char_at(self, x):
-        if x in self:
+        """
+        Return the character at the given position x. If no char exists,
+        create a new one and add it to the line before returning it.
+
+        This is a shortcut of `line.setdefault(x, line.default.copy())`
+        but avoids the copy if the char already exists.
+        """
+        try:
             return self[x]
-        else:
-            char = self.default.copy()
-            self[x] = char
+        except KeyError:
+            self[x] = char = self.default.copy()
             return char
 
     def stats(self, screen):
         """
-        Note: this is not part of the stable API so it may change
+        Return a :class:`~pyte.screens.LineStats` object with the statistics
+        of the line.
+
+        .. note::
+
+        This is not part of the stable API so it may change
         between version of pyte.
         """
         return LineStats(
@@ -388,11 +429,29 @@ class Line(dict):
                 )
 
 class Buffer(dict):
+    """A 2d matrix representation of the screen.
+
+    This dict subclass implements a sparse array for 0-based
+    indexed lines that represents the screen. Each line is then
+    a sparse array for the characters in the same row (see
+    :class:`~pyte.screens.Line`).
+
+    :param pyte.screens.Screen screen: a :class:`~pyte.screens.Screen` instance
+        to be used when a default line needs to be created.
+        See :meth:`~pyte.screens.Buffer.line_at` for details.
+    """
     __slots__ = ('_screen', )
     def __init__(self, screen):
         self._screen = screen
 
     def line_at(self, y):
+        """
+        Return the line at the given position y. If no line exists,
+        create a new one and add it to the buffer before returning it.
+
+        This is a shortcut of `buffer.setdefault(y, screen.default_line())`
+        but avoids the copy if the line already exists.
+        """
         try:
             return self[y]
         except KeyError:
@@ -403,11 +462,13 @@ class LineView:
     """
     A read-only view of an horizontal line of the screen.
 
-    Modifications to the internals of the screen is still possible through
-    this LineView however any modification will result in an undefined
-    behaviour. Don't do that.
+    :param pyte.screens.Line line: a :class:`~pyte.screens.Line` instance
 
-    See BufferView.
+    Modifications to the internals of the screen is still possible through
+    this :class:`~pyte.screens.LineView` however any modification
+    will result in an undefined behaviour. Don't do that.
+
+    See :class:`~pyte.screens.BufferView`.
     """
     __slots__ = ("_line",)
     def __init__(self, line):
@@ -436,12 +497,26 @@ class BufferView:
     """
     A read-only view of the screen.
 
-    Modifications to the internals of the screen is still possible through
-    this BufferView however any modification will result in an undefined
-    behaviour. Don't do that.
+    :param pyte.screens.Screen screen: a :class:`~pyte.screens.Screen` instance
 
-    Any modification to the screen must be done through its method
-    (principally draw())
+    Modifications to the internals of the screen is still possible through
+    this :class:`~pyte.screens.BufferView` however any modification
+    will result in an undefined behaviour. Don't do that.
+
+    Any modification to the screen must be done through its methods
+    (principally :meth:`~pyte.screens.Screen.draw`).
+
+    This view allows the user to iterate over the lines and chars of
+    the buffer to query their attributes.
+
+    As an example:
+
+    view = screen.buffer  # get a BufferView
+    for y in view:
+        line = view[y]  # get a LineView (do it once per y line)
+        for x in line:
+            char = line[x]  # get a Char
+            print(char.data, char.fg, char.bg)  # access to char's attrs
     """
     __slots__ = ("_buffer", "_screen")
     def __init__(self, screen):
@@ -449,8 +524,9 @@ class BufferView:
         self._buffer = screen._buffer
 
     def __getitem__(self, y):
-        line = self._buffer.get(y)
-        if line is None:
+        try:
+            line = self._buffer[y]
+        except KeyError:
             line = Line(self._screen.default_char)
 
         return LineView(line)
@@ -458,8 +534,8 @@ class BufferView:
     def __len__(self):
         return self._screen.lines
 
-class NullSet(collections.abc.MutableSet):
-    ''' Implementation of a set that it is always empty. '''
+class _NullSet(collections.abc.MutableSet):
+    """Implementation of a set that it is always empty."""
     def __contains__(self, x):
         return False
 
@@ -485,9 +561,30 @@ class Screen:
     and given explicit commands, or it can be attached to a stream and
     will respond to events.
 
+    :param int columns: count of columns for the screen (width).
+    :param int lines: count of lines for the screen (height).
+
+    :param bool track_dirty_lines: track which lines were modified
+    (see `dirty` attribute). If it is false do not track any line.
+    Defaults to True.
+
+    :param bool disable_display_graphic: disables the modification
+    of cursor attributes disabling :meth:`~pyte.screens.Screen.select_graphic_rendition`.
+    Defaults to False.
+
+    .. note::
+
+    If you don't need the functionality, setting `track_dirty_lines`
+    to False and `disable_display_graphic` to True can
+    make :class:`~pyte.screens.Screen` to work faster and consume less
+    resources.
+
     .. attribute:: buffer
 
-       A sparse ``lines x columns`` :class:`~pyte.screens.Char` matrix.
+       A ``lines x columns`` :class:`~pyte.screens.Char` matrix view of
+       the screen. Under the hood :class:`~pyte.screens.Screen` implements
+       a sparse matrix but `screen.buffer` returns a dense view.
+       See :class:`~pyte.screens.BufferView`
 
     .. attribute:: dirty
 
@@ -499,6 +596,9 @@ class Screen:
        >>> screen.draw("!")
        >>> list(screen.dirty)
        [0]
+
+       If `track_dirty_lines` was set to false, this `dirty` set will be
+       always empty.
 
        .. versionadded:: 0.7.0
 
@@ -562,7 +662,7 @@ class Screen:
         self.columns = columns
         self.lines = lines
         self._buffer = Buffer(self)
-        self.dirty = set() if track_dirty_lines else NullSet()
+        self.dirty = set() if track_dirty_lines else _NullSet()
         self.disabled_display_graphic = disable_display_graphic
 
         self._default_style = CharStyle(
@@ -583,7 +683,11 @@ class Screen:
 
     def stats(self):
         """
-        Note: this is not part of the stable API so it may change
+        Return the statistcs of the buffer.
+
+        .. note::
+
+        This is not part of the stable API so it may change
         between version of pyte.
         """
         buffer = self._buffer
@@ -1657,6 +1761,13 @@ class Screen:
         """Set display attributes.
 
         :param list attrs: a list of display attributes to set.
+
+        .. note::
+
+        If `disable_display_graphic` was set, this method
+        set the cursor's attributes to the default char's attributes
+        ignoring all the parameters.
+        Equivalent to `screen.select_graphic_rendition(0)`.
         """
         replace = {}
 
