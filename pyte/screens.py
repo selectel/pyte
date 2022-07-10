@@ -705,30 +705,55 @@ class Screen:
                 line_stats=[(x, line.stats(self)) for x, line in sorted(buffer.items())]
                 )
 
-    @property
-    def display(self):
-        """A :func:`list` of screen lines as unicode strings."""
+    def compressed_display(self, lstrip=False, rstrip=False, tfilter=False, bfilter=False):
+        """A :func:`list` of screen lines as unicode strings with optionally
+        the possibility to compress its output striping space and filtering
+        empty lines.
+
+        :param bool lstrip: strip the left space of each line.
+        :param bool rstrip: strip the right space of each line.
+        :param bool tfilter: filter the top whole empty lines.
+        :param bool bfilter: filter the bottom whole empty lines.
+
+        .. note::
+
+        The strip of left/right spaces on each line and/or the filter
+        of top/bottom whole empty lines is implemented in an opportunistic
+        fashion and it may not strip/filter fully the spaces and/or lines.
+
+        This method is meant to be an optimization over
+        :meth:`~pyte.screens.Screen.display` for displaying
+        large mostly-empty screens.
+
+        For left-written texts,
+        `compressed_display(rstrip=True, tfilter=True, bfilter=True)` compress
+        the display without losing meaning.
+
+        For right-written texts,
+        `compressed_display(lstrip=True, tfilter=True, bfilter=True)` compress
+        the display without losing meaning.
+        """
         # screen.default_char is always the space character
         # We can skip the lookup of it and set the padding char
         # directly
+        empty_line_padding = "" if (lstrip or rstrip) else " "
         padding = " "
 
-        prev_y = -1
+        non_empty_y = sorted(self._buffer.items())
+        prev_y = non_empty_y[0][0]-1 if tfilter and non_empty_y else -1
         output = []
         columns = self.columns
-        for y, line in sorted(self._buffer.items()):
+        for y, line in non_empty_y:
             empty_lines = y - (prev_y + 1)
             if empty_lines:
-                output.extend([padding * columns] * empty_lines)
+                output.extend([empty_line_padding * columns] * empty_lines)
             prev_y = y
 
+            non_empty_x = sorted(line.items())
             is_wide_char = False
-            prev_x = -1
+            prev_x = non_empty_x[0][0]-1 if lstrip and non_empty_x else -1
             display_line = []
-            for x, cell in sorted(line.items()):
-                if x >= columns:
-                    break
-
+            for x, cell in non_empty_x:
                 gap = x - (prev_x + 1)
                 if gap:
                     display_line.append(padding * gap)
@@ -743,16 +768,21 @@ class Screen:
                 display_line.append(char)
 
             gap = columns - (prev_x + 1)
-            if gap:
+            if gap and not rstrip:
                 display_line.append(padding * gap)
 
             output.append("".join(display_line))
 
         empty_lines = self.lines - (prev_y + 1)
-        if empty_lines:
-            output.extend([padding * columns] * empty_lines)
+        if empty_lines and not bfilter:
+            output.extend([empty_line_padding * columns] * empty_lines)
 
         return output
+
+    @property
+    def display(self):
+        """A :func:`list` of screen lines as unicode strings."""
+        return self.compressed_display()
 
     def reset(self):
         """Reset the terminal to its initial state.

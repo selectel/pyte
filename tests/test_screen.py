@@ -2522,3 +2522,83 @@ def test_fuzzy_delete_lines():
         assert original == lines
 
 
+def test_compressed_display():
+    screen = update(pyte.Screen(4, 5), [
+        "    ",
+        " a  ",
+        "    ",
+        "  bb",
+        "    ",
+        ], write_spaces=False)
+
+    assert screen.display == [
+        "    ",
+        " a  ",
+        "    ",
+        "  bb",
+        "    ",
+        ]
+
+    assert screen.compressed_display() == [
+        "    ",
+        " a  ",
+        "    ",
+        "  bb",
+        "    ",
+        ]
+
+    assert screen.compressed_display(lstrip=True) == [
+        "",
+        "a  ",
+        "",
+        "bb",
+        "",
+        ]
+
+    assert screen.compressed_display(rstrip=True) == [
+        "",
+        " a",
+        "",
+        "  bb",
+        "",
+        ]
+
+    assert screen.compressed_display(lstrip=True, rstrip=True) == [
+        "",
+        "a",
+        "",
+        "bb",
+        "",
+        ]
+
+    assert screen.compressed_display(tfilter=True) == [
+        " a  ",
+        "    ",
+        "  bb",
+        "    ",
+        ]
+
+    assert screen.compressed_display(bfilter=True) == [
+        "    ",
+        " a  ",
+        "    ",
+        "  bb",
+        ]
+
+    assert screen.compressed_display(tfilter=True, bfilter=True) == [
+        " a  ",
+        "    ",
+        "  bb",
+        ]
+
+    assert screen.compressed_display(tfilter=True, bfilter=True, rstrip=True) == [
+        " a",
+        "",
+        "  bb",
+        ]
+
+    assert screen.compressed_display(tfilter=True, bfilter=True, lstrip=True) == [
+        "a  ",
+        "",
+        "bb",
+        ]
