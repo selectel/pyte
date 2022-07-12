@@ -1297,21 +1297,14 @@ class Screen:
             buffer = self._buffer
             pop = buffer.pop
             non_empty_y = sorted(buffer)
-            begin = bisect_left(non_empty_y, self.cursor.y)
-            end = bisect_left(non_empty_y, (bottom + 1) - count)
+            move_begin = bisect_left(non_empty_y, self.cursor.y)
+            drop_begin = bisect_left(non_empty_y, (bottom + 1) - count, move_begin)
+            margin_begin = bisect_left(non_empty_y, bottom + 1, drop_begin)
 
-            to_move = reversed(non_empty_y[begin:end])
+            list(map(pop, non_empty_y[drop_begin:margin_begin])) # drop
 
-            next_y = (bottom + 1) - count
-            for y in to_move:
-                for z in range(y + 1 + count, next_y + count):
-                    pop(z, None)
-
-                next_y = y
-                buffer[y + count] = pop(y)
-
-            for z in range(self.cursor.y, next_y + count):
-                pop(z, None)
+            for y in reversed(non_empty_y[move_begin:drop_begin]):
+                buffer[y + count] = pop(y)  # move
 
             self.carriage_return()
 
@@ -1333,21 +1326,14 @@ class Screen:
             buffer = self._buffer
             pop = buffer.pop
             non_empty_y = sorted(buffer)
-            begin = bisect_left(non_empty_y, self.cursor.y + count)
-            end = bisect_left(non_empty_y, bottom + 1)
+            drop_begin = bisect_left(non_empty_y, self.cursor.y)
+            margin_begin = bisect_left(non_empty_y, bottom + 1, drop_begin)
+            move_begin = bisect_left(non_empty_y, self.cursor.y + count, drop_begin, margin_begin)
 
-            to_move = non_empty_y[begin:end]
+            list(map(pop, non_empty_y[drop_begin:move_begin])) # drop
 
-            prev_y = self.cursor.y + count - 1
-            for y in to_move:
-                for z in range(prev_y + 1 - count, y - count):
-                    pop(z, None)
-
-                prev_y = y
-                buffer[y - count] = pop(y)
-
-            for z in range(prev_y + 1 - count, min(prev_y + 1, bottom + 1)):
-                pop(z, None)
+            for y in non_empty_y[move_begin:margin_begin]:
+                buffer[y - count] = pop(y)  # move
 
             self.carriage_return()
 
@@ -1377,39 +1363,25 @@ class Screen:
         # to insert is small and the cursor is not very close to the right
         # end.
         non_empty_x = sorted(line)
-        begin = bisect_left(non_empty_x, self.cursor.x)
-        end = bisect_left(non_empty_x, self.columns - count)
-
-        to_move = reversed(non_empty_x[begin:end])
+        move_begin = bisect_left(non_empty_x, self.cursor.x)
+        drop_begin = bisect_left(non_empty_x, self.columns - count, move_begin)
 
         # cursor.x
         # |
-        # V    to_move
-        # |---------------|
+        # V    to_move     to_drop
+        # |---------------|-------|
         #   0   1   x   3   4   5      count = 2  (x means empty)
         #
-        #   x   x   0   1   4   3      (first for-loop without the inner loop: the "4" is wrong)
-        #
-        #   x   x   0   1   x   3      (first for-loop with the inner loop: the "4" is removed)
-        next_x = self.columns - count
-        for x in to_move:
-            # Notice how if (x + 1) == (next_x) then you know
-            # that no empty char are in between this x and the next one
-            # and therefore the range() loop gets empty.
-            # In other cases, (x + 1) < (next_x)
-            for z in range(x + 1 + count, next_x + count):
-                pop(z, None)
+        list(map(pop, non_empty_x[drop_begin:]))   # drop
 
-            # it may look weird but the current "x" is the "next_x"
-            # of the next iteration because we are iterating to_move
-            # backwards
-            next_x = x
-            line[x + count] = pop(x)
+        # cursor.x
+        # |
+        # V            moved
+        #         |---------------|
+        #   x   x   0   1   x   3      count = 2  (x means empty)
+        for x in reversed(non_empty_x[move_begin:drop_begin]):
+            line[x + count] = pop(x)  # move
 
-        # between the cursor.x and the last moved char
-        # we may have that should be emptied
-        for z in range(self.cursor.x, next_x + count):
-            pop(z, None)
 
 
     def delete_characters(self, count=None):
@@ -1434,34 +1406,20 @@ class Screen:
         pop = line.pop
 
         non_empty_x = sorted(line)
-        begin = bisect_left(non_empty_x, self.cursor.x + count)
+        drop_begin = bisect_left(non_empty_x, self.cursor.x)
+        move_begin = bisect_left(non_empty_x, self.cursor.x + count, drop_begin)
 
-        to_move = non_empty_x[begin:]
+        list(map(pop, non_empty_x[drop_begin:move_begin]))  # drop
 
         # cursor.x
-        #   |
-        #   |          to_move
-        #   V     |---------------|
+        # |
+        # V to drop    to_move
+        # |-------|---------------|
         #   0   1   x   3   4   x      count = 2  (x means empty)
-        #
-        #   0   3   4   3   x   x
-        #
-        #   x   3   4   x   x   x
-        prev_x = self.cursor.x + count - 1
-        for x in to_move:
-            # Notice how if (x - 1) == (prev_x) then you know
-            # that no empty char are in between this x and the prev one
-            # and therefore the range() loop gets empty.
-            # In other cases, (prev_x + 1) > (x)
-            for z in range(prev_x + 1 - count, x - count):
-                pop(z, None)
-
-            prev_x = x
-            line[x - count] = pop(x)
-
-        # this delete from the last written to the last read
-        for z in range(prev_x + 1 - count, prev_x + 1):
-            pop(z, None)
+        #   x   x   x   3   4   x      after the drop
+        #   x   3   4   x   x   x      after the move
+        for x in  non_empty_x[move_begin:]:
+            line[x - count] = pop(x)  # move
 
     def erase_characters(self, count=None):
         """Erase the indicated # of characters, starting with the
