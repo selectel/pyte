@@ -1,10 +1,12 @@
-import io
+import io, sys, os
 
 import pytest
 
 import pyte
 from pyte import charsets as cs, control as ctrl, escape as esc
 
+sys.path.append(os.path.join(os.path.dirname(__file__), "helpers"))
+from asserts import consistency_asserts
 
 class counter:
     def __init__(self):
@@ -227,6 +229,7 @@ def test_define_charset():
     stream = pyte.Stream(screen)
     stream.feed(ctrl.ESC + "(B")
     assert screen.display[0] == " " * 3
+    consistency_asserts(screen)
 
 
 def test_non_utf8_shifts():
@@ -305,6 +308,7 @@ def test_byte_stream_define_charset_unknown():
     stream.feed((ctrl.ESC + "(Z").encode())
     assert screen.display[0] == " " * 3
     assert screen.g0_charset == default_g0_charset
+    consistency_asserts(screen)
 
 
 @pytest.mark.parametrize("charset,mapping", cs.MAPS.items())
@@ -315,6 +319,7 @@ def test_byte_stream_define_charset(charset, mapping):
     stream.feed((ctrl.ESC + "(" + charset).encode())
     assert screen.display[0] == " " * 3
     assert screen.g0_charset == mapping
+    consistency_asserts(screen)
 
 
 def test_byte_stream_select_other_charset():
