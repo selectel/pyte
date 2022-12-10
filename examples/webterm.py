@@ -10,8 +10,8 @@
     * most of the common keyboard events,
     * pagination on Meta + P/Meta + A.
 
-    .. note:: This example requires at least Python 3.5 and a recent
-              version of ``aiohttp`` library.
+    .. note:: This example requires at least Python 3.7 and version 3.0 of the
+              ``aiohttp`` library.
 
     .. seealso::
 
@@ -80,14 +80,14 @@ async def websocket_handler(request):
     ws = web.WebSocketResponse()
     await ws.prepare(request)
 
-    request.app["websockets"].add(asyncio.Task.current_task())
+    request.app["websockets"].add(asyncio.current_task())
 
     terminal, p_pid, p_out = open_terminal()
-    ws.send_str(terminal.dumps())
+    await ws.send_str(terminal.dumps())
 
     def on_master_output():
         terminal.feed(p_out.read(65536))
-        ws.send_str(terminal.dumps())
+        asyncio.create_task(ws.send_str(terminal.dumps()))
 
     loop = asyncio.get_event_loop()
     loop.add_reader(p_out, on_master_output)
@@ -112,7 +112,7 @@ async def websocket_handler(request):
         os.kill(p_pid, signal.SIGTERM)
         p_out.close()
         if not is_shutting_down:
-            request.app["websockets"].remove(asyncio.Task.current_task())
+            request.app["websockets"].remove(asyncio.current_task())
     await ws.close()
     return ws
 
