@@ -6,7 +6,7 @@
     terminal emulator using Textual.
     To exit the application, hit Ctrl-C.
 
-    .. note:: This example requires the ``textual`` library, at least v0.5.0.
+    .. note:: This example requires the ``textual`` library, at least v0.6.0.
 
     :copyright: (c) 2022 by pyte authors and contributors,
                 see AUTHORS for details.
@@ -20,51 +20,47 @@ import pty
 import shlex
 import struct
 import termios
-from io import StringIO
 
 import pyte
-from rich.console import Console, RenderableType
 from rich.text import Text
 from textual import events
 from textual.app import App
 from textual.widget import Widget
 
 
-CONSOLE = Console(file=StringIO(), force_terminal=True, force_interactive=False)
+class PyteDisplay:
+    def __init__(self, lines):
+        self.lines = lines
 
-CTRL_KEYS = {
-    "left": "\u001b[D",
-    "right": "\u001b[C",
-    "up": "\u001b[A",
-    "down": "\u001b[B",
-}
-
-
-def open_terminal(command="bash", columns=80, lines=24):
-    pid, fd = pty.fork()
-    if pid == 0:
-        argv = shlex.split(command)
-        env = dict(TERM="linux", LC_ALL="en_GB.UTF-8", COLUMNS=str(columns), LINES=str(lines))
-        os.execvpe(argv[0], argv, env)
-    return fd
+    def __rich_console__(self, console, options):
+        for line in self.lines:
+            yield line
 
 
 class Terminal(Widget, can_focus=True):
-    def __init__(self, send_queue, recv_queue):
+    def __init__(self, send_queue, recv_queue, ncol, nrow):
+        self.ctrl_keys = {
+            "left": "\u001b[D",
+            "right": "\u001b[C",
+            "up": "\u001b[A",
+            "down": "\u001b[B",
+        }
         self.recv_queue = recv_queue
         self.send_queue = send_queue
-        self.chars = ""
-        self._screen = pyte.Screen(80, 24)
+        self.nrow = nrow
+        self.ncol = ncol
+        self._display = PyteDisplay([Text()])
+        self._screen = pyte.Screen(self.ncol, self.nrow)
         self.stream = pyte.Stream(self._screen)
         asyncio.create_task(self.recv())
         super().__init__()
         self.focus()
 
-    def render(self) -> RenderableType:
-        return self.chars
+    def render(self):
+        return self._display
 
     async def on_key(self, event: events.Key) -> None:
-        char = CTRL_KEYS.get(event.key) or event.char
+        char = self.ctrl_keys.get(event.key) or event.char
         await self.send_queue.put(["stdin", char])
 
     async def recv(self):
@@ -72,29 +68,33 @@ class Terminal(Widget, can_focus=True):
             message = await self.recv_queue.get()
             cmd = message[0]
             if cmd == "setup":
-                await self.send_queue.put(["set_size", 24, 80, 567, 573])
+                await self.send_queue.put(["set_size", self.nrow, self.ncol, 567, 573])
             elif cmd == "stdout":
                 chars = message[1]
                 self.stream.feed(chars)
-                with CONSOLE.capture() as capture:
-                    for i, line in enumerate(self._screen.display):
-                        text = Text.from_ansi(line)
-                        x = self._screen.cursor.x
-                        if x < len(text) and  i == self._screen.cursor.y:
-                            CONSOLE.print(text[:x], end="")
-                            CONSOLE.print(text[x], style="reverse", end="")
-                            CONSOLE.print(text[x + 1:])
-                        else:
-                            CONSOLE.print(text)
-                self.chars = capture.get()
+                lines = []
+                for i, line in enumerate(self._screen.display):
+                    text = Text.from_ansi(line)
+                    x = self._screen.cursor.x
+                    if i == self._screen.cursor.y and x < len(text):
+                        cursor = text[x]
+                        cursor.stylize("reverse")
+                        new_text = text[:x]
+                        new_text.append(cursor)
+                        new_text.append(text[x + 1:])
+                        text = new_text
+                    lines.append(text)
+                self._display = PyteDisplay(lines)
                 self.refresh()
 
 
 class TerminalEmulator(App):
 
-    def __init__(self):
+    def __init__(self, ncol, nrow):
+        self.ncol = ncol
+        self.nrow = nrow
         self.data_or_disconnect = None
-        self.fd = open_terminal()
+        self.fd = self.open_terminal()
         self.p_out = os.fdopen(self.fd, "w+b", 0)
         self.recv_queue = asyncio.Queue()
         self.send_queue = asyncio.Queue()
@@ -104,7 +104,15 @@ class TerminalEmulator(App):
     def compose(self):
         asyncio.create_task(self._run())
         asyncio.create_task(self._send_data())
-        yield Terminal(self.recv_queue, self.send_queue)
+        yield Terminal(self.recv_queue, self.send_queue, self.ncol, self.nrow)
+
+    def open_terminal(self):
+        pid, fd = pty.fork()
+        if pid == 0:
+            argv = shlex.split("bash")
+            env = dict(TERM="linux", LC_ALL="en_GB.UTF-8", COLUMNS=str(self.ncol), LINES=str(self.nrow))
+            os.execvpe(argv[0], argv, env)
+        return fd
 
     async def _run(self):
         loop = asyncio.get_running_loop()
@@ -139,5 +147,5 @@ class TerminalEmulator(App):
 
 
 if __name__ == "__main__":
-    app = TerminalEmulator()
+    app = TerminalEmulator(80, 24)
     app.run()
