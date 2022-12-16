@@ -110,7 +110,7 @@ BG_256 = 48
 
 #: A table of 256 foreground or background colors.
 # The following code is part of the Pygments project (BSD licensed).
-FG_BG_256 = [
+_FG_BG_256 = [
     (0x00, 0x00, 0x00),  # 0
     (0xcd, 0x00, 0x00),  # 1
     (0x00, 0xcd, 0x00),  # 2
@@ -136,11 +136,11 @@ for i in range(216):
     r = valuerange[(i // 36) % 6]
     g = valuerange[(i // 6) % 6]
     b = valuerange[i % 6]
-    FG_BG_256.append((r, g, b))
+    _FG_BG_256.append((r, g, b))
 
 # colors 232..255: grayscale
 for i in range(24):
     v = 8 + i * 10
-    FG_BG_256.append((v, v, v))
+    _FG_BG_256.append((v, v, v))
 
-FG_BG_256 = ["{0:02x}{1:02x}{2:02x}".format(r, g, b) for r, g, b in FG_BG_256]
+FG_BG_256 = ["{0:02x}{1:02x}{2:02x}".format(r, g, b) for r, g, b in _FG_BG_256]
