@@ -37,6 +37,7 @@ setup(name="pyte",
       install_requires=["wcwidth"],
       setup_requires=["pytest-runner"],
       tests_require=["pytest"],
+      python_requires=">=3.7",
       platforms=["any"],
 
       author="Sergei Lebedev",
