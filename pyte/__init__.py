@@ -26,13 +26,14 @@ __all__ = ("Screen", "DiffScreen", "HistoryScreen", "DebugScreen",
            "Stream", "ByteStream")
 
 import io
+from typing import Union
 
 from .screens import Screen, DiffScreen, HistoryScreen, DebugScreen
 from .streams import Stream, ByteStream
 
 
 if __debug__:
-    def dis(chars):
+    def dis(chars: Union[bytes, str]) -> None:
         """A :func:`dis.dis` for terminals.
 
         >>> dis(b"\x07")       # doctest: +NORMALIZE_WHITESPACE
