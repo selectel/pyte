@@ -18,15 +18,22 @@
                     see AUTHORS for details.
     :license: LGPL, see LICENSE for more details.
 """
+from __future__ import annotations
 
 import codecs
 import itertools
 import re
 import warnings
 from collections import defaultdict
+from typing import Any, Callable, Generator, Union, TYPE_CHECKING
 
 from . import control as ctrl, escape as esc
 
+if TYPE_CHECKING:
+    from .screens import Screen
+
+
+ParserGenerator = Generator[Union[bool, None], str, None]
 
 class Stream:
     """A stream is a state machine that parses a stream of bytes and
@@ -131,15 +138,17 @@ class Stream:
         "[^" + "".join(map(re.escape, _special)) + "]+")
     del _special
 
-    def __init__(self, screen=None, strict=True):
-        self.listener = None
+    def __init__(self, screen: Union[Screen | None] = None, strict: bool = True) -> None:
+        self.listener: Union[Screen, None] = None
         self.strict = strict
-        self.use_utf8 = True
+        self.use_utf8: bool = True
+
+        self._taking_plain_text: Union[bool, None] = None
 
         if screen is not None:
             self.attach(screen)
 
-    def attach(self, screen):
+    def attach(self, screen: Screen) -> None:
         """Adds a given screen to the listener queue.
 
         :param pyte.screens.Screen screen: a screen to attach to.
@@ -156,10 +165,10 @@ class Stream:
                     raise TypeError("{0} is missing {1}".format(screen, event))
 
         self.listener = screen
-        self._parser = None
+        self._parser: Union[ParserGenerator, None] = None
         self._initialize_parser()
 
-    def detach(self, screen):
+    def detach(self, screen: Screen) -> None:
         """Remove a given screen from the listener queue and fails
         silently if it's not attached.
 
@@ -168,12 +177,15 @@ class Stream:
         if screen is self.listener:
             self.listener = None
 
-    def feed(self, data):
+    def feed(self, data: str) -> None:
         """Consume some data and advances the state as necessary.
 
         :param str data: a blob of data to feed from.
         """
         send = self._send_to_parser
+        if self.listener is None:
+            raise RuntimeError("Listener is not set")
+
         draw = self.listener.draw
         match_text = self._text_pattern.match
         taking_plain_text = self._taking_plain_text
@@ -194,8 +206,9 @@ class Stream:
 
         self._taking_plain_text = taking_plain_text
 
-    def _send_to_parser(self, data):
+    def _send_to_parser(self, data: str) -> Union[bool, None]:
         try:
+            assert self._parser is not None
             return self._parser.send(data)
         except Exception:
             # Reset the parser state to make sure it is usable even
@@ -203,11 +216,11 @@ class Stream:
             self._initialize_parser()
             raise
 
-    def _initialize_parser(self):
+    def _initialize_parser(self) -> None:
         self._parser = self._parser_fsm()
         self._taking_plain_text = next(self._parser)
 
-    def _parser_fsm(self):
+    def _parser_fsm(self) -> ParserGenerator:
         """An FSM implemented as a coroutine.
 
         This generator is not the most beautiful, but it is as performant
@@ -218,6 +231,7 @@ class Stream:
         Don't change anything without profiling first.
         """
         basic = self.basic
+        assert self.listener is not None
         listener = self.listener
         draw = listener.draw
         debug = listener.debug
@@ -231,7 +245,7 @@ class Stream:
                                   ctrl.VT, ctrl.FF, ctrl.CR])
         OSC_TERMINATORS = set([ctrl.ST_C0, ctrl.ST_C1, ctrl.BEL])
 
-        def create_dispatcher(mapping):
+        def create_dispatcher(mapping: dict[str, str]) -> dict[str, Callable[..., None]]:
             return defaultdict(lambda: debug, dict(
                 (event, getattr(listener, attr))
                 for event, attr in mapping.items()))
@@ -259,18 +273,18 @@ class Stream:
                 #    recognizes ``ESC % C`` sequences for selecting control
                 #    character set. However, in the current version these
                 #    are noop.
-                char = yield
+                char = yield None
                 if char == "[":
                     char = CSI_C1  # Go to CSI.
                 elif char == "]":
                     char = OSC_C1  # Go to OSC.
                 else:
                     if char == "#":
-                        sharp_dispatch[(yield)]()
+                        sharp_dispatch[(yield None)]()
                     elif char == "%":
-                        self.select_other_charset((yield))
+                        self.select_other_charset((yield None))
                     elif char in "()":
-                        code = yield
+                        code = yield None
                         if self.use_utf8:
                             continue
 
@@ -307,7 +321,7 @@ class Stream:
                 current = ""
                 private = False
                 while True:
-                    char = yield
+                    char = yield None
                     if char == "?":
                         private = True
                     elif char in ALLOWED_IN_CSI:
@@ -326,7 +340,7 @@ class Stream:
                     elif char == "$":
                         # XTerm-specific ESC]...$[a-z] sequences are not
                         # currently supported.
-                        yield
+                        yield None
                         break
                     else:
                         params.append(min(int(current or 0), 9999))
@@ -340,7 +354,7 @@ class Stream:
                                 csi_dispatch[char](*params)
                             break  # CSI is finished.
             elif char == OSC_C1:
-                code = yield
+                code = yield None
                 if code == "R":
                     continue  # Reset palette. Not implemented.
                 elif code == "P":
@@ -348,9 +362,9 @@ class Stream:
 
                 param = ""
                 while True:
-                    char = yield
+                    char = yield None
                     if char == ESC:
-                        char += yield
+                        char += yield None
                     if char in OSC_TERMINATORS:
                         break
                     else:
@@ -364,7 +378,7 @@ class Stream:
             elif char not in NUL_OR_DEL:
                 draw(char)
 
-    def select_other_charset(self, code):
+    def select_other_charset(self, code: str) -> None:
         """Select other (non G0 or G1) charset.
 
         :param str code: character set code, should be a character from
@@ -395,20 +409,20 @@ class ByteStream(Stream):
        Assume the input to :meth:`~pyte.streams.ByteStream.feed` is encoded
        using UTF-8. Defaults to ``True``.
     """
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any):
         super(ByteStream, self).__init__(*args, **kwargs)
 
         self.utf8_decoder = codecs.getincrementaldecoder("utf-8")("replace")
 
-    def feed(self, data):
+    def feed(self, data: bytes) -> None:  # type: ignore[override]
         if self.use_utf8:
-            data = self.utf8_decoder.decode(data)
+            data_str = self.utf8_decoder.decode(data)
         else:
-            data = "".join(map(chr, data))
+            data_str = "".join(map(chr, data))
 
-        super(ByteStream, self).feed(data)
+        super(ByteStream, self).feed(data_str)
 
-    def select_other_charset(self, code):
+    def select_other_charset(self, code: str) -> None:
         if code == "@":
             self.use_utf8 = False
             self.utf8_decoder.reset()
