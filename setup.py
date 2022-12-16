@@ -39,6 +39,7 @@ setup(name="pyte",
       tests_require=["pytest"],
       python_requires=">=3.7",
       platforms=["any"],
+      package_data={"pyte": ["py.typed"]},
 
       author="Sergei Lebedev",
       author_email="superbobry@gmail.com",
