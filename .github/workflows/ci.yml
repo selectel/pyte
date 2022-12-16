@@ -41,3 +41,9 @@ jobs:
           python -m pytest -vv --pyargs .
           popd
         shell: bash
+      - name: "Run mypy"
+        run: |
+          set -xe
+          python -m mypy --strict pyte
+          popd
+        shell: bash
