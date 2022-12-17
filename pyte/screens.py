@@ -35,7 +35,7 @@ import unicodedata
 import warnings
 from collections import deque, defaultdict
 from functools import lru_cache
-from typing import Any, Callable, Dict, DefaultDict, Generator, NamedTuple, Sequence, Union, TextIO, TypeVar
+from typing import Any, Callable, DefaultDict, Dict, Generator, NamedTuple, Optional, Sequence, TextIO, TypeVar
 
 from wcwidth import wcwidth as _wcwidth  # type: ignore[import]
 
@@ -221,7 +221,7 @@ class Screen:
         self.dirty: set[int] = set()
         self.reset()
         self.mode = _DEFAULT_MODE.copy()
-        self.margins: Union[Margins, None] = None
+        self.margins: Optional[Margins] = None
 
     def __repr__(self) -> str:
         return ("{0}({1}, {2})".format(self.__class__.__name__,
@@ -281,9 +281,9 @@ class Screen:
         self.cursor = Cursor(0, 0)
         self.cursor_position()
 
-        self.saved_columns: Union[int, None] = None
+        self.saved_columns: Optional[int] = None
 
-    def resize(self, lines: Union[int, None] = None, columns: Union[int, None] = None) -> None:
+    def resize(self, lines: Optional[int] = None, columns: Optional[int] = None) -> None:
         """Resize the screen to the given size.
 
         If the requested screen size has more lines than the existing
@@ -324,7 +324,7 @@ class Screen:
         self.lines, self.columns = lines, columns
         self.set_margins()
 
-    def set_margins(self, top: Union[int, None] = None, bottom: Union[int, None] = None) -> None:
+    def set_margins(self, top: Optional[int] = None, bottom: Optional[int] = None) -> None:
         """Select top and bottom margins for the scrolling region.
 
         :param int top: the smallest line number that is scrolled.
@@ -638,7 +638,7 @@ class Screen:
             self.reset_mode(mo.DECOM)
             self.cursor_position()
 
-    def insert_lines(self, count: Union[int, None] = None) -> None:
+    def insert_lines(self, count: Optional[int] = None) -> None:
         """Insert the indicated # of lines at line with cursor. Lines
         displayed **at** and below the cursor move down. Lines moved
         past the bottom margin are lost.
@@ -658,7 +658,7 @@ class Screen:
 
             self.carriage_return()
 
-    def delete_lines(self, count: Union[int, None] = None) -> None:
+    def delete_lines(self, count: Optional[int] = None) -> None:
         """Delete the indicated # of lines, starting at line with
         cursor. As lines are deleted, lines displayed below cursor
         move up. Lines added to bottom of screen have spaces with same
@@ -681,7 +681,7 @@ class Screen:
 
             self.carriage_return()
 
-    def insert_characters(self, count: Union[int, None] = None) -> None:
+    def insert_characters(self, count: Optional[int] = None) -> None:
         """Insert the indicated # of blank characters at the cursor
         position. The cursor does not move and remains at the beginning
         of the inserted blank characters. Data on the line is shifted
@@ -698,7 +698,7 @@ class Screen:
                 line[x + count] = line[x]
             line.pop(x, None)
 
-    def delete_characters(self, count: Union[int, None] = None) -> None:
+    def delete_characters(self, count: Optional[int] = None) -> None:
         """Delete the indicated # of characters, starting with the
         character at cursor position. When a character is deleted, all
         characters to the right of cursor move left. Character attributes
@@ -716,7 +716,7 @@ class Screen:
             else:
                 line.pop(x, None)
 
-    def erase_characters(self, count: Union[int, None] = None) -> None:
+    def erase_characters(self, count: Optional[int] = None) -> None:
         """Erase the indicated # of characters, starting with the
         character at cursor position. Character attributes are set
         cursor attributes. The cursor remains in the same position.
@@ -828,7 +828,7 @@ class Screen:
         """Ensure the cursor is within horizontal screen bounds."""
         self.cursor.x = min(max(0, self.cursor.x), self.columns - 1)
 
-    def ensure_vbounds(self, use_margins: Union[bool, None] = None) -> None:
+    def ensure_vbounds(self, use_margins: Optional[bool] = None) -> None:
         """Ensure the cursor is within vertical screen bounds.
 
         :param bool use_margins: when ``True`` or when
@@ -843,7 +843,7 @@ class Screen:
 
         self.cursor.y = min(max(top, self.cursor.y), bottom)
 
-    def cursor_up(self, count: Union[int, None] = None) -> None:
+    def cursor_up(self, count: Optional[int] = None) -> None:
         """Move cursor up the indicated # of lines in same column.
         Cursor stops at top margin.
 
@@ -852,7 +852,7 @@ class Screen:
         top, _bottom = self.margins or Margins(0, self.lines - 1)
         self.cursor.y = max(self.cursor.y - (count or 1), top)
 
-    def cursor_up1(self, count: Union[int, None] = None) -> None:
+    def cursor_up1(self, count: Optional[int] = None) -> None:
         """Move cursor up the indicated # of lines to column 1. Cursor
         stops at bottom margin.
 
@@ -861,7 +861,7 @@ class Screen:
         self.cursor_up(count)
         self.carriage_return()
 
-    def cursor_down(self, count: Union[int, None] = None) -> None:
+    def cursor_down(self, count: Optional[int] = None) -> None:
         """Move cursor down the indicated # of lines in same column.
         Cursor stops at bottom margin.
 
@@ -870,7 +870,7 @@ class Screen:
         _top, bottom = self.margins or Margins(0, self.lines - 1)
         self.cursor.y = min(self.cursor.y + (count or 1), bottom)
 
-    def cursor_down1(self, count: Union[int, None] = None) -> None:
+    def cursor_down1(self, count: Optional[int] = None) -> None:
         """Move cursor down the indicated # of lines to column 1.
         Cursor stops at bottom margin.
 
@@ -879,7 +879,7 @@ class Screen:
         self.cursor_down(count)
         self.carriage_return()
 
-    def cursor_back(self, count: Union[int, None] = None) -> None:
+    def cursor_back(self, count: Optional[int] = None) -> None:
         """Move cursor left the indicated # of columns. Cursor stops
         at left margin.
 
@@ -893,7 +893,7 @@ class Screen:
         self.cursor.x -= count or 1
         self.ensure_hbounds()
 
-    def cursor_forward(self, count: Union[int, None] = None) -> None:
+    def cursor_forward(self, count: Optional[int] = None) -> None:
         """Move cursor right the indicated # of columns. Cursor stops
         at right margin.
 
@@ -902,7 +902,7 @@ class Screen:
         self.cursor.x += count or 1
         self.ensure_hbounds()
 
-    def cursor_position(self, line: Union[int, None] = None, column: Union[int, None] = None) -> None:
+    def cursor_position(self, line: Optional[int] = None, column: Optional[int] = None) -> None:
         """Set the cursor to a specific `line` and `column`.
 
         Cursor is allowed to move out of the scrolling region only when
@@ -929,7 +929,7 @@ class Screen:
         self.ensure_hbounds()
         self.ensure_vbounds()
 
-    def cursor_to_column(self, column: Union[int, None] = None) -> None:
+    def cursor_to_column(self, column: Optional[int] = None) -> None:
         """Move cursor to a specific column in the current line.
 
         :param int column: column number to move the cursor to.
@@ -937,7 +937,7 @@ class Screen:
         self.cursor.x = (column or 1) - 1
         self.ensure_hbounds()
 
-    def cursor_to_line(self, line: Union[int, None] = None) -> None:
+    def cursor_to_line(self, line: Optional[int] = None) -> None:
         """Move cursor to a specific line in the current column.
 
         :param int line: line number to move the cursor to.

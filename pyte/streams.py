@@ -25,7 +25,7 @@ import itertools
 import re
 import warnings
 from collections import defaultdict
-from typing import Any, Callable, Generator, Union, TYPE_CHECKING
+from typing import Any, Callable, Generator, Optional, TYPE_CHECKING
 
 from . import control as ctrl, escape as esc
 
@@ -33,7 +33,7 @@ if TYPE_CHECKING:
     from .screens import Screen
 
 
-ParserGenerator = Generator[Union[bool, None], str, None]
+ParserGenerator = Generator[Optional[bool], str, None]
 
 class Stream:
     """A stream is a state machine that parses a stream of bytes and
@@ -138,12 +138,12 @@ class Stream:
         "[^" + "".join(map(re.escape, _special)) + "]+")
     del _special
 
-    def __init__(self, screen: Union[Screen | None] = None, strict: bool = True) -> None:
-        self.listener: Union[Screen, None] = None
+    def __init__(self, screen: Optional[Screen] = None, strict: bool = True) -> None:
+        self.listener: Optional[Screen] = None
         self.strict = strict
         self.use_utf8: bool = True
 
-        self._taking_plain_text: Union[bool, None] = None
+        self._taking_plain_text: Optional[bool] = None
 
         if screen is not None:
             self.attach(screen)
@@ -165,7 +165,7 @@ class Stream:
                     raise TypeError("{0} is missing {1}".format(screen, event))
 
         self.listener = screen
-        self._parser: Union[ParserGenerator, None] = None
+        self._parser: Optional[ParserGenerator] = None
         self._initialize_parser()
 
     def detach(self, screen: Screen) -> None:
@@ -206,7 +206,7 @@ class Stream:
 
         self._taking_plain_text = taking_plain_text
 
-    def _send_to_parser(self, data: str) -> Union[bool, None]:
+    def _send_to_parser(self, data: str) -> Optional[bool]:
         try:
             assert self._parser is not None
             return self._parser.send(data)
