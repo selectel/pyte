@@ -35,7 +35,7 @@ import unicodedata
 import warnings
 from collections import deque, defaultdict
 from functools import lru_cache
-from typing import Any, Callable, DefaultDict, Dict, Generator, NamedTuple, Optional, Sequence, TextIO, TypeVar
+from typing import Any, Callable, DefaultDict, Dict, Generator, List, NamedTuple, Optional, Set, Sequence, TextIO, TypeVar
 
 from wcwidth import wcwidth as _wcwidth  # type: ignore[import]
 
@@ -214,11 +214,11 @@ class Screen:
         return Char(data=" ", fg="default", bg="default", reverse=reverse)
 
     def __init__(self, columns: int, lines: int) -> None:
-        self.savepoints: list[Savepoint] = []
+        self.savepoints: List[Savepoint] = []
         self.columns = columns
         self.lines = lines
         self.buffer: Dict[int, StaticDefaultDict[int, Char]] = defaultdict(lambda: StaticDefaultDict[int, Char](self.default_char))
-        self.dirty: set[int] = set()
+        self.dirty: Set[int] = set()
         self.reset()
         self.mode = _DEFAULT_MODE.copy()
         self.margins: Optional[Margins] = None
@@ -228,7 +228,7 @@ class Screen:
                                        self.columns, self.lines))
 
     @property
-    def display(self) -> list[str]:
+    def display(self) -> List[str]:
         """A :func:`list` of screen lines as unicode strings."""
         def render(line: StaticDefaultDict[int, Char]) -> Generator[str, None, None]:
             is_wide_char = False
