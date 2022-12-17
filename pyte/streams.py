@@ -25,7 +25,8 @@ import itertools
 import re
 import warnings
 from collections import defaultdict
-from typing import Any, Callable, Generator, Optional, TYPE_CHECKING
+from collections.abc import Mapping
+from typing import Any, Callable, Dict, Generator, Optional, TYPE_CHECKING
 
 from . import control as ctrl, escape as esc
 
@@ -245,7 +246,7 @@ class Stream:
                                   ctrl.VT, ctrl.FF, ctrl.CR])
         OSC_TERMINATORS = set([ctrl.ST_C0, ctrl.ST_C1, ctrl.BEL])
 
-        def create_dispatcher(mapping: dict[str, str]) -> dict[str, Callable[..., None]]:
+        def create_dispatcher(mapping: Mapping[str, str]) -> Dict[str, Callable[..., None]]:
             return defaultdict(lambda: debug, dict(
                 (event, getattr(listener, attr))
                 for event, attr in mapping.items()))
