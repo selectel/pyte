@@ -22,9 +22,11 @@ CLASSIFIERS = [
     "Intended Audience :: Developers",
     "Operating System :: OS Independent",
     "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
-    "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Python :: Implementation :: PyPy",
     "Topic :: Terminals :: Terminal Emulators/X Terminals",
@@ -32,12 +34,12 @@ CLASSIFIERS = [
 
 
 setup(name="pyte",
-      version="0.8.1",
+      version="0.8.2",
       packages=["pyte"],
       install_requires=["wcwidth"],
       setup_requires=["pytest-runner"],
       tests_require=["pytest"],
-      python_requires=">=3.7",
+      python_requires=">=3.8",
       platforms=["any"],
       package_data={"pyte": ["py.typed"]},
 

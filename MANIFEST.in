@@ -4,9 +4,11 @@ include CHANGES
 include LICENSE
 include README
 
+include pyte/py.typed
+
 recursive-include docs *.rst
 include docs/conf.py
 
 recursive-include examples *.py
 recursive-include tests *.py
-recursive-include tests/captured
+recursive-include tests/captured *
