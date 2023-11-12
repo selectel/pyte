@@ -35,9 +35,9 @@ import unicodedata
 import warnings
 from collections import deque, defaultdict
 from functools import lru_cache
-from typing import Any, Callable, DefaultDict, Dict, Generator, List, NamedTuple, Optional, Set, Sequence, TextIO, TypeVar
+from typing import Any, Callable, Dict, Generator, List, NamedTuple, Optional, Set, Sequence, TextIO, TypeVar
 
-from wcwidth import wcwidth as _wcwidth  # type: ignore[import]
+from wcwidth import wcwidth as _wcwidth  # type: ignore[import-untyped]
 
 from . import (
     charsets as cs,

@@ -13,7 +13,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11", "pypy-3.7"]
+        python-version: ["3.8", "3.9", "3.10", "3.11", "pypy-3.10"]
 
     steps:
       - uses: "actions/checkout@v2"
@@ -44,5 +44,6 @@ jobs:
       - name: "Run mypy"
         run: |
           set -xe
+          python -m pip install mypy==1.7.0
           python -m mypy --strict pyte
         shell: bash
