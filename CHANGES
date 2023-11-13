@@ -3,6 +3,13 @@ pyte Changelog
 
 Here you can see the full list of changes between each pyte release.
 
+Version 0.8.2
+-------------
+
+Technical release, released on November 13th 2023.
+
+- Added py.typed to the source archive and wheel files.
+
 Version 0.8.1
 -------------
 
