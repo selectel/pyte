@@ -36,7 +36,11 @@ if __name__ == "__main__":
                     ValueError):        # Nothing to read.
                 break
             else:
-                data = os.read(master_fd, 1024)
+                try:
+                    data = os.read(master_fd, 1024)
+                except OSError:
+                    break
+
                 if not data:
                     break
 
