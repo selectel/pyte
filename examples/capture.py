@@ -35,15 +35,15 @@ if __name__ == "__main__":
             except (KeyboardInterrupt,  # Stop right now!
                     ValueError):        # Nothing to read.
                 break
-            else:
-                try:
-                    data = os.read(master_fd, 1024)
-                except OSError:
-                    break
 
-                if not data:
-                    break
+            try:
+                data = os.read(master_fd, 1024)
+            except OSError:
+                break
 
-                handle.write(data)
+            if not data:
+                break
+
+            handle.write(data)
 
         os.kill(p_pid, signal.SIGTERM)
