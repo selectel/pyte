@@ -60,7 +60,7 @@ class Terminal(Widget, can_focus=True):
         return self._display
 
     async def on_key(self, event: events.Key) -> None:
-        char = self.ctrl_keys.get(event.key) or event.char
+        char = self.ctrl_keys.get(event.key) or event.character
         await self.send_queue.put(["stdin", char])
 
     async def recv(self):
