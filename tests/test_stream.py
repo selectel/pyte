@@ -332,3 +332,13 @@ def test_byte_stream_select_other_charset():
     # c) enable utf-8
     stream.select_other_charset("G")
     assert stream.use_utf8
+
+
+def test_byte_stream_without_c1() -> None:
+    screen = pyte.ByteScreen(3, 3)
+    stream = pyte.ByteStream(screen, use_c1=False)
+    stream.select_other_charset("@")
+    b = '𡶐'.encode("big5-hkscs")
+    stream.feed(b)
+    assert screen.display[0] == "\x9b\xf3 "
+    assert stream.use_c1 == False

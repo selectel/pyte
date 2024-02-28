@@ -139,10 +139,11 @@ class Stream:
         "[^" + "".join(map(re.escape, _special)) + "]+")
     del _special
 
-    def __init__(self, screen: Optional[Screen] = None, strict: bool = True) -> None:
+    def __init__(self, screen: Optional[Screen] = None, strict: bool = True, use_c1: bool = True) -> None:
         self.listener: Optional[Screen] = None
         self.strict = strict
         self.use_utf8: bool = True
+        self.use_c1: bool = use_c1
 
         self._taking_plain_text: Optional[bool] = None
 
@@ -304,7 +305,7 @@ class Stream:
                     continue
 
                 basic_dispatch[char]()
-            elif char == CSI_C1:
+            elif char == CSI_C1 and self.use_c1:
                 # All parameters are unsigned, positive decimal integers, with
                 # the most significant digit sent first. Any parameter greater
                 # than 9999 is set to 9999. If you do not specify a value, a 0
@@ -354,7 +355,7 @@ class Stream:
                             else:
                                 csi_dispatch[char](*params)
                             break  # CSI is finished.
-            elif char == OSC_C1:
+            elif char == OSC_C1 and self.use_c1:
                 code = yield None
                 if code == "R":
                     continue  # Reset palette. Not implemented.
