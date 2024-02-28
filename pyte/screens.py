@@ -1337,7 +1337,7 @@ class DebugScreen:
         else:
             return lambda *args, **kwargs: None
 
-def byte_screen_wcwidth(text: str):
+def byte_screen_wcwidth(text: str) -> int:
     # FIXME: should we always return 1?
     n = _DEFAULT_WCWIDTH(text)
     if n <= 0 and text <= "\xff":
@@ -1346,7 +1346,7 @@ def byte_screen_wcwidth(text: str):
 
 class ByteScreen(Screen):
     """A screen that draws bytes and stores byte-string in the buffer, including un-printable/zero-length chars."""
-    def __init__(self, *args, encoding: str | None=None, **kwargs):
+    def __init__(self, *args: Any, encoding: str|None = None, **kwargs: Any):
         """
         :param encoding: The encoding of the screen. If set, the byte-string will be decoded when calling :meth:`ByteScreen.display`.
         """
@@ -1354,7 +1354,7 @@ class ByteScreen(Screen):
         self.encoding = encoding
         self.wcwidth = byte_screen_wcwidth
 
-    def draw(self, data: str | bytes):
+    def draw(self, data: str|bytes) -> None:
         if isinstance(data, bytes):
             data = data.decode("latin-1")
         return super().draw(data)
