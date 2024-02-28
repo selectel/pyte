@@ -238,6 +238,9 @@ class Stream:
         draw = listener.draw
         debug = listener.debug
 
+        use_c1 = self.use_c1
+        in_control = False
+
         ESC, CSI_C1 = ctrl.ESC, ctrl.CSI_C1
         OSC_C1 = ctrl.OSC_C1
         SP_OR_GT = ctrl.SP + ">"
@@ -275,6 +278,7 @@ class Stream:
                 #    recognizes ``ESC % C`` sequences for selecting control
                 #    character set. However, in the current version these
                 #    are noop.
+                in_control = True
                 char = yield None
                 if char == "[":
                     char = CSI_C1  # Go to CSI.
@@ -305,7 +309,7 @@ class Stream:
                     continue
 
                 basic_dispatch[char]()
-            elif char == CSI_C1 and self.use_c1:
+            elif char == CSI_C1 and (use_c1 or in_control):
                 # All parameters are unsigned, positive decimal integers, with
                 # the most significant digit sent first. Any parameter greater
                 # than 9999 is set to 9999. If you do not specify a value, a 0
@@ -355,11 +359,14 @@ class Stream:
                             else:
                                 csi_dispatch[char](*params)
                             break  # CSI is finished.
-            elif char == OSC_C1 and self.use_c1:
+                in_control = False
+            elif char == OSC_C1 and (use_c1 or in_control):
                 code = yield None
                 if code == "R":
+                    in_control = False
                     continue  # Reset palette. Not implemented.
                 elif code == "P":
+                    in_control = False
                     continue  # Set palette. Not implemented.
 
                 param = ""
@@ -377,6 +384,8 @@ class Stream:
                     listener.set_icon_name(param)
                 if code in "02":
                     listener.set_title(param)
+
+                in_control = False
             elif char not in NUL_OR_DEL:
                 draw(char)
 

@@ -342,3 +342,12 @@ def test_byte_stream_without_c1() -> None:
     stream.feed(b)
     assert screen.display[0] == "\x9b\xf3 "
     assert stream.use_c1 == False
+
+def test_byte_stream_without_c1_with_c0() -> None:
+    screen = pyte.ByteScreen(3, 3)
+    stream = pyte.ByteStream(screen, use_c1=False)
+    stream.select_other_charset("@")
+    stream.feed(b"\x1b[1;36m")
+    assert screen.display[0] == "   "
+
+
