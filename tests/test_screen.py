@@ -1583,3 +1583,13 @@ def test_screen_set_icon_name_title():
 
     screen.set_title(text)
     assert screen.title == text
+
+
+def test_byte_screen() -> None:
+    screen = pyte.ByteScreen(10, 1, encoding="big5")
+
+    text = "限".encode("big5")
+    screen.draw(text)
+    assert screen.display[0].strip() == "限"
+    assert screen.buffer[0][0].data == "\xad"
+
