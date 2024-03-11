@@ -521,7 +521,7 @@ class Screen:
                     self.buffer[self.cursor.y - 1][self.columns - 1] = \
                         last._replace(data=normalized)
             else:
-                break  # Unprintable character or doesn't advance the cursor.
+                continue  # Unprintable character or doesn't advance the cursor.
 
             # .. note:: We can't use :meth:`cursor_forward()`, because that
             #           way, we'll never know when to linefeed.
