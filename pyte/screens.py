@@ -133,6 +133,11 @@ class StaticDefaultDict(Dict[KT, VT]):
     def __missing__(self, key: KT) -> VT:
         return self.default
 
+    def copy(self):
+        new_static_default_dict = type(self)(self.default)
+        new_static_default_dict.update(self)
+        return new_static_default_dict
+
 
 _DEFAULT_MODE = set([mo.DECAWM, mo.DECTCEM])
 
@@ -1065,6 +1070,26 @@ class Screen:
 
         By default is a noop.
         """
+
+    def scroll_up(self, lines):
+        """Scroll up `lines` lines."""
+        lines_to_scroll = range(self.margins.top, self.margins.bottom + 1)
+        for y in lines_to_scroll:
+            if y + lines in set(lines_to_scroll):
+                self.buffer[y] = self.buffer[y + lines].copy()
+            else:
+                self.buffer[y].clear()
+        self.dirty = set(lines_to_scroll)
+
+    def scroll_down(self, lines):
+        """Scroll down `lines` lines."""
+        lines_to_scroll = range(self.margins.bottom, self.margins.top - 1, -1)
+        for y in lines_to_scroll:
+            if y - lines in set(lines_to_scroll):
+                self.buffer[y] = self.buffer[y - lines].copy()
+            else:
+                self.buffer[y].clear()
+        self.dirty = set(lines_to_scroll)
 
 
 class DiffScreen(Screen):
