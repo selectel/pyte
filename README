@@ -27,7 +27,7 @@ So, why would one need a terminal emulator library?
 * To screen scrape terminal apps, for example ``htop`` or ``aptitude``.
 * To write cross platform terminal emulators; either with a graphical
   (`xterm <http://invisible-island.net/xterm/>`_,
-  `rxvt <http://www.rxvt.org/>`_) or a web interface, like
+  `rxvt <http://rxvt.net/>`_) or a web interface, like
   `AjaxTerm <http://antony.lesuisse.org/software/ajaxterm/>`_.
 * To have fun, hacking on the ancient, poorly documented technologies.
 
