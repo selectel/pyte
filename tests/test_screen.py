@@ -1583,3 +1583,54 @@ def test_screen_set_icon_name_title():
 
     screen.set_title(text)
     assert screen.title == text
+
+
+def test_scroll_down():
+    screen = pyte.Screen(1, 5)
+    screen.set_mode(mo.LNM)
+    screen.linefeed()
+    for i in "abcd":
+        screen.draw(i)
+        screen.linefeed()
+    screen.draw("e")
+
+    screen.set_margins(top=2, bottom=4)
+
+    assert screen.display == ["a",
+                              "b",
+                              "c",
+                              "d",
+                              "e"]
+
+    screen.scroll_down(2)
+
+    assert screen.display == ["a",
+                              " ",
+                              " ",
+                              "b",
+                              "e"]
+
+def test_scroll_up():
+    screen = pyte.Screen(1, 5)
+    screen.set_mode(mo.LNM)
+    screen.linefeed()
+    for i in "abcd":
+        screen.draw(i)
+        screen.linefeed()
+    screen.draw("e")
+
+    screen.set_margins(top=2, bottom=4)
+
+    assert screen.display == ["a",
+                              "b",
+                              "c",
+                              "d",
+                              "e"]
+
+    screen.scroll_up(2)
+
+    assert screen.display == ["a",
+                              "d",
+                              " ",
+                              " ",
+                              "e"]
