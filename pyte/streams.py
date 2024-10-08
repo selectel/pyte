@@ -94,6 +94,7 @@ class Stream:
     }
 
     #: CSI escape sequences -- ``CSI P1;P2;...;Pn <fn>``.
+    # Note that Pn can contain digits or `:`
     csi = {
         esc.ICH: "insert_characters",
         esc.CUU: "cursor_up",
@@ -306,9 +307,13 @@ class Stream:
                 basic_dispatch[char]()
             elif char == CSI_C1:
                 # All parameters are unsigned, positive decimal integers, with
-                # the most significant digit sent first. Any parameter greater
+                # the most significant digit sent first*. Any parameter greater
                 # than 9999 is set to 9999. If you do not specify a value, a 0
                 # value is assumed.
+                #
+                # *Not entirely true: Some SGR parameters allow `:`-delimited additional
+                # subparameters. These additional subparameters are a list of positive decimal integers
+                # following the above rules.
                 #
                 # .. seealso::
                 #
@@ -318,8 +323,12 @@ class Stream:
                 #    `VT220 Programmer Ref. <http://vt100.net/docs/vt220-rm/>`_
                 #        For details on the characters valid for use as
                 #        arguments.
+                #
+                #    `XTerm <https://invisible-island.net/xterm/xterm.faq.html#color_by_number>`_
+                #        "Using semicolon was incorrect because [...]"
+                #
                 params = []
-                current = 0
+                param_with_subparameters = [0]
                 private = False
                 while True:
                     char = yield None
@@ -338,17 +347,23 @@ class Stream:
                         break
                     elif char.isdigit():
                         digit_value = ord(char) - ord("0")
-                        current = min(current * 10 + digit_value, 9999)
+                        param_with_subparameters[-1] = min(param_with_subparameters[-1] * 10 + digit_value, 9999)
+                    elif char == ":":
+                        param_with_subparameters.append(0)
                     elif char == "$":
                         # XTerm-specific ESC]...$[a-z] sequences are not
                         # currently supported.
                         yield None
                         break
                     else:
-                        params.append(current)
+                        # Note: pyte currently doesn't support subparameters.
+                        # Ideally, we'd update SGR handling to be aware of it.
+                        # That's tracked by <https://github.com/selectel/pyte/issues/179>.
+                        current_param, *_subparameters = param_with_subparameters
+                        params.append(current_param)
 
                         if char == ";":
-                            current = 0
+                            param_with_subparameters = [0]
                         else:
                             if private:
                                 csi_dispatch[char](*params, private=True)
