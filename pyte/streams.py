@@ -319,7 +319,7 @@ class Stream:
                 #        For details on the characters valid for use as
                 #        arguments.
                 params = []
-                current = ""
+                current = 0
                 private = False
                 while True:
                     char = yield None
@@ -337,17 +337,18 @@ class Stream:
                         draw(char)
                         break
                     elif char.isdigit():
-                        current += char
+                        digit_value = ord(char) - ord("0")
+                        current = min(current * 10 + digit_value, 9999)
                     elif char == "$":
                         # XTerm-specific ESC]...$[a-z] sequences are not
                         # currently supported.
                         yield None
                         break
                     else:
-                        params.append(min(int(current or 0), 9999))
+                        params.append(current)
 
                         if char == ";":
-                            current = ""
+                            current = 0
                         else:
                             if private:
                                 csi_dispatch[char](*params, private=True)
