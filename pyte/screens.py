@@ -544,6 +544,19 @@ class Screen:
         """
         self.icon_name = param
 
+    def set_color_number(self, index: int, color: str) -> None:
+        """Set colour number index to be the specified colour (in hex)
+        """
+        # TODO: This has no way to reset colors back to their original.
+        if index > 15:
+            g.FG_BG_256[index] = color
+        elif index > 7:  # Bright colors
+            g.FG_AIXTERM[index + 82] = color
+            g.BG_AIXTERM[index + 92] = color
+        else:
+            g.FG_ANSI[index + 30] = color
+            g.BG_ANSI[index + 40] = color
+
     def carriage_return(self) -> None:
         """Move the cursor to the beginning of the current line."""
         self.cursor.x = 0

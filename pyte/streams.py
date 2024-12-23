@@ -376,6 +376,9 @@ class Stream:
                     listener.set_icon_name(param)
                 if code in "02":
                     listener.set_title(param)
+                if code == "4":
+                    index, color = param.split(";")
+                    listener.set_color_number(int(index), color[4:].replace("/", "").lower())
             elif char not in NUL_OR_DEL:
                 draw(char)
 
