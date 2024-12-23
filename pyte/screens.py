@@ -47,8 +47,6 @@ from . import (
 )
 from .streams import Stream
 
-wcwidth: Callable[[str], int] = lru_cache(maxsize=4096)(_wcwidth)
-
 KT = TypeVar("KT")
 VT = TypeVar("VT")
 
@@ -135,7 +133,7 @@ class StaticDefaultDict(Dict[KT, VT]):
 
 
 _DEFAULT_MODE = set([mo.DECAWM, mo.DECTCEM])
-
+_DEFAULT_WCWIDTH: Callable[[str], int] = lru_cache(maxsize=4096)(_wcwidth)
 
 class Screen:
     """
@@ -222,6 +220,7 @@ class Screen:
         self.reset()
         self.mode = _DEFAULT_MODE.copy()
         self.margins: Optional[Margins] = None
+        self.wcwidth = _DEFAULT_WCWIDTH
 
     def __repr__(self) -> str:
         return ("{0}({1}, {2})".format(self.__class__.__name__,
@@ -237,8 +236,8 @@ class Screen:
                     is_wide_char = False
                     continue
                 char = line[x].data
-                assert sum(map(wcwidth, char[1:])) == 0
-                is_wide_char = wcwidth(char[0]) == 2
+                assert sum(map(self.wcwidth, char[1:])) == 0
+                is_wide_char = self.wcwidth(char[0]) == 2
                 yield char
 
         return ["".join(render(self.buffer[y])) for y in range(self.lines)]
@@ -479,7 +478,7 @@ class Screen:
             self.g1_charset if self.charset else self.g0_charset)
 
         for char in data:
-            char_width = wcwidth(char)
+            char_width = self.wcwidth(char)
 
             # If this was the last column in a line and auto wrap mode is
             # enabled, move the cursor to the beginning of the next line,
@@ -1337,3 +1336,38 @@ class DebugScreen:
             return self.only_wrapper(attr)
         else:
             return lambda *args, **kwargs: None
+
+def byte_screen_wcwidth(text: str) -> int:
+    # FIXME: should we always return 1?
+    n = _DEFAULT_WCWIDTH(text)
+    if n <= 0 and text <= "\xff":
+        return 1
+    return n
+
+class ByteScreen(Screen):
+    """A screen that draws bytes and stores byte-string in the buffer, including un-printable/zero-length chars."""
+    def __init__(self, *args: Any, encoding: str|None = None, **kwargs: Any):
+        """
+        :param encoding: The encoding of the screen. If set, the byte-string will be decoded when calling :meth:`ByteScreen.display`.
+        """
+        super().__init__(*args, **kwargs)
+        self.encoding = encoding
+        self.wcwidth = byte_screen_wcwidth
+
+    def draw(self, data: str|bytes) -> None:
+        if isinstance(data, bytes):
+            data = data.decode("latin-1")
+        return super().draw(data)
+
+    @property
+    def display(self) -> List[str]:
+        if not self.encoding:
+            return super().display
+
+        def render(line: StaticDefaultDict[int, Char]) -> Generator[str, None, None]:
+            for x in range(self.columns):
+                char = line[x].data
+                yield char
+
+        return ["".join(render(self.buffer[y])).encode("latin-1").decode(self.encoding) for y in range(self.lines)]
+
