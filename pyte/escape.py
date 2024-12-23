@@ -113,6 +113,9 @@ ECH = "X"
 #: *Horizontal position relative*: Same as :data:`CUF`.
 HPR = "a"
 
+#: *Repeat*: Repeat the preceding graphic character # times
+REP = "b"
+
 #: *Device Attributes*.
 DA = "c"
 

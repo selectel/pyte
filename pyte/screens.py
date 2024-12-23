@@ -222,6 +222,7 @@ class Screen:
         self.reset()
         self.mode = _DEFAULT_MODE.copy()
         self.margins: Optional[Margins] = None
+        self.last_char: str = ""
 
     def __repr__(self) -> str:
         return ("{0}({1}, {2})".format(self.__class__.__name__,
@@ -479,6 +480,7 @@ class Screen:
             self.g1_charset if self.charset else self.g0_charset)
 
         for char in data:
+            self.last_char = char
             char_width = wcwidth(char)
 
             # If this was the last column in a line and auto wrap mode is
@@ -697,6 +699,14 @@ class Screen:
             if x + count <= self.columns:
                 line[x + count] = line[x]
             line.pop(x, None)
+
+    def repeat_character(self, count: Optional[int] = None) -> None:
+        """Repeat drawing the last drawn character # times.
+
+        :param int count: number of characters to insert.
+        """
+        if self.last_char:
+            self.draw(self.last_char * (count or 1))
 
     def delete_characters(self, count: Optional[int] = None) -> None:
         """Delete the indicated # of characters, starting with the
