@@ -111,6 +111,7 @@ class Stream:
         esc.DCH: "delete_characters",
         esc.ECH: "erase_characters",
         esc.HPR: "cursor_forward",
+        esc.REP: "repeat_character",
         esc.DA: "report_device_attributes",
         esc.VPA: "cursor_to_line",
         esc.VPR: "cursor_down",
