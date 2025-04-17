@@ -150,3 +150,8 @@ DECSTBM = "r"
 
 #: *Horizontal position adjust*: Same as :data:`CHA`.
 HPA = "'"
+
+#: *Progressive enhancement event*: Shell queries or sends flags to configure
+#: alternative keyboard escape sequences and key codes.
+#: see: https://sw.kovidgoyal.net/kitty/keyboard-protocol/#progressive-enhancement
+PE = "u"

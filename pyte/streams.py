@@ -122,7 +122,8 @@ class Stream:
         esc.SGR: "select_graphic_rendition",
         esc.DSR: "report_device_status",
         esc.DECSTBM: "set_margins",
-        esc.HPA: "cursor_to_column"
+        esc.HPA: "cursor_to_column",
+        esc.PE: "set_keyboard_flags",
     }
 
     #: A set of all events dispatched by the stream.
@@ -322,10 +323,17 @@ class Stream:
                 params = []
                 current = ""
                 private = False
+                operator = ""
                 while True:
                     char = yield None
                     if char == "?":
                         private = True
+                    elif char in "<>=":
+                        # may indicate secondary device attribute query
+                        #   see: https://vt100.net/docs/vt510-rm/DA2.html
+                        # may be part of progressive enhencement
+                        #   see: https://sw.kovidgoyal.net/kitty/keyboard-protocol/#progressive-enhancement
+                        operator = char
                     elif char in ALLOWED_IN_CSI:
                         basic_dispatch[char]()
                     elif char in SP_OR_GT:
@@ -352,6 +360,8 @@ class Stream:
                         else:
                             if private:
                                 csi_dispatch[char](*params, private=True)
+                            elif operator:
+                                csi_dispatch[char](*params, operator=operator)
                             else:
                                 csi_dispatch[char](*params)
                             break  # CSI is finished.

@@ -34,6 +34,7 @@ import sys
 import unicodedata
 import warnings
 from collections import deque, defaultdict
+from enum import IntFlag
 from functools import lru_cache
 from typing import Any, Dict, List, NamedTuple, Optional, Set, TextIO, TypeVar
 from collections.abc import Callable, Generator, Sequence
@@ -53,10 +54,104 @@ wcwidth: Callable[[str], int] = lru_cache(maxsize=4096)(_wcwidth)
 KT = TypeVar("KT")
 VT = TypeVar("VT")
 
+
+class KeyboardFlags(IntFlag):
+    DEFAULT = 0
+    """
+    All progressive enhancements disabled
+    """
+
+    DISAMBIGUATE_ESCAPE_CODES = 1
+    """
+    This type of progressive enhancement (0b1) fixes the problem of some legacy
+    key press encodings overlapping with other control codes. For instance,
+    pressing the Esc key generates the byte 0x1b which also is used to indicate
+    the start of an escape code. Similarly pressing the key alt+[ will generate
+    the bytes used for CSI control codes.
+
+    Turning on this flag will cause the terminal to report the Esc, alt+key,
+    ctrl+key, ctrl+alt+key, shift+alt+key keys using CSI u sequences instead of
+    legacy ones. Here key is any ASCII key as described in Legacy text keys.
+    Additionally, all non text keypad keys will be reported as separate keys
+    with CSI u encoding, using dedicated numbers from the table below.
+
+    With this flag turned on, all key events that do not generate text are
+    represented in one of the following two forms:
+
+    .. code:
+
+        CSI number; modifier u
+        CSI 1; modifier [~ABCDEFHPQS]
+
+    This makes it very easy to parse key events in an application. In
+    particular, ctrl+c will no longer generate the SIGINT signal, but instead
+    be delivered as a CSI u escape code. This has the nice side effect of
+    making it much easier to integrate into the application event loop. The
+    only exceptions are the Enter, Tab and Backspace keys which still generate
+    the same bytes as in legacy mode this is to allow the user to type and
+    execute commands in the shell such as reset after a program that sets this
+    mode crashes without clearing it. Note that the Lock modifiers are not
+    reported for text producing keys, to keep them useable in legacy programs.
+    To get lock modifiers for all keys use the Report all keys as escape codes
+    enhancement.
+    """
+
+    REPORT_EVENT_TYPES = 2
+    """
+    This progressive enhancement (0b10) causes the terminal to report key
+    repeat and key release events. Normally only key press events are reported
+    and key repeat events are treated as key press events. See Event types for
+    details on how these are reported.
+    """
+
+    REPORT_ALTERNATE_KEYS = 4
+    """
+    This progressive enhancement (0b100) causes the terminal to report
+    alternate key values in addition to the main value, to aid in shortcut
+    matching. See Key codes for details on how these are reported. Note that
+    this flag is a pure enhancement to the form of the escape code used to
+    represent key events, only key events represented as escape codes due to
+    the other enhancements in effect will be affected by this enhancement. In
+    other words, only if a key event was already going to be represented as an
+    escape code due to one of the other enhancements will this enhancement
+    affect it.
+    """
+
+    REPORT_ALL_KEYS_AS_ESCAPE_CODES = 8
+    """
+    Key events that generate text, such as plain key presses without modifiers,
+    result in just the text being sent, in the legacy protocol. There is no way
+    to be notified of key repeat/release events. These types of events are
+    needed for some applications, such as games (think of movement using the
+    WASD keys).
+
+    This progressive enhancement (0b1000) turns on key reporting even for key
+    events that generate text. When it is enabled, text will not be sent,
+    instead only key events are sent. If the text is needed as well, combine
+    with the Report associated text enhancement below.
+
+    Additionally, with this mode, events for pressing modifier keys are
+    reported. Note that all keys are reported as escape codes, including Enter,
+    Tab, Backspace etc. Note that this enhancement implies all keys are
+    automatically disambiguated as well, since they are represented in their
+    canonical escape code form.
+    """
+
+    REPORT_ASSOCIATED_TEXT = 16
+    """
+    This progressive enhancement (0b10000) additionally causes key events that
+    generate text to be reported as CSI u escape codes with the text embedded
+    in the escape code. See Text as code points above for details on the
+    mechanism. Note that this flag is an enhancement to Report all keys as
+    escape codes and is undefined if used without it.
+    """
+
+
 class Margins(NamedTuple):
     """A container for screen's scroll margins."""
     top: int
     bottom: int
+
 
 class Savepoint(NamedTuple):
     """A container for savepoint, created on :data:`~pyte.escape.DECSC`."""
@@ -223,6 +318,7 @@ class Screen:
         self.reset()
         self.mode = _DEFAULT_MODE.copy()
         self.margins: Margins | None = None
+        self._keyboard_flags: list[KeyboardFlags] = [KeyboardFlags.DEFAULT]
 
     def __repr__(self) -> str:
         return ("{}({}, {})".format(self.__class__.__name__,
@@ -439,6 +535,58 @@ class Screen:
         # Hide the cursor.
         if mo.DECTCEM in mode_list:
             self.cursor.hidden = True
+
+    @property
+    def keyboard_flags(self) -> KeyboardFlags:
+        """Keyboard flags of current stack level.
+
+        Keyboard flags are to be used by terminal implementations to decide
+        how to encode keyboard events sent to shell applications.
+        """
+        return self._keyboard_flags[-1]
+
+    def set_keyboard_flags(self, *args, private: bool = False, operator: str = "") -> None:
+        """Handle progressive enhancement events.
+
+        Assign keyboard flags for shells supporting "progressive enhancements".
+        see: https://sw.kovidgoyal.net/kitty/keyboard-protocol/#progressive-enhancement
+        """
+        if private:
+            # CSI ? u
+            # progressive enhancment state query
+            # report flags of current stack level
+            self.write_process_input(str(self.keyboard_flags))
+        elif operator == "=":
+            # assign/set/reset flags
+            # CSI = u
+            # CSI = mode u
+            # CSI = flags ; mode u
+            flags = KeyboardFlags.DEFAULT if len(args) == 0 else args[0]
+            mode: int = 1 if len(args) < 2 else args[1]
+            if mode == 1:
+                # set all set and reset all unset bits
+                self._keyboard_flags[-1] = flags
+            elif mode == 2:
+                # set all set and retain all unset bits
+                self._keyboard_flags[-1] = self._keyboard_flags[-1] | flags
+            elif mode == 3:
+                # reset all set and retain all unset bits
+                self._keyboard_flags[-1] = self._keyboard_flags[-1] & ~flags
+        elif operator == ">":
+            # push flags onto stack
+            # CSI > u
+            # CSI > flags u
+            flags = KeyboardFlags.DEFAULT if len(args) == 0 else args[0]
+            if len(self._keyboard_flags) < 99:
+                self._keyboard_flags.append(flags)
+        elif operator == "<":
+            # pop flags from stack
+            # CSI < u
+            # CSI < count u
+            count = 1 if len(args) == 0 else args[0]
+            self._keyboard_flags = self._keyboard_flags[:-count]
+            if len(self._keyboard_flags) == 0:
+                self._keyboard_flags = [KeyboardFlags.DEFAULT]
 
     def define_charset(self, code: str, mode: str) -> None:
         """Define ``G0`` or ``G1`` charset.
