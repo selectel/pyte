@@ -348,7 +348,7 @@ def test_set_keypad_mode_args(mode):
 
 
 def test_set_keypad_mode():
-    """Verify escape sequences correctly applying kaypad mode."""
+    """Verify escape sequences correctly applying keypad mode."""
     screen = pyte.Screen(80, 1)
     stream = pyte.Stream(screen)
     assert screen.keypad_mode == pyte.KeypadMode.NUMERIC
