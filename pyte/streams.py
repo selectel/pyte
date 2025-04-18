@@ -129,6 +129,7 @@ class Stream:
     events = frozenset(itertools.chain(
         basic.values(), escape.values(), sharp.values(), csi.values(),
         ["define_charset"],
+        ["set_keypad_mode"],
         ["set_icon_name", "set_title"],  # OSC.
         ["draw", "debug"]))
 
@@ -239,6 +240,7 @@ class Stream:
         debug = listener.debug
 
         ESC, CSI_C1 = ctrl.ESC, ctrl.CSI_C1
+        KEYPAD_MODE = esc.DECKPAM + esc.DECKPNM
         OSC_C1 = ctrl.OSC_C1
         SP_OR_GT = ctrl.SP + ">"
         NUL_OR_DEL = ctrl.NUL + ctrl.DEL
@@ -293,6 +295,11 @@ class Stream:
                         # See http://www.cl.cam.ac.uk/~mgk25/unicode.html#term
                         # for the why on the UTF-8 restriction.
                         listener.define_charset(code, mode=char)
+                    elif char in KEYPAD_MODE:
+                        # See https://vt100.net/docs/vt510-rm/DECKPAM.html
+                        # DECKPAM enables the keypad to send application sequences.
+                        # DECKPNM enables the keypad to send numeric characters to the host.
+                        listener.set_keypad_mode(mode=char)
                     else:
                         escape_dispatch[char]()
                     continue    # Don't go to CSI.
