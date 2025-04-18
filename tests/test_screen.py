@@ -3,7 +3,7 @@ import copy
 import pytest
 
 import pyte
-from pyte import modes as mo, control as ctrl, graphics as g
+from pyte import escape as esc, modes as mo, control as ctrl, graphics as g
 from pyte.screens import Char
 
 
@@ -299,6 +299,28 @@ def test_set_mode():
     assert not screen.cursor.hidden
     screen.reset_mode(mo.DECTCEM)
     assert screen.cursor.hidden
+
+
+def test_set_keypad_mode():
+    screen = pyte.Screen(2, 1)
+    # test numeric mode being the default
+    assert screen.keypad_mode == pyte.KeypadMode.NUMERIC
+    # test setting application mode
+    screen.set_keypad_mode(esc.DECKPAM)
+    assert screen.keypad_mode == pyte.KeypadMode.APPLICATION
+    # test setting numeric mode
+    screen.set_keypad_mode(esc.DECKPNM)
+    assert screen.keypad_mode == pyte.KeypadMode.NUMERIC
+
+
+def test_numeric_keypad_mode_on_reset():
+    screen = pyte.Screen(2, 1)
+    # test setting application mode
+    screen.set_keypad_mode(esc.DECKPAM)
+    assert screen.keypad_mode == pyte.KeypadMode.APPLICATION
+    # test numeric mode after reset
+    screen.reset()
+    assert screen.keypad_mode == pyte.KeypadMode.NUMERIC
 
 
 def test_draw():
