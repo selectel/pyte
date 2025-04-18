@@ -356,3 +356,5 @@ def test_set_keypad_mode():
     assert screen.keypad_mode == pyte.KeypadMode.APPLICATION
     stream.feed(ctrl.ESC + esc.DECKPNM)
     assert screen.keypad_mode == pyte.KeypadMode.NUMERIC
+    # verify nothing added to buffer
+    assert screen.display[0] == " " * 80
