@@ -18,7 +18,7 @@ class argcheck(counter):
     def __call__(self, *args, **kwargs):
         self.args = args
         self.kwargs = kwargs
-        super(argcheck, self).__call__()
+        super().__call__()
 
 
 class argstore:
@@ -290,7 +290,7 @@ def test_byte_stream_feed():
     screen.draw = handler = argcheck()
 
     stream = pyte.ByteStream(screen)
-    stream.feed("Нерусский текст".encode("utf-8"))
+    stream.feed("Нерусский текст".encode())
     assert handler.count == 1
     assert handler.args == ("Нерусский текст", )
 

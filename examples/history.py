@@ -21,7 +21,7 @@ def print_screen(screen, text):
     print(pyte.control.ESC + pyte.escape.RIS)
 
     for idx, line in enumerate(screen.display, 1):
-        print("{0:2d} {1} ¶".format(idx, line))
+        print(f"{idx:2d} {line} ¶")
 
     input(os.linesep + os.linesep + text)
 

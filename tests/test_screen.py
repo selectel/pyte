@@ -663,7 +663,7 @@ def test_tabstops():
     screen = pyte.Screen(10, 10)
 
     # Making sure initial tabstops are in place ...
-    assert screen.tabstops == set([8])
+    assert screen.tabstops == {8}
 
     # ... and clearing them.
     screen.clear_tab_stop(3)
@@ -696,12 +696,12 @@ def test_clear_tabstops():
     screen.set_tab_stop()
     screen.clear_tab_stop()
 
-    assert screen.tabstops == set([1])
+    assert screen.tabstops == {1}
 
     screen.set_tab_stop()
     screen.clear_tab_stop(0)
 
-    assert screen.tabstops == set([1])
+    assert screen.tabstops == {1}
 
     # b) all tabstops
     screen.set_tab_stop()
@@ -1460,7 +1460,7 @@ def test_unicode():
     screen = pyte.Screen(4, 2)
     stream = pyte.ByteStream(screen)
 
-    stream.feed("тест".encode("utf-8"))
+    stream.feed("тест".encode())
     assert screen.display == ["тест", "    "]
 
 
@@ -1563,7 +1563,7 @@ def test_report_device_status():
     # c) cursor position, DECOM off
     screen.cursor_to_column(5)
     screen.report_device_status(6)
-    assert acc.pop() == ctrl.CSI + "{0};{1}R".format(1, 5)
+    assert acc.pop() == ctrl.CSI + f"{1};{5}R"
 
     # d) cursor position, DECOM on
     screen.cursor_position()
@@ -1571,7 +1571,7 @@ def test_report_device_status():
     screen.set_mode(mo.DECOM)
     screen.cursor_to_line(5)
     screen.report_device_status(6)
-    assert acc.pop() == ctrl.CSI + "{0};{1}R".format(5, 1)
+    assert acc.pop() == ctrl.CSI + f"{5};{1}R"
 
 
 def test_screen_set_icon_name_title():

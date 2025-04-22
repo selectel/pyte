@@ -29,7 +29,7 @@ import pyte
 
 
 def make_benchmark(path, screen_cls):
-    with io.open(path, "rt", encoding="utf-8") as handle:
+    with open(path, encoding="utf-8") as handle:
         data = handle.read()
 
     stream = pyte.Stream(screen_cls(80, 24))

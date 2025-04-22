@@ -17,4 +17,4 @@ if __name__ == "__main__":
     stream.feed("Hello World!")
 
     for idx, line in enumerate(screen.display, 1):
-        print("{0:2d} {1} ¶".format(idx, line))
+        print(f"{idx:2d} {line} ¶")

@@ -143,4 +143,4 @@ for i in range(24):
     v = 8 + i * 10
     _FG_BG_256.append((v, v, v))
 
-FG_BG_256 = ["{0:02x}{1:02x}{2:02x}".format(r, g, b) for r, g, b in _FG_BG_256]
+FG_BG_256 = [f"{r:02x}{g:02x}{b:02x}" for r, g, b in _FG_BG_256]

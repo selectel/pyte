@@ -33,8 +33,7 @@ class PyteDisplay:
         self.lines = lines
 
     def __rich_console__(self, console, options):
-        for line in self.lines:
-            yield line
+        yield from self.lines
 
 
 class Terminal(Widget, can_focus=True):

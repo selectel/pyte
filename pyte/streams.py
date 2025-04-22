@@ -26,7 +26,8 @@ import re
 import warnings
 from collections import defaultdict
 from collections.abc import Mapping
-from typing import Any, Callable, Dict, Generator, Optional, TYPE_CHECKING
+from typing import Any, Dict, Optional, TYPE_CHECKING
+from collections.abc import Callable, Generator
 
 from . import control as ctrl, escape as esc
 
@@ -133,18 +134,18 @@ class Stream:
 
     #: A regular expression pattern matching everything what can be
     #: considered plain text.
-    _special = set([ctrl.ESC, ctrl.CSI_C1, ctrl.NUL, ctrl.DEL, ctrl.OSC_C1])
+    _special = {ctrl.ESC, ctrl.CSI_C1, ctrl.NUL, ctrl.DEL, ctrl.OSC_C1}
     _special.update(basic)
     _text_pattern = re.compile(
         "[^" + "".join(map(re.escape, _special)) + "]+")
     del _special
 
-    def __init__(self, screen: Optional[Screen] = None, strict: bool = True) -> None:
-        self.listener: Optional[Screen] = None
+    def __init__(self, screen: Screen | None = None, strict: bool = True) -> None:
+        self.listener: Screen | None = None
         self.strict = strict
         self.use_utf8: bool = True
 
-        self._taking_plain_text: Optional[bool] = None
+        self._taking_plain_text: bool | None = None
 
         if screen is not None:
             self.attach(screen)
@@ -157,16 +158,16 @@ class Stream:
         if self.listener is not None:
             warnings.warn("As of version 0.6.0 the listener queue is "
                           "restricted to a single element. Existing "
-                          "listener {0} will be replaced."
+                          "listener {} will be replaced."
                           .format(self.listener), DeprecationWarning)
 
         if self.strict:
             for event in self.events:
                 if not hasattr(screen, event):
-                    raise TypeError("{0} is missing {1}".format(screen, event))
+                    raise TypeError(f"{screen} is missing {event}")
 
         self.listener = screen
-        self._parser: Optional[ParserGenerator] = None
+        self._parser: ParserGenerator | None = None
         self._initialize_parser()
 
     def detach(self, screen: Screen) -> None:
@@ -207,7 +208,7 @@ class Stream:
 
         self._taking_plain_text = taking_plain_text
 
-    def _send_to_parser(self, data: str) -> Optional[bool]:
+    def _send_to_parser(self, data: str) -> bool | None:
         try:
             assert self._parser is not None
             return self._parser.send(data)
@@ -244,12 +245,12 @@ class Stream:
         CAN_OR_SUB = ctrl.CAN + ctrl.SUB
         ALLOWED_IN_CSI = "".join([ctrl.BEL, ctrl.BS, ctrl.HT, ctrl.LF,
                                   ctrl.VT, ctrl.FF, ctrl.CR])
-        OSC_TERMINATORS = set([ctrl.ST_C0, ctrl.ST_C1, ctrl.BEL])
+        OSC_TERMINATORS = {ctrl.ST_C0, ctrl.ST_C1, ctrl.BEL}
 
-        def create_dispatcher(mapping: Mapping[str, str]) -> Dict[str, Callable[..., None]]:
-            return defaultdict(lambda: debug, dict(
-                (event, getattr(listener, attr))
-                for event, attr in mapping.items()))
+        def create_dispatcher(mapping: Mapping[str, str]) -> dict[str, Callable[..., None]]:
+            return defaultdict(lambda: debug, {
+                event: getattr(listener, attr)
+                for event, attr in mapping.items()})
 
         basic_dispatch = create_dispatcher(basic)
         sharp_dispatch = create_dispatcher(self.sharp)
@@ -411,7 +412,7 @@ class ByteStream(Stream):
        using UTF-8. Defaults to ``True``.
     """
     def __init__(self, *args: Any, **kwargs: Any):
-        super(ByteStream, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         self.utf8_decoder = codecs.getincrementaldecoder("utf-8")("replace")
 
@@ -421,7 +422,7 @@ class ByteStream(Stream):
         else:
             data_str = "".join(map(chr, data))
 
-        super(ByteStream, self).feed(data_str)
+        super().feed(data_str)
 
     def select_other_charset(self, code: str) -> None:
         if code == "@":

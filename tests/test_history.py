@@ -393,7 +393,7 @@ def test_ensure_width(monkeypatch):
     stream = pyte.Stream(screen)
 
     for idx in range(screen.lines * 5):
-        stream.feed("{0:04d}".format(idx) + os.linesep)
+        stream.feed(f"{idx:04d}" + os.linesep)
 
     assert screen.display == [
         "0021 ",

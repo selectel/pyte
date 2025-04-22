@@ -33,7 +33,7 @@ from .streams import Stream, ByteStream
 
 
 if __debug__:
-    def dis(chars: Union[bytes, str]) -> None:
+    def dis(chars: bytes | str) -> None:
         """A :func:`dis.dis` for terminals.
 
         >>> dis(b"\x07")       # doctest: +NORMALIZE_WHITESPACE
