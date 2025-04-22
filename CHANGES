@@ -3,6 +3,14 @@ pyte Changelog
 
 Here you can see the full list of changes between each pyte release.
 
+Version 0.8.3
+-------------
+
+Unreleased
+
+- The minimum Python version supported by pyte is now 3.10.
+
+
 Version 0.8.2
 -------------
 

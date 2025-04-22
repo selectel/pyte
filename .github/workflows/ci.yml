@@ -16,34 +16,32 @@ jobs:
         python-version: ["3.10", "3.11", "3.12", "3.13", "pypy-3.10"]
 
     steps:
-      - uses: "actions/checkout@v2"
-      - uses: "actions/setup-python@v2"
+      - uses: "actions/checkout@v4"
+      - uses: "actions/setup-python@v5"
         with:
             python-version: "${{ matrix.python-version }}"
       - name: "Install dependencies"
         run: |
           set -xe
-          python -m pip install -r requirements_dev.txt
+          python -m pip install uv
         shell: bash
       - name: "Build"
         run: |
           set -xe
           python -VV
-          python setup.py sdist
-          pip wheel --verbose --no-deps --no-clean dist/pyte*.tar.gz
-          pip install pyte*.whl
+          python -m uv build --wheel --sdist
+          python -m uv pip install dist/pyte*.whl
         shell: bash
       - name: "Run tests"
         run: |
           set -xe
           # Change directory to avoid importing pyte from repo root.
           pushd tests
-          python -m pytest -vv --pyargs .
+          python -m uv run pytest -vv
           popd
         shell: bash
       - name: "Run mypy"
         run: |
           set -xe
-          python -m pip install mypy==1.7.0
-          python -m mypy --strict pyte
+          python -m uv run mypy pyte
         shell: bash
