@@ -545,7 +545,7 @@ class Screen:
         """
         return self._keyboard_flags[-1]
 
-    def set_keyboard_flags(self, *args, private: bool = False, operator: str = "") -> None:
+    def set_keyboard_flags(self, *args: int, private: bool = False, operator: str = "") -> None:
         """Handle progressive enhancement events.
 
         Assign keyboard flags for shells supporting "progressive enhancements".
@@ -561,11 +561,11 @@ class Screen:
             # CSI = u
             # CSI = mode u
             # CSI = flags ; mode u
-            flags = KeyboardFlags.DEFAULT if len(args) == 0 else args[0]
-            mode: int = 1 if len(args) < 2 else args[1]
+            flags = KeyboardFlags.DEFAULT if len(args) == 0 else KeyboardFlags(args[0])
+            mode = 1 if len(args) < 2 else args[1]
             if mode == 1:
                 # set all set and reset all unset bits
-                self._keyboard_flags[-1] = flags
+                self._keyboard_flags[-1] = KeyboardFlags(flags)
             elif mode == 2:
                 # set all set and retain all unset bits
                 self._keyboard_flags[-1] = self._keyboard_flags[-1] | flags
@@ -576,7 +576,7 @@ class Screen:
             # push flags onto stack
             # CSI > u
             # CSI > flags u
-            flags = KeyboardFlags.DEFAULT if len(args) == 0 else args[0]
+            flags = KeyboardFlags.DEFAULT if len(args) == 0 else KeyboardFlags(args[0])
             if len(self._keyboard_flags) < 99:
                 self._keyboard_flags.append(flags)
         elif operator == "<":
