@@ -149,4 +149,5 @@ DSR = "n"
 DECSTBM = "r"
 
 #: *Horizontal position adjust*: Same as :data:`CHA`.
-HPA = "'"
+HPA = "`"
+

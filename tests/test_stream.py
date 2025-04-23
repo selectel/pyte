@@ -332,3 +332,31 @@ def test_byte_stream_select_other_charset():
     # c) enable utf-8
     stream.select_other_charset("G")
     assert stream.use_utf8
+
+
+def test_csi_cha():
+    screen = pyte.Screen(10, 2)
+    stream = pyte.Stream(screen)
+    # before
+    assert screen.cursor.x == 0
+    assert screen.cursor.y == 0
+    assert screen.display[0] == "          "
+    # set cursor to column absolute
+    stream.feed("\x9b4`text")
+    assert screen.cursor.x == 7
+    assert screen.cursor.y == 0
+    assert screen.display[0] == "   text   "
+
+
+def test_csi_hpa():
+    screen = pyte.Screen(10, 2)
+    stream = pyte.Stream(screen)
+    # before
+    assert screen.cursor.x == 0
+    assert screen.cursor.y == 0
+    assert screen.display[0] == "          "
+    # set cursor to column absolute
+    stream.feed("\x9b4`text")
+    assert screen.cursor.x == 7
+    assert screen.cursor.y == 0
+    assert screen.display[0] == "   text   "
