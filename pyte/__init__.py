@@ -28,7 +28,8 @@ __all__ = ("Screen", "DiffScreen", "HistoryScreen", "DebugScreen", "KeyboardFlag
 import io
 from typing import Union
 
-from .screens import Screen, DiffScreen, HistoryScreen, DebugScreen, KeyboardFlags
+from .keyboard import KeyboardFlags
+from .screens import Screen, DiffScreen, HistoryScreen, DebugScreen
 from .streams import Stream, ByteStream
 
 
