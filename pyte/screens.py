@@ -34,7 +34,6 @@ import sys
 import unicodedata
 import warnings
 from collections import deque, defaultdict
-from enum import IntEnum
 from functools import lru_cache
 from typing import Any, Dict, List, NamedTuple, Optional, Set, TextIO, TypeVar
 from collections.abc import Callable, Generator, Sequence
@@ -48,20 +47,13 @@ from . import (
     graphics as g,
     modes as mo
 )
+from .keyboard import KeypadMode
 from .streams import Stream
 
 wcwidth: Callable[[str], int] = lru_cache(maxsize=4096)(_wcwidth)
 
 KT = TypeVar("KT")
 VT = TypeVar("VT")
-
-
-class KeypadMode(IntEnum):
-    """Supported keypad modes"""
-    NUMERIC = 0
-    """Keypad sends numbers (default)."""
-    APPLICATION = 1
-    """Keypad sends control sequences."""
 
 
 class Margins(NamedTuple):

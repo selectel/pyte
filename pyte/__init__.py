@@ -22,13 +22,15 @@
     :license: LGPL, see LICENSE for more details.
 """
 
-__all__ = ("Screen", "DiffScreen", "HistoryScreen", "DebugScreen", "KeypadMode",
+__all__ = ("KeypadMode",
+           "Screen", "DiffScreen", "HistoryScreen", "DebugScreen",
            "Stream", "ByteStream")
 
 import io
 from typing import Union
 
-from .screens import Screen, DiffScreen, HistoryScreen, DebugScreen, KeypadMode
+from .keyboard import KeypadMode
+from .screens import Screen, DiffScreen, HistoryScreen, DebugScreen
 from .streams import Stream, ByteStream
 
 
