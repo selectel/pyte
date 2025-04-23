@@ -22,7 +22,8 @@
     :license: LGPL, see LICENSE for more details.
 """
 
-__all__ = ("Screen", "DiffScreen", "HistoryScreen", "DebugScreen", "KeyboardFlags",
+__all__ = ("KeyboardFlags",
+           "Screen", "DiffScreen", "HistoryScreen", "DebugScreen",
            "Stream", "ByteStream")
 
 import io
