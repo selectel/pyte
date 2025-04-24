@@ -35,8 +35,7 @@ import unicodedata
 import warnings
 from collections import deque, defaultdict
 from functools import lru_cache
-from typing import Any, Dict, List, NamedTuple, Optional, Set, TextIO, TypeVar
-from collections.abc import Callable, Generator, Sequence
+from typing import TYPE_CHECKING, NamedTuple, TypeVar
 
 from wcwidth import wcwidth as _wcwidth  # type: ignore[import-untyped]
 
@@ -47,6 +46,10 @@ from . import (
     modes as mo
 )
 from .streams import Stream
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Generator, Sequence
+    from typing import Any, NamedTuple, TextIO
 
 wcwidth: Callable[[str], int] = lru_cache(maxsize=4096)(_wcwidth)
 

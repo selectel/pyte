@@ -26,8 +26,6 @@ __all__ = ("Screen", "DiffScreen", "HistoryScreen", "DebugScreen",
            "Stream", "ByteStream")
 
 import io
-from typing import Union
-
 from .screens import Screen, DiffScreen, HistoryScreen, DebugScreen
 from .streams import Stream, ByteStream
 
