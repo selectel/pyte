@@ -25,12 +25,13 @@
 __all__ = ("Screen", "DiffScreen", "HistoryScreen", "DebugScreen",
            "Stream", "ByteStream")
 
-import io
 from .screens import Screen, DiffScreen, HistoryScreen, DebugScreen
 from .streams import Stream, ByteStream
 
 
 if __debug__:
+    import io
+
     def dis(chars: bytes | str) -> None:
         """A :func:`dis.dis` for terminals.
 
