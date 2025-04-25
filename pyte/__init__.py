@@ -21,6 +21,7 @@
                     see AUTHORS for details.
     :license: LGPL, see LICENSE for more details.
 """
+__version__ = "0.8.3.dev"
 
 __all__ = ("Screen", "DiffScreen", "HistoryScreen", "DebugScreen",
            "Stream", "ByteStream")
