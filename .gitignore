@@ -1,6 +1,12 @@
+# python cache
+__pycache__/
 *.pyc
-build/
-dist/
-*.egg-info/
-.eggs/
+
+# tool cache
 .pytest_cache/
+.mypy_cache/
+.venv/
+*.lock
+
+# build output
+dist/

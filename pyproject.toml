@@ -1,6 +1,10 @@
 [build-system]
-requires = ["setuptools", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["flit_core"]
+build-backend = "flit_core.buildapi"
+
+[tool.flit.sdist]
+include = ["docs/*.rst", "docs/*.py", "examples/", "tests/", "AUTHORS*", "CHANGES*", "LICENSE*"]
+exclude = ["**/__pycache__/", "**/.*/", "*.lock"]
 
 [tool.mypy]
 show_error_codes = true
@@ -22,7 +26,7 @@ dev = [
 name = "pyte"
 dynamic = ["version"]
 description = "Simple VTXXX-compatible terminal emulator."
-readme = "README"
+readme = "README.rst"
 license = "LGPL-3.0-only"
 requires-python = ">=3.10"
 authors = [
