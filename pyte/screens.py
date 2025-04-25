@@ -45,6 +45,7 @@ from . import (
     graphics as g,
     modes as mo
 )
+from .keyboard import KeyboardFlags
 from .streams import Stream
 
 if TYPE_CHECKING:
@@ -56,10 +57,12 @@ wcwidth: Callable[[str], int] = lru_cache(maxsize=4096)(_wcwidth)
 KT = TypeVar("KT")
 VT = TypeVar("VT")
 
+
 class Margins(NamedTuple):
     """A container for screen's scroll margins."""
     top: int
     bottom: int
+
 
 class Savepoint(NamedTuple):
     """A container for savepoint, created on :data:`~pyte.escape.DECSC`."""
@@ -226,6 +229,7 @@ class Screen:
         self.reset()
         self.mode = _DEFAULT_MODE.copy()
         self.margins: Margins | None = None
+        self._keyboard_flags: list[KeyboardFlags] = [KeyboardFlags.DEFAULT]
 
     def __repr__(self) -> str:
         return ("{}({}, {})".format(self.__class__.__name__,
@@ -442,6 +446,58 @@ class Screen:
         # Hide the cursor.
         if mo.DECTCEM in mode_list:
             self.cursor.hidden = True
+
+    @property
+    def keyboard_flags(self) -> KeyboardFlags:
+        """Keyboard flags of current stack level.
+
+        Keyboard flags are to be used by terminal implementations to decide
+        how to encode keyboard events sent to shell applications.
+        """
+        return self._keyboard_flags[-1]
+
+    def set_keyboard_flags(self, *args: int, private: bool = False, operator: str = "") -> None:
+        """Handle progressive enhancement events.
+
+        Assign keyboard flags for shells supporting "progressive enhancements".
+        see: https://sw.kovidgoyal.net/kitty/keyboard-protocol/#progressive-enhancement
+        """
+        if private:
+            # CSI ? u
+            # progressive enhancment state query
+            # report flags of current stack level
+            self.write_process_input(str(self.keyboard_flags))
+        elif operator == "=":
+            # assign/set/reset flags
+            # CSI = u
+            # CSI = mode u
+            # CSI = flags ; mode u
+            flags = KeyboardFlags.DEFAULT if len(args) == 0 else KeyboardFlags(args[0])
+            mode = 1 if len(args) < 2 else args[1]
+            if mode == 1:
+                # set all set and reset all unset bits
+                self._keyboard_flags[-1] = KeyboardFlags(flags)
+            elif mode == 2:
+                # set all set and retain all unset bits
+                self._keyboard_flags[-1] = self._keyboard_flags[-1] | flags
+            elif mode == 3:
+                # reset all set and retain all unset bits
+                self._keyboard_flags[-1] = self._keyboard_flags[-1] & ~flags
+        elif operator == ">":
+            # push flags onto stack
+            # CSI > u
+            # CSI > flags u
+            flags = KeyboardFlags.DEFAULT if len(args) == 0 else KeyboardFlags(args[0])
+            if len(self._keyboard_flags) < 99:
+                self._keyboard_flags.append(flags)
+        elif operator == "<":
+            # pop flags from stack
+            # CSI < u
+            # CSI < count u
+            count = 1 if len(args) == 0 else args[0]
+            self._keyboard_flags = self._keyboard_flags[:-count]
+            if len(self._keyboard_flags) == 0:
+                self._keyboard_flags = [KeyboardFlags.DEFAULT]
 
     def define_charset(self, code: str, mode: str) -> None:
         """Define ``G0`` or ``G1`` charset.

@@ -4,7 +4,7 @@ import pytest
 
 import pyte
 from pyte import charsets as cs, control as ctrl, escape as esc
-
+from pyte import KeyboardFlags
 
 class counter:
     def __init__(self):
@@ -332,3 +332,40 @@ def test_byte_stream_select_other_charset():
     # c) enable utf-8
     stream.select_other_charset("G")
     assert stream.use_utf8
+
+
+def test_progressive_enhancements():
+    screen = pyte.Screen(10, 1)
+    stream = pyte.Stream(screen)
+    assert screen.keyboard_flags == KeyboardFlags.DEFAULT
+
+    # assign flags
+    stream.feed(ctrl.CSI + "=5u")
+    assert screen.keyboard_flags == KeyboardFlags.DISAMBIGUATE_ESCAPE_CODES \
+        | KeyboardFlags.REPORT_ALTERNATE_KEYS
+
+    # set flags
+    stream.feed(ctrl.CSI + "=16;2u")
+    assert screen.keyboard_flags == KeyboardFlags.DISAMBIGUATE_ESCAPE_CODES \
+        | KeyboardFlags.REPORT_ALTERNATE_KEYS | KeyboardFlags.REPORT_ASSOCIATED_TEXT
+
+    # reset flags
+    stream.feed(ctrl.CSI + "=16;3u")
+    assert screen.keyboard_flags == KeyboardFlags.DISAMBIGUATE_ESCAPE_CODES \
+        | KeyboardFlags.REPORT_ALTERNATE_KEYS
+
+    # push flags to stack
+    stream.feed(ctrl.CSI + ">16u")
+    assert screen.keyboard_flags == KeyboardFlags.REPORT_ASSOCIATED_TEXT
+
+    # pop flags and expect bits from stack level 0 to be reported
+    stream.feed(ctrl.CSI + "<1u")
+    assert screen.keyboard_flags == KeyboardFlags.DISAMBIGUATE_ESCAPE_CODES \
+        | KeyboardFlags.REPORT_ALTERNATE_KEYS
+
+    # pop stack level 0, resets flags to default
+    stream.feed(ctrl.CSI + "<u")
+    assert screen.keyboard_flags == KeyboardFlags.DEFAULT
+
+    # verify empty buffer to ensure nothing passed through
+    assert screen.display[0] == " " * 10

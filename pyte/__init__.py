@@ -22,9 +22,11 @@
     :license: LGPL, see LICENSE for more details.
 """
 
-__all__ = ("Screen", "DiffScreen", "HistoryScreen", "DebugScreen",
+__all__ = ("KeyboardFlags",
+           "Screen", "DiffScreen", "HistoryScreen", "DebugScreen",
            "Stream", "ByteStream")
 
+from .keyboard import KeyboardFlags
 from .screens import Screen, DiffScreen, HistoryScreen, DebugScreen
 from .streams import Stream, ByteStream
 
