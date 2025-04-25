@@ -25,17 +25,17 @@ import itertools
 import re
 import warnings
 from collections import defaultdict
-from collections.abc import Mapping
-from typing import Any, Dict, Optional, TYPE_CHECKING
-from collections.abc import Callable, Generator
+from typing import TYPE_CHECKING
 
 from . import control as ctrl, escape as esc
 
 if TYPE_CHECKING:
+    from collections.abc import Callable, Generator, Mapping
+    from typing import Any
     from .screens import Screen
 
+    ParserGenerator = Generator[bool | None, str, None]
 
-ParserGenerator = Generator[Optional[bool], str, None]
 
 class Stream:
     """A stream is a state machine that parses a stream of bytes and
