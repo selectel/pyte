@@ -580,6 +580,28 @@ class Screen:
         else:
             self.cursor_up()
 
+    def scroll_up(self, count: Optional[int] = None) -> None:
+        """Scroll the screen up # lines. Cursor does not move.
+        """
+        for _ in range(count or 1):
+            top, bottom = self.margins or Margins(0, self.lines - 1)
+            # TODO: mark only the lines within margins?
+            self.dirty.update(range(self.lines))
+            for y in range(top, bottom):
+                self.buffer[y] = self.buffer[y + 1]
+            self.buffer.pop(bottom, None)
+
+    def scroll_down(self, count: Optional[int] = None) -> None:
+        """Scroll the screen down # lines. Cursor does not move.
+        """
+        for _ in range(count or 1):
+            top, bottom = self.margins or Margins(0, self.lines - 1)
+            # TODO: mark only the lines within margins?
+            self.dirty.update(range(self.lines))
+            for y in range(bottom, top, -1):
+                self.buffer[y] = self.buffer[y - 1]
+            self.buffer.pop(top, None)
+
     def linefeed(self) -> None:
         """Perform an index and, if :data:`~pyte.modes.LNM` is set, a
         carriage return.
@@ -1233,6 +1255,20 @@ class HistoryScreen(Screen):
             self.history.bottom.append(self.buffer[bottom])
 
         super().reverse_index()
+
+    def scroll_up(self, count: Optional[int] = None) -> None:
+        """Overloaded to update top history with the removed lines."""
+        for _ in range(count or 1):
+            top, bottom = self.margins or Margins(0, self.lines - 1)
+            self.history.top.append(self.buffer[top])
+            super(HistoryScreen, self).scroll_up()
+
+    def scroll_down(self, count: Optional[int] = None) -> None:
+        """Overloaded to update bottom history with the removed lines."""
+        for _ in range(count or 1):
+            top, bottom = self.margins or Margins(0, self.lines - 1)
+            self.history.bottom.append(self.buffer[bottom])
+            super(HistoryScreen, self).scroll_down()
 
     def prev_page(self) -> None:
         """Move the screen page up through the history buffer. Page
