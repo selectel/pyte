@@ -37,8 +37,6 @@ from collections import deque, defaultdict
 from functools import lru_cache
 from typing import TYPE_CHECKING, NamedTuple, TypeVar
 
-from wcwidth import wcwidth as _wcwidth  # type: ignore[import-untyped]
-
 from . import (
     charsets as cs,
     control as ctrl,
@@ -46,12 +44,11 @@ from . import (
     modes as mo
 )
 from .streams import Stream
+from .wcwidth import wcwidth
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Generator, Sequence
     from typing import Any, NamedTuple, TextIO
-
-wcwidth: Callable[[str], int] = lru_cache(maxsize=4096)(_wcwidth)
 
 KT = TypeVar("KT")
 VT = TypeVar("VT")

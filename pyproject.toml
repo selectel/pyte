@@ -50,9 +50,6 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
     "Topic :: Terminals :: Terminal Emulators/X Terminals",
 ]
-dependencies = [
-    "wcwidth",
-]
 
 [project.urls]
 Homepage = "https://github.com/selectel/pyte"
