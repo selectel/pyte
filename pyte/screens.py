@@ -42,9 +42,11 @@ from wcwidth import wcwidth as _wcwidth  # type: ignore[import-untyped]
 from . import (
     charsets as cs,
     control as ctrl,
+    escape as esc,
     graphics as g,
     modes as mo
 )
+from .keyboard import KeypadMode
 from .streams import Stream
 
 if TYPE_CHECKING:
@@ -56,10 +58,12 @@ wcwidth: Callable[[str], int] = lru_cache(maxsize=4096)(_wcwidth)
 KT = TypeVar("KT")
 VT = TypeVar("VT")
 
+
 class Margins(NamedTuple):
     """A container for screen's scroll margins."""
     top: int
     bottom: int
+
 
 class Savepoint(NamedTuple):
     """A container for savepoint, created on :data:`~pyte.escape.DECSC`."""
@@ -277,6 +281,8 @@ class Screen:
         self.g0_charset = cs.LAT1_MAP
         self.g1_charset = cs.VT100_MAP
 
+        self.keypad_mode: KeypadMode = KeypadMode.NUMERIC
+
         # From ``man terminfo`` -- "... hardware tabs are initially
         # set every `n` spaces when the terminal is powered up. Since
         # we aim to support VT102 / VT220 and linux -- we use n = 8.
@@ -442,6 +448,23 @@ class Screen:
         # Hide the cursor.
         if mo.DECTCEM in mode_list:
             self.cursor.hidden = True
+
+    def set_keypad_mode(self, mode: str) -> None:
+        """Set keypad mode
+
+        DECKPAM enables the keypad to send application sequences.
+        DECKPNM enables the keypad to send numeric characters to the host.
+
+        Default: Send numeric keypad characters.
+
+        :param: mode
+            ``esc.DECKPAM`` - application mode
+            ``esc.DECKPNM`` - numeric mode
+        """
+        if mode == esc.DECKPAM:
+            self.keypad_mode = KeypadMode.APPLICATION
+        else:
+            self.keypad_mode = KeypadMode.NUMERIC
 
     def define_charset(self, code: str, mode: str) -> None:
         """Define ``G0`` or ``G1`` charset.

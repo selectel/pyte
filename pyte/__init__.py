@@ -23,9 +23,11 @@
 """
 __version__ = "0.8.3.dev"
 
-__all__ = ("Screen", "DiffScreen", "HistoryScreen", "DebugScreen",
+__all__ = ("KeypadMode",
+           "Screen", "DiffScreen", "HistoryScreen", "DebugScreen",
            "Stream", "ByteStream")
 
+from .keyboard import KeypadMode
 from .screens import Screen, DiffScreen, HistoryScreen, DebugScreen
 from .streams import Stream, ByteStream
 
