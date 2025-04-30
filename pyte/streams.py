@@ -122,7 +122,9 @@ class Stream:
         esc.SGR: "select_graphic_rendition",
         esc.DSR: "report_device_status",
         esc.DECSTBM: "set_margins",
-        esc.HPA: "cursor_to_column"
+        esc.HPA: "cursor_to_column",
+        esc.SD: "scroll_down",
+        esc.SU: "scroll_up"
     }
 
     #: A set of all events dispatched by the stream.
