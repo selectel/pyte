@@ -473,6 +473,19 @@ def test_display_wcwidth():
     assert screen.display == ["コンニチハ"]
 
 
+def test_display_multi_char_emoji():
+    screen = pyte.Screen(4, 1)
+    screen.draw("👨\u200d💻a")
+    assert screen.display == ["👨\u200d💻a "]
+
+
+def test_display_complex_emoji():
+    emoji = "\U0001f926\U0001f3fd\u200d\u2642\ufe0f"
+    screen = pyte.Screen(4, 1)
+    screen.draw(emoji + "a")
+    assert screen.display == [emoji + "a "]
+
+
 def test_carriage_return():
     screen = pyte.Screen(3, 3)
     screen.cursor.x = 2
