@@ -9,6 +9,7 @@ Version 0.8.3
 Unreleased
 
 - The minimum Python version supported by pyte is now 3.10.
+- Fixed rendering of multi code-point emoji sequences.
 
 
 Version 0.8.2
