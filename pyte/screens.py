@@ -37,7 +37,7 @@ from collections import deque, defaultdict
 from functools import lru_cache
 from typing import TYPE_CHECKING, NamedTuple, TypeVar
 
-from wcwidth import wcwidth as _wcwidth  # type: ignore[import-untyped]
+from wcwidth import wcwidth as _wcwidth, wcswidth as _wcswidth  # type: ignore[import-untyped]
 
 from . import (
     charsets as cs,
@@ -51,6 +51,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable, Generator, Sequence
     from typing import Any, NamedTuple, TextIO
 
+wcswidth: Callable[[str], int] = lru_cache(maxsize=4096)(_wcswidth)
 wcwidth: Callable[[str], int] = lru_cache(maxsize=4096)(_wcwidth)
 
 KT = TypeVar("KT")
@@ -74,7 +75,7 @@ class Savepoint(NamedTuple):
 class Char(NamedTuple):
     """A single styled on-screen character.
 
-    :param str data: unicode character. Invariant: ``len(data) == 1``.
+    :param str data: unicode character or grapheme cluster.
     :param str fg: foreground colour. Defaults to ``"default"``.
     :param str bg: background colour. Defaults to ``"default"``.
     :param bool bold: flag for rendering the character using bold font.
@@ -117,6 +118,28 @@ class Cursor:
         self.y = y
         self.attrs = attrs
         self.hidden = False
+
+
+def grapheme_clusters(text: str) -> "Generator[str, None, None]":
+    """Yield grapheme clusters from *text*."""
+    cluster = ""
+    for char in text:
+        if not cluster:
+            cluster = char
+            continue
+        if (
+            cluster.endswith("\u200d")
+            or unicodedata.combining(char)
+            or char == "\u200d"
+            or 0xFE00 <= ord(char) <= 0xFE0F
+            or 0x1F3FB <= ord(char) <= 0x1F3FF
+        ):
+            cluster += char
+        else:
+            yield cluster
+            cluster = char
+    if cluster:
+        yield cluster
 
 
 class StaticDefaultDict(dict[KT, VT]):
@@ -241,8 +264,8 @@ class Screen:
                     is_wide_char = False
                     continue
                 char = line[x].data
-                assert sum(map(wcwidth, char[1:])) == 0
-                is_wide_char = wcwidth(char[0]) == 2
+                char_width = wcswidth(char)
+                is_wide_char = char_width == 2
                 yield char
 
         return ["".join(render(self.buffer[y])) for y in range(self.lines)]
@@ -482,8 +505,8 @@ class Screen:
         data = data.translate(
             self.g1_charset if self.charset else self.g0_charset)
 
-        for char in data:
-            char_width = wcwidth(char)
+        for char in grapheme_clusters(data):
+            char_width = wcswidth(char)
 
             # If this was the last column in a line and auto wrap mode is
             # enabled, move the cursor to the beginning of the next line,
@@ -512,7 +535,7 @@ class Screen:
                 if self.cursor.x + 1 < self.columns:
                     line[self.cursor.x + 1] = self.cursor.attrs \
                         ._replace(data="")
-            elif char_width == 0 and unicodedata.combining(char):
+            elif char_width == 0 and all(unicodedata.combining(c) for c in char):
                 # A zero-cell character is combined with the previous
                 # character either on this or preceding line.
                 if self.cursor.x:
