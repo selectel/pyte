@@ -4,7 +4,7 @@ import pytest
 
 import pyte
 from pyte import modes as mo, control as ctrl, graphics as g
-from pyte.screens import Char
+from pyte.screens import Char, KeyboardFlags
 
 
 # Test helpers.
@@ -1583,3 +1583,36 @@ def test_screen_set_icon_name_title():
 
     screen.set_title(text)
     assert screen.title == text
+
+
+def test_progressive_enhancements():
+    screen = pyte.Screen(10, 1)
+    assert screen.keyboard_flags == KeyboardFlags.DEFAULT
+
+    # assign flags
+    screen.set_keyboard_flags(5, operator="=")
+    assert screen.keyboard_flags == KeyboardFlags.DISAMBIGUATE_ESCAPE_CODES \
+        | KeyboardFlags.REPORT_ALTERNATE_KEYS
+
+    # set flags
+    screen.set_keyboard_flags(16, 2, operator="=")
+    assert screen.keyboard_flags == KeyboardFlags.DISAMBIGUATE_ESCAPE_CODES \
+        | KeyboardFlags.REPORT_ALTERNATE_KEYS | KeyboardFlags.REPORT_ASSOCIATED_TEXT
+
+    # reset flags
+    screen.set_keyboard_flags(16, 3, operator="=")
+    assert screen.keyboard_flags == KeyboardFlags.DISAMBIGUATE_ESCAPE_CODES \
+        | KeyboardFlags.REPORT_ALTERNATE_KEYS
+
+    # push flags to stack
+    screen.set_keyboard_flags(16, operator=">")
+    assert screen.keyboard_flags == KeyboardFlags.REPORT_ASSOCIATED_TEXT
+
+    # pop flags and expect bits from stack level 0 to be reported
+    screen.set_keyboard_flags(operator="<")
+    assert screen.keyboard_flags == KeyboardFlags.DISAMBIGUATE_ESCAPE_CODES \
+        | KeyboardFlags.REPORT_ALTERNATE_KEYS
+
+    # pop stack level 0, resets flags to default
+    screen.set_keyboard_flags(operator="<")
+    assert screen.keyboard_flags == KeyboardFlags.DEFAULT
