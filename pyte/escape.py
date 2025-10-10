@@ -150,3 +150,9 @@ DECSTBM = "r"
 
 #: *Horizontal position adjust*: Same as :data:`CHA`.
 HPA = "'"
+
+#: *Scroll up*: scroll up
+SU = "S"
+
+#: *Scroll down*: scroll up
+SD = "T"
