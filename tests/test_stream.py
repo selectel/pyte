@@ -70,6 +70,19 @@ def test_unknown_sequences():
     assert handler.args == (6, 0)
     assert handler.kwargs == {}
 
+def test_csi_param_with_colon_context():
+    handler = argcheck()
+    screen = pyte.Screen(80, 24)
+    screen.debug = handler
+
+    stream = pyte.Stream(screen)
+    stream.feed(ctrl.CSI + "6:4Z")
+    assert handler.count == 1
+    # Note: currently pyte doesn't actually do anything with `:`-delimited context,
+    # which is why the `4` disappears here.
+    assert handler.args == ((6),)
+    assert handler.kwargs == {}
+
 
 def test_non_csi_sequences():
     for cmd, event in pyte.Stream.csi.items():
