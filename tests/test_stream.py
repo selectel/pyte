@@ -332,3 +332,29 @@ def test_byte_stream_select_other_charset():
     # c) enable utf-8
     stream.select_other_charset("G")
     assert stream.use_utf8
+
+
+@pytest.mark.parametrize("mode", [esc.DECKPAM, esc.DECKPNM])
+def test_set_keypad_mode_args(mode):
+    """Verify escape sequences being passed to event handler."""
+    handler = argcheck()
+    screen = pyte.Screen(80, 1)
+    setattr(screen, 'set_keypad_mode', handler)
+
+    stream = pyte.Stream(screen)
+    stream.feed(ctrl.ESC + mode)
+    assert handler.count == 1
+    assert handler.kwargs == {"mode": mode}
+
+
+def test_set_keypad_mode():
+    """Verify escape sequences correctly applying keypad mode."""
+    screen = pyte.Screen(80, 1)
+    stream = pyte.Stream(screen)
+    assert screen.keypad_mode == pyte.KeypadMode.NUMERIC
+    stream.feed(ctrl.ESC + esc.DECKPAM)
+    assert screen.keypad_mode == pyte.KeypadMode.APPLICATION
+    stream.feed(ctrl.ESC + esc.DECKPNM)
+    assert screen.keypad_mode == pyte.KeypadMode.NUMERIC
+    # verify nothing added to buffer
+    assert screen.display[0] == " " * 80

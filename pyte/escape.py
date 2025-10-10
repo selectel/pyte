@@ -11,6 +11,9 @@
     :license: LGPL, see LICENSE for more details.
 """
 
+# non-CSI escape sequences.
+# -------------------------
+
 #: *Reset*.
 RIS = "c"
 
@@ -37,6 +40,14 @@ DECSC = "7"
 #: attribute (graphic rendition), character set, and origin mode
 #: selection. If none were saved, move cursor to home position.
 DECRC = "8"
+
+#: *Set keypad application mode*: Keypad sends control sequences (NUMLOCK off)
+#: see: https://vt100.net/docs/vt510-rm/DECKPAM.html
+DECKPAM = "="
+
+#: *Set keypad numeric mode*: Keypad sends numbers (NUMLOCK ON).
+#: see: https://vt100.net/docs/vt510-rm/DECKPNM.html
+DECKPNM = ">"
 
 # "Sharp" escape sequences.
 # -------------------------
