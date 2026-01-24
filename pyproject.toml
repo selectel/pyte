@@ -51,7 +51,7 @@ classifiers = [
     "Topic :: Terminals :: Terminal Emulators/X Terminals",
 ]
 dependencies = [
-    "wcwidth",
+    "wcwidth>=0.3.2",
 ]
 
 [project.urls]
