@@ -37,7 +37,7 @@ from collections import deque, defaultdict
 from functools import lru_cache
 from typing import TYPE_CHECKING, NamedTuple, TypeVar
 
-from wcwidth import wcwidth as _wcwidth, wcswidth as _wcswidth  # type: ignore[import-untyped]
+from wcwidth import wcwidth as _wcwidth, wcswidth as _wcswidth, iter_graphemes as grapheme_clusters
 
 from . import (
     charsets as cs,
@@ -118,28 +118,6 @@ class Cursor:
         self.y = y
         self.attrs = attrs
         self.hidden = False
-
-
-def grapheme_clusters(text: str) -> "Generator[str, None, None]":
-    """Yield grapheme clusters from *text*."""
-    cluster = ""
-    for char in text:
-        if not cluster:
-            cluster = char
-            continue
-        if (
-            cluster.endswith("\u200d")
-            or unicodedata.combining(char)
-            or char == "\u200d"
-            or 0xFE00 <= ord(char) <= 0xFE0F
-            or 0x1F3FB <= ord(char) <= 0x1F3FF
-        ):
-            cluster += char
-        else:
-            yield cluster
-            cluster = char
-    if cluster:
-        yield cluster
 
 
 class StaticDefaultDict(dict[KT, VT]):

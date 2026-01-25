@@ -486,6 +486,91 @@ def test_display_complex_emoji():
     assert screen.display == [emoji + "a "]
 
 
+def test_vs16_heart_emoji_40_in_80_columns():
+    screen = pyte.Screen(80, 1)
+    # RED HEART + VARIATION SELECTOR-16: ❤️  (wide)
+    heart_vs16 = '\u2764\ufe0f'
+    screen.draw(heart_vs16 * 40)
+    assert screen.cursor.x == 80
+    assert screen.buffer[0][0].data == heart_vs16
+    assert screen.buffer[0][1].data == ''
+
+
+def test_heart_bare_is_narrow():
+    screen = pyte.Screen(80, 1)
+    # RED HEART (text presentation): ❤  (narrow)
+    heart_bare = '\u2764'
+    screen.draw(heart_bare * 80)
+    assert screen.cursor.x == 80
+
+
+def test_zwj_emoji_40_in_80_columns():
+    screen = pyte.Screen(80, 1)
+    # MAN + ZWJ + WOMAN + ZWJ + GIRL (family): 👨‍👩‍👧
+    family = '\U0001F468\u200D\U0001F469\u200D\U0001F467'
+    screen.draw(family * 40)
+    assert screen.cursor.x == 80
+    assert screen.buffer[0][0].data == family
+    assert screen.buffer[0][1].data == ''
+
+
+def test_flag_emoji_40_in_80_columns():
+    screen = pyte.Screen(80, 1)
+    # REGIONAL INDICATOR U + REGIONAL INDICATOR S (US flag): 🇺🇸
+    flag_us = '\U0001F1FA\U0001F1F8'
+    screen.draw(flag_us * 40)
+    assert screen.cursor.x == 80
+    assert screen.buffer[0][0].data == flag_us
+    assert screen.buffer[0][1].data == ''
+
+
+def test_mixed_emoji_widths():
+    screen = pyte.Screen(10, 1)
+    # ❤ (width 1) + ❤️ (width 2) + 🇺🇸 (width 2) + 'a' (width 1) = 6
+    text = '\u2764' + '\u2764\ufe0f' + '\U0001F1FA\U0001F1F8' + 'a'
+    screen.draw(text)
+    assert screen.cursor.x == 6
+
+
+@pytest.mark.parametrize(("grapheme", "expected_width"), [
+    ('\U0001F44B\U0001F3FB', 2),
+    ('\U0001F469\U0001F3FB\u200D\U0001F4BB', 2),
+    ('\U0001F9D1\U0001F3FB\u200D\u2764\uFE0F\u200D\U0001F48B\u200D\U0001F9D1\U0001F3FD', 2),
+    ('\u26F9\U0001F3FB\u200D\u2640\uFE0F', 2),
+], ids=['wave_skin', 'woman_technologist', 'kiss_couple', 'person_ball_female'])
+def test_wide_grapheme_cluster(grapheme, expected_width):
+    """Wide grapheme clusters occupy expected width and store as single unit."""
+    screen = pyte.Screen(10, 1)
+    screen.draw(grapheme)
+    assert screen.cursor.x == expected_width
+    assert screen.buffer[0][0].data == grapheme
+    assert screen.buffer[0][1].data == ''
+
+
+@pytest.mark.parametrize(("grapheme",), [
+    ('cafe\u0301',),
+    ('ok\u1100\u1161ok',),
+    ('ok\uAC00\u11A8ok',),
+], ids=['combining_accent', 'hangul_lv', 'hangul_lvt'])
+def test_grapheme_cluster_in_context(grapheme):
+    """Grapheme clusters with combining/jamo characters stored correctly."""
+    screen = pyte.Screen(10, 1)
+    screen.draw(grapheme)
+    assert screen.buffer[0][2].data in ('\u1100\u1161', '\uAC00\u11A8', 'f')
+    if grapheme.startswith('cafe'):
+        assert screen.buffer[0][3].data == 'e\u0301'
+
+
+def test_regional_indicator_graphemes():
+    """Regional indicator pairs form flags; odd RI stays separate."""
+    screen = pyte.Screen(10, 1)
+    # four unicode RI's make two flags, 4 total cells
+    screen.draw('\U0001F1FA\U0001F1F8\U0001F1E6\U0001F1FA')
+    assert screen.cursor.x == 4
+    assert screen.buffer[0][0].data == '\U0001F1FA\U0001F1F8'
+    assert screen.buffer[0][2].data == '\U0001F1E6\U0001F1FA'
+
+
 def test_carriage_return():
     screen = pyte.Screen(3, 3)
     screen.cursor.x = 2
