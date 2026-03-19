@@ -351,7 +351,7 @@ class Screen:
         self.lines, self.columns = lines, columns
         self.set_margins()
 
-    def set_margins(self, top: int | None = None, bottom: int | None = None) -> None:
+    def set_margins(self, top: int | None = None, bottom: int | None = None, *args: object, private: bool = False) -> None:
         """Select top and bottom margins for the scrolling region.
 
         :param int top: the smallest line number that is scrolled.
@@ -665,7 +665,7 @@ class Screen:
             self.reset_mode(mo.DECOM)
             self.cursor_position()
 
-    def insert_lines(self, count: int | None = None) -> None:
+    def insert_lines(self, count: int | None = None, *args: object, private: bool = False) -> None:
         """Insert the indicated # of lines at line with cursor. Lines
         displayed **at** and below the cursor move down. Lines moved
         past the bottom margin are lost.
@@ -685,7 +685,7 @@ class Screen:
 
             self.carriage_return()
 
-    def delete_lines(self, count: int | None = None) -> None:
+    def delete_lines(self, count: int | None = None, *args: object, private: bool = False) -> None:
         """Delete the indicated # of lines, starting at line with
         cursor. As lines are deleted, lines displayed below cursor
         move up. Lines added to bottom of screen have spaces with same
@@ -708,7 +708,7 @@ class Screen:
 
             self.carriage_return()
 
-    def insert_characters(self, count: int | None = None) -> None:
+    def insert_characters(self, count: int | None = None, *args: object, private: bool = False) -> None:
         """Insert the indicated # of blank characters at the cursor
         position. The cursor does not move and remains at the beginning
         of the inserted blank characters. Data on the line is shifted
@@ -725,7 +725,7 @@ class Screen:
                 line[x + count] = line[x]
             line.pop(x, None)
 
-    def delete_characters(self, count: int | None = None) -> None:
+    def delete_characters(self, count: int | None = None, *args: object, private: bool = False) -> None:
         """Delete the indicated # of characters, starting with the
         character at cursor position. When a character is deleted, all
         characters to the right of cursor move left. Character attributes
@@ -743,7 +743,7 @@ class Screen:
             else:
                 line.pop(x, None)
 
-    def erase_characters(self, count: int | None = None) -> None:
+    def erase_characters(self, count: int | None = None, *args: object, private: bool = False) -> None:
         """Erase the indicated # of characters, starting with the
         character at cursor position. Character attributes are set
         cursor attributes. The cursor remains in the same position.
@@ -765,7 +765,7 @@ class Screen:
                        min(self.cursor.x + count, self.columns)):
             line[x] = self.cursor.attrs
 
-    def erase_in_line(self, how: int = 0, private: bool = False) -> None:
+    def erase_in_line(self, how: int = 0, *args: object, private: bool = False) -> None:
         """Erase a line in a specific way.
 
         Character attributes are set to cursor attributes.
@@ -787,6 +787,8 @@ class Screen:
             interval = range(self.cursor.x + 1)
         elif how == 2:
             interval = range(self.columns)
+        else:
+            return # Invalid value for `how`.
 
         line = self.buffer[self.cursor.y]
         for x in interval:
@@ -821,6 +823,8 @@ class Screen:
             interval = range(self.cursor.y)
         elif how == 2 or how == 3:
             interval = range(self.lines)
+        else:
+            return  # Invalid value for `how`.
 
         self.dirty.update(interval)
         for y in interval:
@@ -835,7 +839,7 @@ class Screen:
         """Set a horizontal tab stop at cursor position."""
         self.tabstops.add(self.cursor.x)
 
-    def clear_tab_stop(self, how: int = 0) -> None:
+    def clear_tab_stop(self, how: int = 0, *args: object, private: bool = False) -> None:
         """Clear a horizontal tab stop.
 
         :param int how: defines a way the tab stop should be cleared:
@@ -870,7 +874,7 @@ class Screen:
 
         self.cursor.y = min(max(top, self.cursor.y), bottom)
 
-    def cursor_up(self, count: int | None = None) -> None:
+    def cursor_up(self, count: int | None = None, *args: object, private: bool = False) -> None:
         """Move cursor up the indicated # of lines in same column.
         Cursor stops at top margin.
 
@@ -879,7 +883,7 @@ class Screen:
         top, _bottom = self.margins or Margins(0, self.lines - 1)
         self.cursor.y = max(self.cursor.y - (count or 1), top)
 
-    def cursor_up1(self, count: int | None = None) -> None:
+    def cursor_up1(self, count: int | None = None, *args: object, private: bool = False) -> None:
         """Move cursor up the indicated # of lines to column 1. Cursor
         stops at bottom margin.
 
@@ -888,7 +892,7 @@ class Screen:
         self.cursor_up(count)
         self.carriage_return()
 
-    def cursor_down(self, count: int | None = None) -> None:
+    def cursor_down(self, count: int | None = None, *args: object, private: bool = False) -> None:
         """Move cursor down the indicated # of lines in same column.
         Cursor stops at bottom margin.
 
@@ -897,7 +901,7 @@ class Screen:
         _top, bottom = self.margins or Margins(0, self.lines - 1)
         self.cursor.y = min(self.cursor.y + (count or 1), bottom)
 
-    def cursor_down1(self, count: int | None = None) -> None:
+    def cursor_down1(self, count: int | None = None, *args: object, private: bool = False) -> None:
         """Move cursor down the indicated # of lines to column 1.
         Cursor stops at bottom margin.
 
@@ -906,7 +910,7 @@ class Screen:
         self.cursor_down(count)
         self.carriage_return()
 
-    def cursor_back(self, count: int | None = None) -> None:
+    def cursor_back(self, count: int | None = None, *args: object, private: bool = False) -> None:
         """Move cursor left the indicated # of columns. Cursor stops
         at left margin.
 
@@ -920,7 +924,7 @@ class Screen:
         self.cursor.x -= count or 1
         self.ensure_hbounds()
 
-    def cursor_forward(self, count: int | None = None) -> None:
+    def cursor_forward(self, count: int | None = None, *args: object, private: bool = False) -> None:
         """Move cursor right the indicated # of columns. Cursor stops
         at right margin.
 
@@ -929,7 +933,7 @@ class Screen:
         self.cursor.x += count or 1
         self.ensure_hbounds()
 
-    def cursor_position(self, line: int | None = None, column: int | None = None) -> None:
+    def cursor_position(self, line: int | None = None, column: int | None = None, *args: object, private: bool = False) -> None:
         """Set the cursor to a specific `line` and `column`.
 
         Cursor is allowed to move out of the scrolling region only when
@@ -956,7 +960,7 @@ class Screen:
         self.ensure_hbounds()
         self.ensure_vbounds()
 
-    def cursor_to_column(self, column: int | None = None) -> None:
+    def cursor_to_column(self, column: int | None = None, *args: object, private: bool = False) -> None:
         """Move cursor to a specific column in the current line.
 
         :param int column: column number to move the cursor to.
@@ -964,7 +968,7 @@ class Screen:
         self.cursor.x = (column or 1) - 1
         self.ensure_hbounds()
 
-    def cursor_to_line(self, line: int | None = None) -> None:
+    def cursor_to_line(self, line: int | None = None, *args: object, private: bool = False) -> None:
         """Move cursor to a specific line in the current column.
 
         :param int line: line number to move the cursor to.
@@ -1046,7 +1050,7 @@ class Screen:
 
         self.cursor.attrs = self.cursor.attrs._replace(**replace)
 
-    def report_device_attributes(self, mode: int = 0, **kwargs: bool) -> None:
+    def report_device_attributes(self, mode: int = 0, *args: object, **kwargs: bool) -> None:
         """Report terminal identity.
 
         .. versionadded:: 0.5.0
@@ -1061,7 +1065,7 @@ class Screen:
         if mode == 0 and not kwargs.get("private"):
             self.write_process_input(ctrl.CSI + "?6c")
 
-    def report_device_status(self, mode: int) -> None:
+    def report_device_status(self, mode: int, *args: object, private: bool = False) -> None:
         """Report terminal status or cursor position.
 
         :param int mode: if 5 -- terminal status, 6 -- cursor position,

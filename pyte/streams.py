@@ -20,6 +20,7 @@
 """
 from __future__ import annotations
 
+import inspect
 import codecs
 import itertools
 import re
@@ -169,6 +170,39 @@ class Stream:
         self.listener = screen
         self._parser: ParserGenerator | None = None
         self._initialize_parser()
+        self._validate_screen_callbacks(screen)
+
+    def _validate_screen_callbacks(self, screen: Screen) -> None:
+        """
+        Ensure that all `csi` methods of the screen:
+        - take a `private: bool=...` keyword argument.
+        - accept any number of positional arguments.
+        """
+        for method_name in self.csi.values():
+            method = getattr(screen, method_name, None)
+            if method is not None:
+                sig = inspect.signature(method)
+
+                takes_args = any(
+                    param.kind == inspect.Parameter.VAR_POSITIONAL
+                    for param in sig.parameters.values()
+                )
+                takes_kwargs = any(
+                    param.kind == inspect.Parameter.VAR_KEYWORD
+                    for param in sig.parameters.values()
+                )
+
+                if "private" not in sig.parameters and not takes_kwargs:
+                    raise RuntimeError(
+                        f"Screen method {method_name!r} doesn't "
+                        "accept `private:bool=...` keyword argument"
+                    )
+
+                if not takes_args:
+                    raise RuntimeError(
+                        f"Screen method {method_name!r} doesn't "
+                        "accept arbitrary number of positional arguments."
+                    )
 
     def detach(self, screen: Screen) -> None:
         """Remove a given screen from the listener queue and fails
@@ -345,7 +379,10 @@ class Stream:
                         yield None
                         break
                     else:
-                        params.append(min(int(current or 0), 9999))
+                        try:
+                            params.append(min(int(current or 0), 9999))
+                        except ValueError:
+                            continue  # Not a valid integer literal.
 
                         if char == ";":
                             current = ""
