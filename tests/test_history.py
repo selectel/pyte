@@ -532,3 +532,30 @@ def test_erase_in_display():
     screen.erase_in_display(3)
     assert not screen.history.top
     assert not screen.history.bottom
+
+
+def test_alternate_screen_does_not_enter_history():
+    # Lines scrolled off the ALTERNATE screen must not reach scrollback. This is
+    # why paging a file with `less` does not leave the file in your terminal's
+    # history. Measured on tmux 3.6b: after a full-screen program scrolls 12
+    # lines inside 1049 and exits, `history_size` is still 0.
+    screen = pyte.HistoryScreen(5, 3, history=50)
+    screen.set_mode(mo.ALTBUF_1049)
+
+    for idx in range(9):
+        screen.draw("alt%d" % idx)
+        screen.carriage_return()
+        screen.linefeed()
+
+    assert not screen.history.top
+
+    screen.reset_mode(mo.ALTBUF_1049)
+    assert not screen.history.top
+
+    # The primary screen still feeds history normally.
+    for idx in range(5):
+        screen.draw("p%d" % idx)
+        screen.carriage_return()
+        screen.linefeed()
+
+    assert screen.history.top
