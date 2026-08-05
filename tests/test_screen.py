@@ -1747,13 +1747,22 @@ def test_alternate_screen_buffer_reset_leaves_it():
 
 def test_alternate_screen_buffer_resize_clips_offscreen_buffer():
     # Resizing while on the alternate screen must clip the saved primary one
-    # too, or exiting would restore an over-wide screen.
-    screen = update(pyte.Screen(6, 3), ["primar", "second", "third "])
+    # too, or exiting would restore a screen of the wrong shape. The expected
+    # value is taken from resizing WITHOUT entering the alternate screen rather
+    # than written by hand, so it cannot encode a bug in the clipping code.
+    def build():
+        return update(pyte.Screen(6, 3), ["primar", "second", "third "])
+
+    direct = build()
+    direct.resize(columns=3, lines=2)
+    expected = list(direct.display)
+
+    screen = build()
     screen.set_mode(mo.ALTBUF_1049)
     screen.resize(columns=3, lines=2)
     screen.reset_mode(mo.ALTBUF_1049)
     assert screen.columns == 3
-    assert screen.display == ["pri", "sec"]
+    assert screen.display == expected
     for line in screen.buffer.values():
         assert all(x < 3 for x in line)
 
@@ -1776,3 +1785,52 @@ def test_alternate_screen_buffer_via_escape_sequences():
     stream.feed(b"\x1b[?1049l")
     assert not screen.alternate_screen
     assert screen.display == ["main ", "     "]
+
+
+def test_alternate_screen_buffer_cursor_survives_inner_decsc():
+    # Full-screen programs use DECSC *inside* the alternate screen constantly.
+    # If 1049 shared the `savepoints` stack with DECSC, an unbalanced ESC 7 in
+    # there would leave the wrong savepoint on top and exiting would restore the
+    # program's internal cursor instead of the shell's. Measured on tmux 3.6b:
+    # the cursor comes back to where it was before entering.
+    screen = pyte.Screen(20, 5)
+    stream = pyte.ByteStream(screen)
+    stream.feed(b"\x1b[3;7H")
+    assert (screen.cursor.y, screen.cursor.x) == (2, 6)
+
+    stream.feed(b"\x1b[?1049h")
+    stream.feed(b"\x1b[1;1H\x1b7")          # DECSC inside the alternate screen
+    stream.feed(b"\x1b[?1049l")
+    assert (screen.cursor.y, screen.cursor.x) == (2, 6)
+
+    stream.feed(b"X")
+    assert screen.display[2].startswith("      X")
+
+
+def test_alternate_screen_buffer_unpaired_exit_keeps_cursor():
+    # A stray 1049l with no matching 1049h must not move the cursor. Falling
+    # through to restore_cursor's empty-stack behaviour would home it.
+    screen = pyte.Screen(10, 4)
+    screen.cursor_position(3, 5)
+    screen.reset_mode(mo.ALTBUF_1049)
+    assert (screen.cursor.y, screen.cursor.x) == (2, 4)
+
+
+def test_alternate_screen_buffer_resize_shrink_drops_from_top():
+    # Shrinking drops rows from the TOP; the saved primary buffer must be
+    # clipped the same way the displayed one is, or exiting restores the wrong
+    # half. Compared against resizing without ever entering the alternate screen.
+    def build():
+        s = pyte.Screen(6, 4)
+        pyte.ByteStream(s).feed(b"AAA\r\nBBB\r\nCCC\r\nDDD")
+        return s
+
+    direct = build()
+    direct.resize(lines=2, columns=6)
+    expected = [row.rstrip() for row in direct.display]
+
+    via_alt = build()
+    via_alt.set_mode(mo.ALTBUF_1049)
+    via_alt.resize(lines=2, columns=6)
+    via_alt.reset_mode(mo.ALTBUF_1049)
+    assert [row.rstrip() for row in via_alt.display] == expected == ["CCC", "DDD"]

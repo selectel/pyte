@@ -251,6 +251,9 @@ class Screen:
         # leaves the alternate buffer.
         self._offscreen_buffer: dict[int, StaticDefaultDict[int, Char]] | None = None
         self._alternate_screen = False
+        # Cursor saved by 1048/1049. Deliberately NOT the `savepoints` stack:
+        # see _save_alt_cursor.
+        self._alt_savepoint: Savepoint | None = None
         self.reset()
         self.mode = _DEFAULT_MODE.copy()
         self.margins: Margins | None = None
@@ -327,6 +330,33 @@ class Screen:
         self._alternate_screen = alternate
         self.dirty.update(range(self.lines))
 
+    def _save_alt_cursor(self) -> None:
+        """Save the cursor for 1048/1049 in a slot of its own.
+
+        Routing this through :meth:`save_cursor` would share the ``savepoints``
+        stack with DECSC, and full-screen programs use DECSC *inside* the
+        alternate screen constantly. An unbalanced ``ESC 7`` in there would leave
+        the wrong savepoint on top, so exiting restored the program's internal
+        cursor instead of the shell's. Measured on tmux 3.6b: park at row 3
+        col 7, enter 1049, ``ESC [ 1 ; 1 H`` + ``ESC 7``, exit -- the cursor
+        comes back to row 3 col 7.
+        """
+        self.save_cursor()
+        self._alt_savepoint = self.savepoints.pop()
+
+    def _restore_alt_cursor(self) -> None:
+        """Restore the cursor saved by :meth:`_save_alt_cursor`, if any.
+
+        With no saved cursor nothing happens, rather than falling through to
+        ``restore_cursor``'s empty-stack behaviour of homing the cursor: a
+        stray ``ESC [ ? 1 0 4 9 l`` must not move the cursor.
+        """
+        if self._alt_savepoint is None:
+            return
+        self.savepoints.append(self._alt_savepoint)
+        self._alt_savepoint = None
+        self.restore_cursor()
+
     def reset(self) -> None:
         """Reset the terminal to its initial state.
 
@@ -351,6 +381,7 @@ class Screen:
         # RIS leaves the alternate screen buffer; both buffers are discarded.
         self._offscreen_buffer = None
         self._alternate_screen = False
+        self._alt_savepoint = None
 
         self.mode = _DEFAULT_MODE.copy()
 
@@ -409,18 +440,27 @@ class Screen:
                 for x in range(columns, self.columns):
                     line.pop(x, None)
 
-        # The offscreen buffer must be clipped too, or a program that resizes
-        # while on the alternate screen would restore an over-wide primary
-        # screen on exit.
+        # The offscreen buffer must be clipped the same way, or a program that
+        # resizes while on the alternate screen would restore a primary screen
+        # of the wrong shape on exit. Shrinking drops rows from the TOP, exactly
+        # as the displayed buffer does above via `delete_lines` -- clipping the
+        # bottom instead would keep the wrong half.
         offscreen = self._offscreen_buffer
         if offscreen is not None:
+            if lines < self.lines:
+                drop = self.lines - lines
+                for y in range(lines):
+                    row = offscreen.pop(y + drop, None)
+                    if row is not None:
+                        offscreen[y] = row
+                    else:
+                        offscreen.pop(y, None)
+                for y in range(lines, self.lines):
+                    offscreen.pop(y, None)
             if columns < self.columns:
                 for line in offscreen.values():
                     for x in range(columns, self.columns):
                         line.pop(x, None)
-            if lines < self.lines:
-                for y in range(lines, self.lines):
-                    offscreen.pop(y, None)
 
         self.lines, self.columns = lines, columns
         self.set_margins()
@@ -504,7 +544,7 @@ class Screen:
         # Switch to the alternate screen buffer. 1049 is defined as 1047
         # combined with 1048, so the cursor is saved before switching.
         if mo.ALTBUF_1048 in mode_list or mo.ALTBUF_1049 in mode_list:
-            self.save_cursor()
+            self._save_alt_cursor()
 
         if (mo.ALTBUF_1049 in mode_list or mo.ALTBUF_1047 in mode_list
                 or mo.ALTBUF_47 in mode_list):
@@ -558,7 +598,7 @@ class Screen:
             self._switch_screen_buffer(alternate=False)
 
         if mo.ALTBUF_1048 in mode_list or mo.ALTBUF_1049 in mode_list:
-            self.restore_cursor()
+            self._restore_alt_cursor()
 
     def define_charset(self, code: str, mode: str) -> None:
         """Define ``G0`` or ``G1`` charset.
