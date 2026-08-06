@@ -57,3 +57,31 @@ DECAWM = 7 << 5
 #: *Column Mode*: selects the number of columns per line (80 or 132)
 #: on the screen.
 DECCOLM = 3 << 5
+
+
+# Private modes: xterm extensions.
+# ................................
+
+#: *Use Alternate Screen Buffer*: switches to a secondary screen buffer,
+#: leaving the primary one saved and intact. Like :data:`ALTBUF_1047` and
+#: :data:`ALTBUF_1049` the alternate buffer starts empty and is discarded on
+#: exit; unlike :data:`ALTBUF_1049` the cursor is not saved or restored.
+ALTBUF_47 = 47 << 5
+
+#: *Use Alternate Screen Buffer*: switches buffers exactly as
+#: :data:`ALTBUF_47` does. The xterm documentation distinguishes the two by
+#: when they clear, but no reference implementation preserves alternate-screen
+#: contents across a round trip, so there is nothing to distinguish.
+ALTBUF_1047 = 1047 << 5
+
+#: *Save Cursor*: saves the cursor as ``DECSC`` does on set, and restores
+#: it as ``DECRC`` does on reset, without switching buffers.
+ALTBUF_1048 = 1048 << 5
+
+#: *Save Cursor and Use Alternate Screen Buffer*: the combination of
+#: :data:`ALTBUF_1047` and :data:`ALTBUF_1048` -- saves the cursor, then
+#: switches to the alternate buffer and clears it. Leaving switches back and
+#: restores the cursor. This is the mode ``terminfo``-based applications use,
+#: and the one full-screen programs such as ``vim``, ``less`` and ``htop``
+#: emit in practice.
+ALTBUF_1049 = 1049 << 5

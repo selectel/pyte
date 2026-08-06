@@ -1617,3 +1617,314 @@ def test_private_sgr_sequence_ignored():
     assert screen.display == display
     assert screen.mode == mode
     assert cursor_state(screen.cursor) == cursor
+
+
+def test_alternate_screen_buffer():
+    # Entering saves the primary screen and starts from an empty alternate one.
+    screen = update(pyte.Screen(4, 2), ["main", "text"])
+    assert not screen.alternate_screen
+
+    screen.set_mode(mo.ALTBUF_1049)
+    assert screen.alternate_screen
+    assert screen.display == ["    ", "    "]
+
+    # ... and the primary screen comes back untouched on the way out.
+    screen.draw("alt")
+    assert screen.display == ["alt ", "    "]
+    screen.reset_mode(mo.ALTBUF_1049)
+    assert not screen.alternate_screen
+    assert screen.display == ["main", "text"]
+
+
+def test_alternate_screen_buffer_does_not_home_cursor():
+    # xterm clears the alternate buffer without homing the cursor, and both
+    # tmux 3.6b and GNU screen agree: text drawn right after entering lands on
+    # the row the cursor was already on.
+    screen = pyte.Screen(4, 3)
+    screen.draw("ab")
+    screen.carriage_return()
+    screen.linefeed()
+    assert (screen.cursor.y, screen.cursor.x) == (1, 0)
+
+    screen.set_mode(mo.ALTBUF_1049)
+    assert screen.cursor.y == 1
+    screen.draw("alt")
+    assert screen.display == ["    ", "alt ", "    "]
+
+
+def test_alternate_screen_buffer_cursor_save_restore():
+    # 1049 is defined as 1047 combined with 1048, so it saves and restores the
+    # cursor; 47 does neither.
+    screen = pyte.Screen(6, 3)
+    screen.cursor_position(3, 5)
+    screen.set_mode(mo.ALTBUF_1049)
+    screen.cursor_position(1, 1)
+    screen.reset_mode(mo.ALTBUF_1049)
+    assert (screen.cursor.y, screen.cursor.x) == (2, 4)
+
+    screen = pyte.Screen(6, 3)
+    screen.cursor_position(3, 5)
+    screen.set_mode(mo.ALTBUF_47)
+    screen.cursor_position(1, 1)
+    screen.reset_mode(mo.ALTBUF_47)
+    assert (screen.cursor.y, screen.cursor.x) == (0, 0)
+
+
+def test_alternate_screen_buffer_1048_only_moves_cursor():
+    # 1048 saves/restores the cursor without switching buffers at all.
+    screen = update(pyte.Screen(4, 2), ["main", "text"])
+    screen.cursor_position(2, 3)
+    screen.set_mode(mo.ALTBUF_1048)
+    assert not screen.alternate_screen
+    assert screen.display == ["main", "text"]
+
+    screen.cursor_position(1, 1)
+    screen.reset_mode(mo.ALTBUF_1048)
+    assert (screen.cursor.y, screen.cursor.x) == (1, 2)
+    assert screen.display == ["main", "text"]
+
+
+def test_alternate_screen_buffer_is_idempotent():
+    # A program emitting 1049h twice must not lose the primary screen -- if the
+    # second entry overwrote the saved buffer, exiting would restore the
+    # alternate screen instead.
+    screen = update(pyte.Screen(4, 2), ["main", "text"])
+    screen.set_mode(mo.ALTBUF_1049)
+    screen.draw("alt")
+    screen.set_mode(mo.ALTBUF_1049)
+    screen.reset_mode(mo.ALTBUF_1049)
+    assert screen.display == ["main", "text"]
+
+    # Leaving twice is equally harmless.
+    screen.reset_mode(mo.ALTBUF_1049)
+    assert not screen.alternate_screen
+    assert screen.display == ["main", "text"]
+
+
+def test_alternate_screen_buffer_leaving_without_entering():
+    screen = update(pyte.Screen(4, 2), ["main", "text"])
+    screen.reset_mode(mo.ALTBUF_1049)
+    assert not screen.alternate_screen
+    assert screen.display == ["main", "text"]
+
+
+@pytest.mark.parametrize("enter", [mo.ALTBUF_47, mo.ALTBUF_1047, mo.ALTBUF_1049])
+@pytest.mark.parametrize("leave", [mo.ALTBUF_47, mo.ALTBUF_1047, mo.ALTBUF_1049])
+def test_alternate_screen_buffer_modes_share_one_switch(enter, leave):
+    # The reference emulators keep a single buffer-switch flag rather than
+    # per-mode state, so any of the three modes leaves a buffer entered with any
+    # other (measured on tmux 3.6b and GNU screen 4.00.03).
+    screen = update(pyte.Screen(4, 2), ["main", "text"])
+    screen.set_mode(enter)
+    assert screen.alternate_screen
+    screen.draw("alt")
+    screen.reset_mode(leave)
+    assert not screen.alternate_screen
+    assert screen.display == ["main", "text"]
+
+
+def test_alternate_screen_buffer_not_kept_across_a_round_trip():
+    # Re-entering shows an EMPTY alternate screen, whichever mode is used. The
+    # xterm docs' "without clearing" wording for 47/1047 describes clearing, not
+    # buffer lifetime; both reference emulators discard the contents.
+    screen = pyte.Screen(8, 2)
+    screen.set_mode(mo.ALTBUF_47)
+    screen.draw("altdata")
+    screen.reset_mode(mo.ALTBUF_47)
+    screen.set_mode(mo.ALTBUF_47)
+    assert screen.display == ["        ", "        "]
+
+
+def test_alternate_screen_buffer_reset_leaves_it():
+    # RIS returns to the primary screen; both buffers are discarded.
+    screen = update(pyte.Screen(4, 2), ["main", "text"])
+    screen.set_mode(mo.ALTBUF_1049)
+    screen.draw("alt")
+    screen.reset()
+    assert not screen.alternate_screen
+    assert screen.display == ["    ", "    "]
+
+
+def test_alternate_screen_buffer_resize_clips_offscreen_buffer():
+    # Resizing while on the alternate screen must clip the saved primary one
+    # too, or exiting would restore a screen of the wrong shape. The expected
+    # value is taken from resizing WITHOUT entering the alternate screen rather
+    # than written by hand, so it cannot encode a bug in the clipping code.
+    def build():
+        return update(pyte.Screen(6, 3), ["primar", "second", "third "])
+
+    direct = build()
+    direct.resize(columns=3, lines=2)
+    expected = list(direct.display)
+
+    screen = build()
+    screen.set_mode(mo.ALTBUF_1049)
+    screen.resize(columns=3, lines=2)
+    screen.reset_mode(mo.ALTBUF_1049)
+    assert screen.columns == 3
+    assert screen.display == expected
+    for line in screen.buffer.values():
+        assert all(x < 3 for x in line)
+
+
+def test_alternate_screen_buffer_via_escape_sequences():
+    # End to end through the stream, which is how a real program drives this:
+    # `vim`, `less` and `htop` all emit exactly these two sequences.
+    screen = pyte.Screen(5, 2)
+    stream = pyte.ByteStream(screen)
+    stream.feed(b"main\r\n")
+    assert screen.display == ["main ", "     "]
+
+    stream.feed(b"\x1b[?1049h")
+    assert screen.alternate_screen
+    assert screen.display == ["     ", "     "]
+
+    stream.feed(b"ALT")
+    assert screen.display == ["     ", "ALT  "]
+
+    stream.feed(b"\x1b[?1049l")
+    assert not screen.alternate_screen
+    assert screen.display == ["main ", "     "]
+
+
+def test_alternate_screen_buffer_cursor_survives_inner_decsc():
+    # Full-screen programs use DECSC *inside* the alternate screen constantly.
+    # If 1049 shared the `savepoints` stack with DECSC, an unbalanced ESC 7 in
+    # there would leave the wrong savepoint on top and exiting would restore the
+    # program's internal cursor instead of the shell's. Measured on tmux 3.6b:
+    # the cursor comes back to where it was before entering.
+    screen = pyte.Screen(20, 5)
+    stream = pyte.ByteStream(screen)
+    stream.feed(b"\x1b[3;7H")
+    assert (screen.cursor.y, screen.cursor.x) == (2, 6)
+
+    stream.feed(b"\x1b[?1049h")
+    stream.feed(b"\x1b[1;1H\x1b7")          # DECSC inside the alternate screen
+    stream.feed(b"\x1b[?1049l")
+    assert (screen.cursor.y, screen.cursor.x) == (2, 6)
+
+    stream.feed(b"X")
+    assert screen.display[2].startswith("      X")
+
+
+def test_alternate_screen_buffer_unpaired_exit_keeps_cursor():
+    # A stray 1049l with no matching 1049h must not move the cursor. Falling
+    # through to restore_cursor's empty-stack behaviour would home it.
+    screen = pyte.Screen(10, 4)
+    screen.cursor_position(3, 5)
+    screen.reset_mode(mo.ALTBUF_1049)
+    assert (screen.cursor.y, screen.cursor.x) == (2, 4)
+
+
+def test_alternate_screen_buffer_resize_shrink_drops_from_top():
+    # Shrinking drops rows from the TOP; the saved primary buffer must be
+    # clipped the same way the displayed one is, or exiting restores the wrong
+    # half. Compared against resizing without ever entering the alternate screen.
+    def build():
+        s = pyte.Screen(6, 4)
+        pyte.ByteStream(s).feed(b"AAA\r\nBBB\r\nCCC\r\nDDD")
+        return s
+
+    direct = build()
+    direct.resize(lines=2, columns=6)
+    expected = [row.rstrip() for row in direct.display]
+
+    via_alt = build()
+    via_alt.set_mode(mo.ALTBUF_1049)
+    via_alt.resize(lines=2, columns=6)
+    via_alt.reset_mode(mo.ALTBUF_1049)
+    assert [row.rstrip() for row in via_alt.display] == expected == ["CCC", "DDD"]
+
+
+def test_alternate_screen_buffer_nested_entry_keeps_first_cursor():
+    # A program emitting smcup twice must not lose the shell's cursor. Measured
+    # on tmux 3.6b: `ESC[3;7H smcup ESC[5;15H smcup rmcup` restores the cursor to
+    # row 3 col 7 -- identical to the single-smcup case, so the second entry does
+    # not re-save. The buffer switch was already idempotent; the cursor save was
+    # not, which made the two disagree.
+    screen = pyte.Screen(20, 6)
+    stream = pyte.ByteStream(screen)
+    stream.feed(b"\x1b[3;7H\x1b[?1049h\x1b[5;15H\x1b[?1049h\x1b[?1049lX")
+    assert (screen.cursor.y, screen.cursor.x) == (2, 7)
+    assert screen.display[2].startswith("      X")
+
+    # 1048 on its own is an explicit DECSC and must still re-save -- including
+    # while the alternate screen is already up, which is where a full-screen
+    # program would use it. Suppressing 1048 along with the nested 1049 would be
+    # an over-correction, so both cases are pinned.
+    screen = pyte.Screen(20, 6)
+    stream = pyte.ByteStream(screen)
+    stream.feed(b"\x1b[2;5H\x1b[?1048h\x1b[5;1Hjunk\x1b[?1048lX")
+    assert screen.display[1].startswith("    X")
+
+    screen = pyte.Screen(20, 6)
+    stream = pyte.ByteStream(screen)
+    stream.feed(b"\x1b[?1049h")            # already on the alternate screen
+    stream.feed(b"\x1b[2;5H\x1b[?1048h")  # explicit DECSC in here must save
+    stream.feed(b"\x1b[5;1Hjunk\x1b[?1048lX")
+    assert screen.display[1].startswith("    X"), screen.display[:3]
+
+
+@pytest.mark.parametrize("enter,leave", [(b"\x1b[?5h", b"\x1b[?5l"),
+                                         (b"\x1b[?5l", b"\x1b[?5h")])
+def test_alternate_screen_buffer_decscnm_reaches_both_buffers(enter, leave):
+    # DECSCNM is a property of the SCREEN, but pyte realises it by rewriting each
+    # cell. Rewriting only the displayed buffer left the other one disagreeing
+    # with self.mode, so a program that toggled reverse video while on the
+    # alternate screen restored a primary screen whose cells contradicted the
+    # mode bit. Compared against never entering the alternate screen at all.
+    def build(via_alt):
+        s = pyte.Screen(4, 2)
+        st = pyte.ByteStream(s)
+        st.feed(enter + b"ab")
+        if via_alt:
+            st.feed(b"\x1b[?1049h" + leave + b"\x1b[?1049l")
+        else:
+            st.feed(leave)
+        return s
+
+    direct, via_alt = build(False), build(True)
+    assert [via_alt.buffer[0][x].reverse for x in range(4)] == \
+           [direct.buffer[0][x].reverse for x in range(4)]
+    assert via_alt.buffer[0].default.reverse == direct.buffer[0].default.reverse
+
+
+def test_alternate_screen_buffer_1048_does_not_clobber_1049():
+    # 1048 is an independent DECSC that a program may issue WHILE the alternate
+    # screen is up, so it must not overwrite the cursor 1049 saved for the shell.
+    # Sharing one slot reintroduced exactly the defect the dedicated slot was
+    # added to fix for `ESC 7`, one commit earlier.
+    def cursor_after(payload):
+        screen = pyte.Screen(20, 8)
+        pyte.ByteStream(screen).feed(payload)
+        return (screen.cursor.y, screen.cursor.x)
+
+    base = b"\x1b[3;7H\x1b[?1049h\x1b[5;15H"
+    control = cursor_after(base + b"\x1b[?1049l")
+    assert control == (2, 6)
+    # DECSC inside the alternate screen: already covered, kept as the reference.
+    assert cursor_after(base + b"\x1b7\x1b[?1049l") == control
+    # 1048 inside the alternate screen must behave the same way.
+    assert cursor_after(base + b"\x1b[?1048h\x1b[?1049l") == control
+    assert cursor_after(base + b"\x1b[?1048h\x1b[?1048l\x1b[?1049l") == control
+
+    # 1048 must still SAVE while the alternate screen is up — suppressing it
+    # there would be an over-correction, and the paired case above cannot tell
+    # the difference (a suppressed save leaves an empty slot, so the restore is
+    # inert and 1049 supplies the same answer either way). This asserts the save
+    # actually happened, by moving between 1048h and 1048l.
+    screen = pyte.Screen(20, 8)
+    stream = pyte.ByteStream(screen)
+    stream.feed(b"\x1b[?1049h\x1b[2;5H\x1b[?1048h")
+    stream.feed(b"\x1b[6;1Hjunk\x1b[?1048lX")
+    assert screen.display[1].startswith("    X"), screen.display[:3]
+
+    # And 1048 must still work on its own, with an unpaired reset staying inert.
+    screen = pyte.Screen(20, 6)
+    pyte.ByteStream(screen).feed(
+        b"\x1b[2;5H\x1b[?1048h\x1b[5;1Hjunk\x1b[?1048lX")
+    assert screen.display[1].startswith("    X")
+
+    screen = pyte.Screen(20, 8)
+    pyte.ByteStream(screen).feed(b"\x1b[4;9H\x1b[?1048l")
+    assert (screen.cursor.y, screen.cursor.x) == (3, 8)

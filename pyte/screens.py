@@ -244,11 +244,38 @@ class Screen:
         self.savepoints: list[Savepoint] = []
         self.columns = columns
         self.lines = lines
-        self.buffer: dict[int, StaticDefaultDict[int, Char]] = defaultdict(lambda: StaticDefaultDict[int, Char](self.default_char))
+        self.buffer: dict[int, StaticDefaultDict[int, Char]] = self._make_buffer()
         self.dirty: set[int] = set()
+        # The screen buffer which is currently NOT displayed, or None while only
+        # one buffer has ever been used. Set up before reset() because reset()
+        # leaves the alternate buffer.
+        self._offscreen_buffer: dict[int, StaticDefaultDict[int, Char]] | None = None
+        # Cursors saved by 1049 and by 1048, in SEPARATE slots. Deliberately
+        # not the `savepoints` stack (see _save_alt_cursor), and deliberately not
+        # shared with each other: 1048 is an independent DECSC that a program may
+        # issue while the alternate screen is up, and it must not overwrite the
+        # cursor smcup saved for the shell.
+        self._alt_savepoint: Savepoint | None = None
+        self._cursor_only_savepoint: Savepoint | None = None
         self.reset()
         self.mode = _DEFAULT_MODE.copy()
         self.margins: Margins | None = None
+
+    def _make_buffer(self) -> dict[int, StaticDefaultDict[int, Char]]:
+        return defaultdict(lambda: StaticDefaultDict[int, Char](self.default_char))
+
+    def _all_buffers(self) -> Generator[StaticDefaultDict[int, Char]]:
+        """Every line of both buffers, for screen-wide modes.
+
+        DECSCNM is a property of the SCREEN, but pyte realises it by rewriting
+        each cell. Rewriting only the displayed buffer would leave the other one
+        disagreeing with ``self.mode``, so a program that toggled reverse video
+        while on the alternate screen restored a primary screen whose cells and
+        whose mode bit contradicted each other.
+        """
+        yield from self.buffer.values()
+        if self._offscreen_buffer is not None:
+            yield from self._offscreen_buffer.values()
 
     def __repr__(self) -> str:
         return ("{}({}, {})".format(self.__class__.__name__,
@@ -270,6 +297,90 @@ class Screen:
 
         return ["".join(render(self.buffer[y])) for y in range(self.lines)]
 
+    @property
+    def alternate_screen(self) -> bool:
+        """``True`` while the alternate screen buffer is displayed.
+
+        Derived rather than stored: the offscreen buffer exists exactly while the
+        alternate one is displayed, so a separate flag would only add a pair of
+        values that could disagree.
+
+        .. versionadded:: 0.8.3
+        """
+        return self._offscreen_buffer is not None
+
+    def _switch_screen_buffer(self, alternate: bool) -> None:
+        """Switch between the primary and the alternate screen buffer.
+
+        Entering saves the primary screen and starts from an empty alternate
+        one; leaving restores the primary screen and discards the alternate.
+
+        Both directions are idempotent, which is what makes the saved primary
+        screen safe: a program emitting ``ESC [ ? 1 0 4 9 h`` twice (or exiting
+        twice) must not lose it.
+
+        The cursor is deliberately left where it is: xterm clears the
+        alternate buffer without homing it.
+
+        All three modes behave identically here. The xterm documentation
+        distinguishes them by when they clear, but no reference
+        implementation preserves alternate-screen contents across a round
+        trip, so there is nothing for per-mode clear flags to distinguish.
+
+        :param bool alternate: switch to the alternate buffer if ``True``,
+                               back to the primary one otherwise.
+        """
+        if alternate == self.alternate_screen:
+            return
+
+        if alternate:
+            self._offscreen_buffer = self.buffer
+            self.buffer = self._make_buffer()
+        else:
+            # Unreachable-by-construction: the early return above means we only
+            # get here while the alternate screen is displayed, which is exactly
+            # when the offscreen buffer holds the primary one.
+            assert self._offscreen_buffer is not None
+            self.buffer = self._offscreen_buffer
+            self._offscreen_buffer = None
+
+        self.dirty.update(range(self.lines))
+
+    def _save_alt_cursor(self, cursor_only: bool = False) -> None:
+        """Save the cursor for 1049, or for 1048 when ``cursor_only``.
+
+        Routing this through :meth:`save_cursor` would share the ``savepoints``
+        stack with DECSC, and full-screen programs use DECSC *inside* the
+        alternate screen constantly. An unbalanced ``ESC 7`` in there would leave
+        the wrong savepoint on top, so exiting restored the program's internal
+        cursor instead of the shell's. 1048 gets a slot of its own for the
+        same reason: a program may issue it while the alternate screen is up,
+        and it must not overwrite the cursor smcup saved for the shell.
+        """
+        self.save_cursor()
+        if cursor_only:
+            self._cursor_only_savepoint = self.savepoints.pop()
+        else:
+            self._alt_savepoint = self.savepoints.pop()
+
+    def _restore_alt_cursor(self, cursor_only: bool = False) -> None:
+        """Restore what :meth:`_save_alt_cursor` saved for that mode, if any.
+
+        With no saved cursor nothing happens, rather than falling through to
+        ``restore_cursor``'s empty-stack behaviour of homing the cursor: a
+        stray ``ESC [ ? 1 0 4 9 l`` must not move the cursor.
+        """
+        saved = (self._cursor_only_savepoint if cursor_only
+                 else self._alt_savepoint)
+        if saved is None:
+            return
+        if cursor_only:
+            self._cursor_only_savepoint = None
+        else:
+            self._alt_savepoint = None
+        self.savepoints.append(saved)
+        self.restore_cursor()
+
     def reset(self) -> None:
         """Reset the terminal to its initial state.
 
@@ -290,6 +401,11 @@ class Screen:
         self.dirty.update(range(self.lines))
         self.buffer.clear()
         self.margins = None
+
+        # RIS leaves the alternate screen buffer; both buffers are discarded.
+        self._offscreen_buffer = None
+        self._alt_savepoint = None
+        self._cursor_only_savepoint = None
 
         self.mode = _DEFAULT_MODE.copy()
 
@@ -347,6 +463,28 @@ class Screen:
             for line in self.buffer.values():
                 for x in range(columns, self.columns):
                     line.pop(x, None)
+
+        # The offscreen buffer must be clipped the same way, or a program that
+        # resizes while on the alternate screen would restore a primary screen
+        # of the wrong shape on exit. Shrinking drops rows from the TOP, exactly
+        # as the displayed buffer does above via `delete_lines` -- clipping the
+        # bottom instead would keep the wrong half.
+        offscreen = self._offscreen_buffer
+        if offscreen is not None:
+            if lines < self.lines:
+                drop = self.lines - lines
+                for y in range(lines):
+                    row = offscreen.pop(y + drop, None)
+                    if row is not None:
+                        offscreen[y] = row
+                    else:
+                        offscreen.pop(y, None)
+                for y in range(lines, self.lines):
+                    offscreen.pop(y, None)
+            if columns < self.columns:
+                for line in offscreen.values():
+                    for x in range(columns, self.columns):
+                        line.pop(x, None)
 
         self.lines, self.columns = lines, columns
         self.set_margins()
@@ -416,7 +554,7 @@ class Screen:
 
         # Mark all displayed characters as reverse.
         if mo.DECSCNM in mode_list:
-            for line in self.buffer.values():
+            for line in self._all_buffers():
                 line.default = self.default_char
                 for x in line:
                     line[x] = line[x]._replace(reverse=True)
@@ -426,6 +564,24 @@ class Screen:
         # Make the cursor visible.
         if mo.DECTCEM in mode_list:
             self.cursor.hidden = False
+
+        # Switch to the alternate screen buffer. 1049 is defined as 1047
+        # combined with 1048, so the cursor is saved before switching.
+        #
+        # 1049 does not re-save while the alternate screen is already up: a
+        # program emitting smcup twice must not lose the shell's cursor. The
+        # buffer switch is idempotent for the same reason, and measured on tmux
+        # 3.6b the two agree -- `ESC[3;7H smcup ESC[5;15H smcup rmcup` restores
+        # the cursor to row 3 col 7, identical to the single-smcup case. 1048 on
+        # its own is an explicit DECSC and does re-save.
+        if mo.ALTBUF_1048 in mode_list:
+            self._save_alt_cursor(cursor_only=True)
+        if mo.ALTBUF_1049 in mode_list and not self.alternate_screen:
+            self._save_alt_cursor()
+
+        if (mo.ALTBUF_1049 in mode_list or mo.ALTBUF_1047 in mode_list
+                or mo.ALTBUF_47 in mode_list):
+            self._switch_screen_buffer(alternate=True)
 
     def reset_mode(self, *modes: int, **kwargs: Any) -> None:
         """Reset (disable) a given list of modes.
@@ -455,7 +611,7 @@ class Screen:
             self.cursor_position()
 
         if mo.DECSCNM in mode_list:
-            for line in self.buffer.values():
+            for line in self._all_buffers():
                 line.default = self.default_char
                 for x in line:
                     line[x] = line[x]._replace(reverse=False)
@@ -465,6 +621,19 @@ class Screen:
         # Hide the cursor.
         if mo.DECTCEM in mode_list:
             self.cursor.hidden = True
+
+        # Switch back to the primary screen buffer. Any of the three modes
+        # leaves it: the reference emulators keep a single buffer-switch flag
+        # rather than per-mode state, so `ESC [ ? 4 7 l` exits a buffer entered
+        # with 1049 and vice versa (measured on tmux 3.6b and GNU screen).
+        if (mo.ALTBUF_1049 in mode_list or mo.ALTBUF_1047 in mode_list
+                or mo.ALTBUF_47 in mode_list):
+            self._switch_screen_buffer(alternate=False)
+
+        if mo.ALTBUF_1049 in mode_list:
+            self._restore_alt_cursor()
+        if mo.ALTBUF_1048 in mode_list:
+            self._restore_alt_cursor(cursor_only=True)
 
     def define_charset(self, code: str, mode: str) -> None:
         """Define ``G0`` or ``G1`` charset.
@@ -1247,7 +1416,10 @@ class HistoryScreen(Screen):
         """Overloaded to update top history with the removed lines."""
         top, bottom = self.margins or Margins(0, self.lines - 1)
 
-        if self.cursor.y == bottom:
+        # Lines scrolled off the ALTERNATE screen must not enter scrollback:
+        # that is why paging a file with ``less`` does not leave the file in
+        # your terminal's history.
+        if self.cursor.y == bottom and not self.alternate_screen:
             self.history.top.append(self.buffer[top])
 
         super().index()
@@ -1256,7 +1428,7 @@ class HistoryScreen(Screen):
         """Overloaded to update bottom history with the removed lines."""
         top, bottom = self.margins or Margins(0, self.lines - 1)
 
-        if self.cursor.y == top:
+        if self.cursor.y == top and not self.alternate_screen:
             self.history.bottom.append(self.buffer[bottom])
 
         super().reverse_index()
@@ -1266,7 +1438,26 @@ class HistoryScreen(Screen):
         size is defined by ``history.ratio``, so for instance
         ``ratio = .5`` means that half the screen is restored from
         history on page switch.
+
+        Does nothing while the alternate screen is displayed.
+
+        .. versionchanged:: 0.8.3
+
+           Became a no-op on the alternate screen.
         """
+        # Paging is meaningless on the alternate screen and destructive there:
+        # it would splice primary-screen scrollback into the running
+        # full-screen program's display, and push that program's rows into
+        # history.bottom. Real terminals scroll back the primary screen only,
+        # which is why index/reverse_index are guarded the same way.
+        #
+        # next_page needs no such guard: `before_event` forces the history to
+        # the bottom on every non-paging event, and switching buffers is one, so
+        # by the time the alternate screen is up `position == size` and
+        # `history.bottom` is empty -- next_page is already inert. Guarding it
+        # too would be unobservable code.
+        if self.alternate_screen:
+            return
         if self.history.position > self.lines and self.history.top:
             mid = min(len(self.history.top),
                       int(math.ceil(self.lines * self.history.ratio)))

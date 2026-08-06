@@ -532,3 +532,82 @@ def test_erase_in_display():
     screen.erase_in_display(3)
     assert not screen.history.top
     assert not screen.history.bottom
+
+
+def test_alternate_screen_does_not_enter_history():
+    # Lines scrolled off the ALTERNATE screen must not reach scrollback. This is
+    # why paging a file with `less` does not leave the file in your terminal's
+    # history. Measured on tmux 3.6b: after a full-screen program scrolls 12
+    # lines inside 1049 and exits, `history_size` is still 0.
+    screen = pyte.HistoryScreen(5, 3, history=50)
+    screen.set_mode(mo.ALTBUF_1049)
+
+    for idx in range(9):
+        screen.draw("alt%d" % idx)
+        screen.carriage_return()
+        screen.linefeed()
+
+    assert not screen.history.top
+
+    screen.reset_mode(mo.ALTBUF_1049)
+    assert not screen.history.top
+
+    # The primary screen still feeds history normally.
+    for idx in range(5):
+        screen.draw("p%d" % idx)
+        screen.carriage_return()
+        screen.linefeed()
+
+    assert screen.history.top
+
+
+def test_alternate_screen_pagination_is_inert():
+    # Paging is meaningless on the alternate screen and destructive there: it
+    # spliced primary-screen scrollback into the running full-screen program's
+    # display and pushed that program's rows into history.bottom. index and
+    # reverse_index were already guarded; paging was not.
+    screen = pyte.HistoryScreen(8, 4, history=20, ratio=.5)
+    for idx in range(10):
+        screen.draw("main%d" % idx)
+        screen.carriage_return()
+        screen.linefeed()
+
+    screen.set_mode(mo.ALTBUF_1049)
+    screen.draw("PAGER-1")
+    before = list(screen.display)
+    history_before = len(screen.history.top), len(screen.history.bottom)
+
+    screen.prev_page()
+    assert list(screen.display) == before
+    assert (len(screen.history.top), len(screen.history.bottom)) == history_before
+    # next_page is deliberately NOT guarded: entering the alternate screen runs
+    # before_event, which forces the history to the bottom and empties
+    # history.bottom, so next_page is already inert here. Asserting on it would
+    # pass with or without a guard and prove nothing.
+
+    # Leaving restores the primary screen, and paging works again afterwards.
+    screen.reset_mode(mo.ALTBUF_1049)
+    screen.prev_page()
+    assert "main" in "".join(
+        screen.buffer[0][x].data for x in range(screen.columns))
+
+
+def test_alternate_screen_pagination_guard_cannot_hang_before_event():
+    # before_event forces `while position < size: next_page()` on every
+    # non-paging event. A guard that early-returns without advancing position
+    # would spin there forever, so pin down that entering the alternate screen
+    # leaves the history at the bottom.
+    screen = pyte.HistoryScreen(8, 4, history=20, ratio=.5)
+    for idx in range(12):
+        screen.draw("m%d" % idx)
+        screen.carriage_return()
+        screen.linefeed()
+
+    screen.prev_page()
+    assert screen.history.position < screen.history.size
+
+    screen.set_mode(mo.ALTBUF_1049)
+    assert screen.history.position == screen.history.size
+
+    screen.draw("X")  # any non-paging event; must return, not spin
+    assert screen.history.position == screen.history.size

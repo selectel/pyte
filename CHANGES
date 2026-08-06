@@ -10,6 +10,8 @@ Unreleased
 
 - The minimum Python version supported by pyte is now 3.10.
 - Fixed rendering of multi code-point emoji sequences.
+- Added support for the alternate screen buffer -- private modes ``47``,
+  ``1047``, ``1048`` and ``1049``. See issue #90 on GitHub.
 
 
 Version 0.8.2
