@@ -1887,3 +1887,44 @@ def test_alternate_screen_buffer_decscnm_reaches_both_buffers(enter, leave):
     assert [via_alt.buffer[0][x].reverse for x in range(4)] == \
            [direct.buffer[0][x].reverse for x in range(4)]
     assert via_alt.buffer[0].default.reverse == direct.buffer[0].default.reverse
+
+
+def test_alternate_screen_buffer_1048_does_not_clobber_1049():
+    # 1048 is an independent DECSC that a program may issue WHILE the alternate
+    # screen is up, so it must not overwrite the cursor 1049 saved for the shell.
+    # Sharing one slot reintroduced exactly the defect the dedicated slot was
+    # added to fix for `ESC 7`, one commit earlier.
+    def cursor_after(payload):
+        screen = pyte.Screen(20, 8)
+        pyte.ByteStream(screen).feed(payload)
+        return (screen.cursor.y, screen.cursor.x)
+
+    base = b"\x1b[3;7H\x1b[?1049h\x1b[5;15H"
+    control = cursor_after(base + b"\x1b[?1049l")
+    assert control == (2, 6)
+    # DECSC inside the alternate screen: already covered, kept as the reference.
+    assert cursor_after(base + b"\x1b7\x1b[?1049l") == control
+    # 1048 inside the alternate screen must behave the same way.
+    assert cursor_after(base + b"\x1b[?1048h\x1b[?1049l") == control
+    assert cursor_after(base + b"\x1b[?1048h\x1b[?1048l\x1b[?1049l") == control
+
+    # 1048 must still SAVE while the alternate screen is up — suppressing it
+    # there would be an over-correction, and the paired case above cannot tell
+    # the difference (a suppressed save leaves an empty slot, so the restore is
+    # inert and 1049 supplies the same answer either way). This asserts the save
+    # actually happened, by moving between 1048h and 1048l.
+    screen = pyte.Screen(20, 8)
+    stream = pyte.ByteStream(screen)
+    stream.feed(b"\x1b[?1049h\x1b[2;5H\x1b[?1048h")
+    stream.feed(b"\x1b[6;1Hjunk\x1b[?1048lX")
+    assert screen.display[1].startswith("    X"), screen.display[:3]
+
+    # And 1048 must still work on its own, with an unpaired reset staying inert.
+    screen = pyte.Screen(20, 6)
+    pyte.ByteStream(screen).feed(
+        b"\x1b[2;5H\x1b[?1048h\x1b[5;1Hjunk\x1b[?1048lX")
+    assert screen.display[1].startswith("    X")
+
+    screen = pyte.Screen(20, 8)
+    pyte.ByteStream(screen).feed(b"\x1b[4;9H\x1b[?1048l")
+    assert (screen.cursor.y, screen.cursor.x) == (3, 8)

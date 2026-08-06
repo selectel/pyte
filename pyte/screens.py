@@ -250,9 +250,13 @@ class Screen:
         # one buffer has ever been used. Set up before reset() because reset()
         # leaves the alternate buffer.
         self._offscreen_buffer: dict[int, StaticDefaultDict[int, Char]] | None = None
-        # Cursor saved by 1048/1049. Deliberately NOT the `savepoints` stack:
-        # see _save_alt_cursor.
+        # Cursors saved by 1049 and by 1048, in SEPARATE slots. Deliberately
+        # not the `savepoints` stack (see _save_alt_cursor), and deliberately not
+        # shared with each other: 1048 is an independent DECSC that a program may
+        # issue while the alternate screen is up, and it must not overwrite the
+        # cursor smcup saved for the shell.
         self._alt_savepoint: Savepoint | None = None
+        self._cursor_only_savepoint: Savepoint | None = None
         self.reset()
         self.mode = _DEFAULT_MODE.copy()
         self.margins: Margins | None = None
@@ -345,8 +349,8 @@ class Screen:
 
         self.dirty.update(range(self.lines))
 
-    def _save_alt_cursor(self) -> None:
-        """Save the cursor for 1048/1049 in a slot of its own.
+    def _save_alt_cursor(self, cursor_only: bool = False) -> None:
+        """Save the cursor for 1049, or for 1048 when ``cursor_only``.
 
         Routing this through :meth:`save_cursor` would share the ``savepoints``
         stack with DECSC, and full-screen programs use DECSC *inside* the
@@ -357,19 +361,27 @@ class Screen:
         comes back to row 3 col 7.
         """
         self.save_cursor()
-        self._alt_savepoint = self.savepoints.pop()
+        if cursor_only:
+            self._cursor_only_savepoint = self.savepoints.pop()
+        else:
+            self._alt_savepoint = self.savepoints.pop()
 
-    def _restore_alt_cursor(self) -> None:
-        """Restore the cursor saved by :meth:`_save_alt_cursor`, if any.
+    def _restore_alt_cursor(self, cursor_only: bool = False) -> None:
+        """Restore what :meth:`_save_alt_cursor` saved for that mode, if any.
 
         With no saved cursor nothing happens, rather than falling through to
         ``restore_cursor``'s empty-stack behaviour of homing the cursor: a
         stray ``ESC [ ? 1 0 4 9 l`` must not move the cursor.
         """
-        if self._alt_savepoint is None:
+        saved = (self._cursor_only_savepoint if cursor_only
+                 else self._alt_savepoint)
+        if saved is None:
             return
-        self.savepoints.append(self._alt_savepoint)
-        self._alt_savepoint = None
+        if cursor_only:
+            self._cursor_only_savepoint = None
+        else:
+            self._alt_savepoint = None
+        self.savepoints.append(saved)
         self.restore_cursor()
 
     def reset(self) -> None:
@@ -396,6 +408,7 @@ class Screen:
         # RIS leaves the alternate screen buffer; both buffers are discarded.
         self._offscreen_buffer = None
         self._alt_savepoint = None
+        self._cursor_only_savepoint = None
 
         self.mode = _DEFAULT_MODE.copy()
 
@@ -564,8 +577,9 @@ class Screen:
         # 3.6b the two agree -- `ESC[3;7H smcup ESC[5;15H smcup rmcup` restores
         # the cursor to row 3 col 7, identical to the single-smcup case. 1048 on
         # its own is an explicit DECSC and does re-save.
-        if mo.ALTBUF_1048 in mode_list or (
-                mo.ALTBUF_1049 in mode_list and not self.alternate_screen):
+        if mo.ALTBUF_1048 in mode_list:
+            self._save_alt_cursor(cursor_only=True)
+        if mo.ALTBUF_1049 in mode_list and not self.alternate_screen:
             self._save_alt_cursor()
 
         if (mo.ALTBUF_1049 in mode_list or mo.ALTBUF_1047 in mode_list
@@ -619,8 +633,10 @@ class Screen:
                 or mo.ALTBUF_47 in mode_list):
             self._switch_screen_buffer(alternate=False)
 
-        if mo.ALTBUF_1048 in mode_list or mo.ALTBUF_1049 in mode_list:
+        if mo.ALTBUF_1049 in mode_list:
             self._restore_alt_cursor()
+        if mo.ALTBUF_1048 in mode_list:
+            self._restore_alt_cursor(cursor_only=True)
 
     def define_charset(self, code: str, mode: str) -> None:
         """Define ``G0`` or ``G1`` charset.
