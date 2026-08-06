@@ -319,19 +319,13 @@ class Screen:
         screen safe: a program emitting ``ESC [ ? 1 0 4 9 h`` twice (or exiting
         twice) must not lose it.
 
-        The cursor is deliberately left where it is. xterm clears the alternate
-        buffer without homing the cursor, and both reference emulators agree:
-        ``main\\r\\n`` followed by ``ESC [ ? 1 0 4 9 h`` and ``ALT`` puts
-        ``ALT`` on the second row, not the first.
+        The cursor is deliberately left where it is: xterm clears the
+        alternate buffer without homing it.
 
-        Note on the ``47``/``1047`` "do not clear" wording in the xterm
-        documentation: it describes clearing rather than buffer lifetime, and
-        taken literally it would imply that alternate-screen contents survive a
-        round trip. They do not, in either reference implementation -- both tmux
-        3.6b and GNU screen 4.00.03 (with ``altscreen on``) show an empty
-        alternate screen on re-entry regardless of which mode was used. So
-        there is nothing for the mode-specific clear flags to distinguish, and
-        this implementation does not pretend otherwise.
+        All three modes behave identically here. The xterm documentation
+        distinguishes them by when they clear, but no reference
+        implementation preserves alternate-screen contents across a round
+        trip, so there is nothing for per-mode clear flags to distinguish.
 
         :param bool alternate: switch to the alternate buffer if ``True``,
                                back to the primary one otherwise.
@@ -343,8 +337,11 @@ class Screen:
             self._offscreen_buffer = self.buffer
             self.buffer = self._make_buffer()
         else:
-            saved = self._offscreen_buffer
-            self.buffer = saved if saved is not None else self._make_buffer()
+            # Unreachable-by-construction: the early return above means we only
+            # get here while the alternate screen is displayed, which is exactly
+            # when the offscreen buffer holds the primary one.
+            assert self._offscreen_buffer is not None
+            self.buffer = self._offscreen_buffer
             self._offscreen_buffer = None
 
         self.dirty.update(range(self.lines))
@@ -356,9 +353,9 @@ class Screen:
         stack with DECSC, and full-screen programs use DECSC *inside* the
         alternate screen constantly. An unbalanced ``ESC 7`` in there would leave
         the wrong savepoint on top, so exiting restored the program's internal
-        cursor instead of the shell's. Measured on tmux 3.6b: park at row 3
-        col 7, enter 1049, ``ESC [ 1 ; 1 H`` + ``ESC 7``, exit -- the cursor
-        comes back to row 3 col 7.
+        cursor instead of the shell's. 1048 gets a slot of its own for the
+        same reason: a program may issue it while the alternate screen is up,
+        and it must not overwrite the cursor smcup saved for the shell.
         """
         self.save_cursor()
         if cursor_only:
@@ -1441,6 +1438,12 @@ class HistoryScreen(Screen):
         size is defined by ``history.ratio``, so for instance
         ``ratio = .5`` means that half the screen is restored from
         history on page switch.
+
+        Does nothing while the alternate screen is displayed.
+
+        .. versionchanged:: 0.8.3
+
+           Became a no-op on the alternate screen.
         """
         # Paging is meaningless on the alternate screen and destructive there:
         # it would splice primary-screen scrollback into the running
