@@ -261,6 +261,19 @@ class Screen:
     def _make_buffer(self) -> dict[int, StaticDefaultDict[int, Char]]:
         return defaultdict(lambda: StaticDefaultDict[int, Char](self.default_char))
 
+    def _all_buffers(self) -> Generator[StaticDefaultDict[int, Char]]:
+        """Every line of both buffers, for screen-wide modes.
+
+        DECSCNM is a property of the SCREEN, but pyte realises it by rewriting
+        each cell. Rewriting only the displayed buffer would leave the other one
+        disagreeing with ``self.mode``, so a program that toggled reverse video
+        while on the alternate screen restored a primary screen whose cells and
+        whose mode bit contradicted each other.
+        """
+        yield from self.buffer.values()
+        if self._offscreen_buffer is not None:
+            yield from self._offscreen_buffer.values()
+
     def __repr__(self) -> str:
         return ("{}({}, {})".format(self.__class__.__name__,
                                        self.columns, self.lines))
@@ -530,7 +543,7 @@ class Screen:
 
         # Mark all displayed characters as reverse.
         if mo.DECSCNM in mode_list:
-            for line in self.buffer.values():
+            for line in self._all_buffers():
                 line.default = self.default_char
                 for x in line:
                     line[x] = line[x]._replace(reverse=True)
@@ -543,7 +556,15 @@ class Screen:
 
         # Switch to the alternate screen buffer. 1049 is defined as 1047
         # combined with 1048, so the cursor is saved before switching.
-        if mo.ALTBUF_1048 in mode_list or mo.ALTBUF_1049 in mode_list:
+        #
+        # 1049 does not re-save while the alternate screen is already up: a
+        # program emitting smcup twice must not lose the shell's cursor. The
+        # buffer switch is idempotent for the same reason, and measured on tmux
+        # 3.6b the two agree -- `ESC[3;7H smcup ESC[5;15H smcup rmcup` restores
+        # the cursor to row 3 col 7, identical to the single-smcup case. 1048 on
+        # its own is an explicit DECSC and does re-save.
+        if mo.ALTBUF_1048 in mode_list or (
+                mo.ALTBUF_1049 in mode_list and not self._alternate_screen):
             self._save_alt_cursor()
 
         if (mo.ALTBUF_1049 in mode_list or mo.ALTBUF_1047 in mode_list
@@ -578,7 +599,7 @@ class Screen:
             self.cursor_position()
 
         if mo.DECSCNM in mode_list:
-            for line in self.buffer.values():
+            for line in self._all_buffers():
                 line.default = self.default_char
                 for x in line:
                     line[x] = line[x]._replace(reverse=False)
@@ -1404,6 +1425,19 @@ class HistoryScreen(Screen):
         ``ratio = .5`` means that half the screen is restored from
         history on page switch.
         """
+        # Paging is meaningless on the alternate screen and destructive there:
+        # it would splice primary-screen scrollback into the running
+        # full-screen program's display, and push that program's rows into
+        # history.bottom. Real terminals scroll back the primary screen only,
+        # which is why index/reverse_index are guarded the same way.
+        #
+        # next_page needs no such guard: `before_event` forces the history to
+        # the bottom on every non-paging event, and switching buffers is one, so
+        # by the time the alternate screen is up `position == size` and
+        # `history.bottom` is empty -- next_page is already inert. Guarding it
+        # too would be unobservable code.
+        if self.alternate_screen:
+            return
         if self.history.position > self.lines and self.history.top:
             mid = min(len(self.history.top),
                       int(math.ceil(self.lines * self.history.ratio)))

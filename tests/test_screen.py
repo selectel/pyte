@@ -1834,3 +1834,56 @@ def test_alternate_screen_buffer_resize_shrink_drops_from_top():
     via_alt.resize(lines=2, columns=6)
     via_alt.reset_mode(mo.ALTBUF_1049)
     assert [row.rstrip() for row in via_alt.display] == expected == ["CCC", "DDD"]
+
+
+def test_alternate_screen_buffer_nested_entry_keeps_first_cursor():
+    # A program emitting smcup twice must not lose the shell's cursor. Measured
+    # on tmux 3.6b: `ESC[3;7H smcup ESC[5;15H smcup rmcup` restores the cursor to
+    # row 3 col 7 -- identical to the single-smcup case, so the second entry does
+    # not re-save. The buffer switch was already idempotent; the cursor save was
+    # not, which made the two disagree.
+    screen = pyte.Screen(20, 6)
+    stream = pyte.ByteStream(screen)
+    stream.feed(b"\x1b[3;7H\x1b[?1049h\x1b[5;15H\x1b[?1049h\x1b[?1049lX")
+    assert (screen.cursor.y, screen.cursor.x) == (2, 7)
+    assert screen.display[2].startswith("      X")
+
+    # 1048 on its own is an explicit DECSC and must still re-save -- including
+    # while the alternate screen is already up, which is where a full-screen
+    # program would use it. Suppressing 1048 along with the nested 1049 would be
+    # an over-correction, so both cases are pinned.
+    screen = pyte.Screen(20, 6)
+    stream = pyte.ByteStream(screen)
+    stream.feed(b"\x1b[2;5H\x1b[?1048h\x1b[5;1Hjunk\x1b[?1048lX")
+    assert screen.display[1].startswith("    X")
+
+    screen = pyte.Screen(20, 6)
+    stream = pyte.ByteStream(screen)
+    stream.feed(b"\x1b[?1049h")            # already on the alternate screen
+    stream.feed(b"\x1b[2;5H\x1b[?1048h")  # explicit DECSC in here must save
+    stream.feed(b"\x1b[5;1Hjunk\x1b[?1048lX")
+    assert screen.display[1].startswith("    X"), screen.display[:3]
+
+
+@pytest.mark.parametrize("enter,leave", [(b"\x1b[?5h", b"\x1b[?5l"),
+                                         (b"\x1b[?5l", b"\x1b[?5h")])
+def test_alternate_screen_buffer_decscnm_reaches_both_buffers(enter, leave):
+    # DECSCNM is a property of the SCREEN, but pyte realises it by rewriting each
+    # cell. Rewriting only the displayed buffer left the other one disagreeing
+    # with self.mode, so a program that toggled reverse video while on the
+    # alternate screen restored a primary screen whose cells contradicted the
+    # mode bit. Compared against never entering the alternate screen at all.
+    def build(via_alt):
+        s = pyte.Screen(4, 2)
+        st = pyte.ByteStream(s)
+        st.feed(enter + b"ab")
+        if via_alt:
+            st.feed(b"\x1b[?1049h" + leave + b"\x1b[?1049l")
+        else:
+            st.feed(leave)
+        return s
+
+    direct, via_alt = build(False), build(True)
+    assert [via_alt.buffer[0][x].reverse for x in range(4)] == \
+           [direct.buffer[0][x].reverse for x in range(4)]
+    assert via_alt.buffer[0].default.reverse == direct.buffer[0].default.reverse

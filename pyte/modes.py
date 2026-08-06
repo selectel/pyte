@@ -63,12 +63,15 @@ DECCOLM = 3 << 5
 # ................................
 
 #: *Use Alternate Screen Buffer*: switches to a secondary screen buffer,
-#: leaving the primary one untouched. Unlike :data:`ALTBUF_1049` neither
-#: entering nor leaving clears a buffer, and the cursor is not saved.
+#: leaving the primary one saved and intact. Like :data:`ALTBUF_1047` and
+#: :data:`ALTBUF_1049` the alternate buffer starts empty and is discarded on
+#: exit; unlike :data:`ALTBUF_1049` the cursor is not saved or restored.
 ALTBUF_47 = 47 << 5
 
-#: *Use Alternate Screen Buffer, clearing on exit*: as :data:`ALTBUF_47`,
-#: except that leaving clears the alternate buffer.
+#: *Use Alternate Screen Buffer*: switches buffers exactly as
+#: :data:`ALTBUF_47` does. The xterm documentation distinguishes the two by
+#: when they clear, but no reference implementation preserves alternate-screen
+#: contents across a round trip, so there is nothing to distinguish.
 ALTBUF_1047 = 1047 << 5
 
 #: *Save Cursor*: saves the cursor as ``DECSC`` does on set, and restores
