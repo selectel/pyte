@@ -250,7 +250,6 @@ class Screen:
         # one buffer has ever been used. Set up before reset() because reset()
         # leaves the alternate buffer.
         self._offscreen_buffer: dict[int, StaticDefaultDict[int, Char]] | None = None
-        self._alternate_screen = False
         # Cursor saved by 1048/1049. Deliberately NOT the `savepoints` stack:
         # see _save_alt_cursor.
         self._alt_savepoint: Savepoint | None = None
@@ -298,9 +297,13 @@ class Screen:
     def alternate_screen(self) -> bool:
         """``True`` while the alternate screen buffer is displayed.
 
+        Derived rather than stored: the offscreen buffer exists exactly while the
+        alternate one is displayed, so a separate flag would only add a pair of
+        values that could disagree.
+
         .. versionadded:: 0.8.3
         """
-        return self._alternate_screen
+        return self._offscreen_buffer is not None
 
     def _switch_screen_buffer(self, alternate: bool) -> None:
         """Switch between the primary and the alternate screen buffer.
@@ -329,7 +332,7 @@ class Screen:
         :param bool alternate: switch to the alternate buffer if ``True``,
                                back to the primary one otherwise.
         """
-        if alternate == self._alternate_screen:
+        if alternate == self.alternate_screen:
             return
 
         if alternate:
@@ -340,7 +343,6 @@ class Screen:
             self.buffer = saved if saved is not None else self._make_buffer()
             self._offscreen_buffer = None
 
-        self._alternate_screen = alternate
         self.dirty.update(range(self.lines))
 
     def _save_alt_cursor(self) -> None:
@@ -393,7 +395,6 @@ class Screen:
 
         # RIS leaves the alternate screen buffer; both buffers are discarded.
         self._offscreen_buffer = None
-        self._alternate_screen = False
         self._alt_savepoint = None
 
         self.mode = _DEFAULT_MODE.copy()
@@ -564,7 +565,7 @@ class Screen:
         # the cursor to row 3 col 7, identical to the single-smcup case. 1048 on
         # its own is an explicit DECSC and does re-save.
         if mo.ALTBUF_1048 in mode_list or (
-                mo.ALTBUF_1049 in mode_list and not self._alternate_screen):
+                mo.ALTBUF_1049 in mode_list and not self.alternate_screen):
             self._save_alt_cursor()
 
         if (mo.ALTBUF_1049 in mode_list or mo.ALTBUF_1047 in mode_list
