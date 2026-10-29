@@ -1,4 +1,5 @@
 import copy
+import unicodedata
 
 import pytest
 
@@ -1617,3 +1618,42 @@ def test_private_sgr_sequence_ignored():
     assert screen.display == display
     assert screen.mode == mode
     assert cursor_state(screen.cursor) == cursor
+
+
+NON_RENDERING_CHARACTERS = [chr(code) for code in range(0x20)] + [
+    "\x7f", "\u200b", "\u200c"
+]
+
+
+@pytest.mark.parametrize("char", NON_RENDERING_CHARACTERS)
+@pytest.mark.parametrize("template,expected", [
+    ("{}AB", "AB"),
+    ("A{}B", "AB"),
+    ("AB{}C", "ABC"),
+])
+def test_draw_continues_after_non_rendering_characters(char, template, expected):
+    screen = pyte.Screen(8, 2)
+    screen.draw(template.format(char))
+    assert screen.display == [expected.ljust(8), " " * 8]
+    assert (screen.cursor.x, screen.cursor.y) == (len(expected), 0)
+
+
+@pytest.mark.parametrize("char", NON_RENDERING_CHARACTERS)
+@pytest.mark.parametrize("screen_type", [pyte.Screen, pyte.HistoryScreen])
+def test_non_rendering_characters_do_not_wrap_or_scroll(char, screen_type):
+    screen = screen_type(3, 1)
+    screen.draw("ABC")
+    assert screen.cursor.x == screen.columns
+    screen.draw(char)
+    assert screen.display == ["ABC"]
+    assert (screen.cursor.x, screen.cursor.y) == (3, 0)
+    if isinstance(screen, pyte.HistoryScreen):
+        assert not screen.history.top
+
+
+@pytest.mark.parametrize("char", ["\x01", "\x02", "\x80", "\x9f"])
+def test_ignored_controls_do_not_consume_combining_characters(char):
+    screen = pyte.Screen(8, 2)
+    screen.draw("A" + char + "\u0301B")
+    assert unicodedata.normalize("NFC", screen.display[0]) == "ÁB      "
+    assert (screen.cursor.x, screen.cursor.y) == (2, 0)

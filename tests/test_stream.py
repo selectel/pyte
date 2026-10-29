@@ -1,4 +1,5 @@
 import io
+import unicodedata
 
 import pytest
 
@@ -332,3 +333,33 @@ def test_byte_stream_select_other_charset():
     # c) enable utf-8
     stream.select_other_charset("G")
     assert stream.use_utf8
+
+
+@pytest.mark.parametrize("char", ["\x01", "\x02", "\x05", "\x11"])
+@pytest.mark.parametrize("stream_type", [pyte.Stream, pyte.ByteStream])
+def test_ignored_controls_preserve_text_at_every_chunk_boundary(char, stream_type):
+    text = "\x1b[31mAB" + char + "CD\x1b[0m"
+    data = text.encode("utf-8") if stream_type is pyte.ByteStream else text
+    for split in range(len(data) + 1):
+        screen = pyte.Screen(8, 2)
+        stream = stream_type(screen)
+        stream.feed(data[:split])
+        stream.feed(data[split:])
+        assert screen.display == ["ABCD    ", " " * 8], split
+        assert (screen.cursor.x, screen.cursor.y) == (4, 0)
+        assert all(screen.buffer[0][x].fg == "red" for x in range(4))
+        assert screen.cursor.attrs.fg == "default"
+
+
+@pytest.mark.parametrize("char", ["\x01", "\x02"])
+@pytest.mark.parametrize("stream_type", [pyte.Stream, pyte.ByteStream])
+def test_ignored_controls_preserve_combining_text_across_chunks(char, stream_type):
+    text = "A" + char + "\u0301B"
+    data = text.encode("utf-8") if stream_type is pyte.ByteStream else text
+    for split in range(len(data) + 1):
+        screen = pyte.Screen(8, 2)
+        stream = stream_type(screen)
+        stream.feed(data[:split])
+        stream.feed(data[split:])
+        assert unicodedata.normalize("NFC", screen.display[0]) == "ÁB      ", split
+        assert (screen.cursor.x, screen.cursor.y) == (2, 0)

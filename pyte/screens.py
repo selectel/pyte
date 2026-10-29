@@ -30,6 +30,7 @@ import copy
 import json
 import math
 import os
+import re
 import sys
 import unicodedata
 import warnings
@@ -46,6 +47,9 @@ from . import (
     modes as mo
 )
 from .streams import Stream
+
+# Strip controls after charset translation, before grapheme clustering.
+_IGNORED_CONTROLS = re.compile(r"[\x00-\x1f\x7f-\x9f]")
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Generator, Sequence
@@ -504,9 +508,16 @@ class Screen:
         """
         data = data.translate(
             self.g1_charset if self.charset else self.g0_charset)
+        data = _IGNORED_CONTROLS.sub("", data)
 
         for char in grapheme_clusters(data):
             char_width = wcswidth(char)
+            is_combining = char_width == 0 and all(
+                unicodedata.combining(c) for c in char)
+            # Ignore non-rendering input before wrap/insert processing. It must
+            # neither move the cursor nor discard the rest of this text chunk.
+            if char_width <= 0 and not is_combining:
+                continue
 
             # If this was the last column in a line and auto wrap mode is
             # enabled, move the cursor to the beginning of the next line,
@@ -535,7 +546,7 @@ class Screen:
                 if self.cursor.x + 1 < self.columns:
                     line[self.cursor.x + 1] = self.cursor.attrs \
                         ._replace(data="")
-            elif char_width == 0 and all(unicodedata.combining(c) for c in char):
+            elif is_combining:
                 # A zero-cell character is combined with the previous
                 # character either on this or preceding line.
                 if self.cursor.x:
@@ -548,7 +559,7 @@ class Screen:
                     self.buffer[self.cursor.y - 1][self.columns - 1] = \
                         last._replace(data=normalized)
             else:
-                break  # Unprintable character or doesn't advance the cursor.
+                break  # Unsupported display width.
 
             # .. note:: We can't use :meth:`cursor_forward()`, because that
             #           way, we'll never know when to linefeed.
